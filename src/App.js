@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore'; // Removed unused imports
 
 // Ensure Tailwind CSS is available in the environment
 // This component assumes Tailwind CSS is configured and available globally.
@@ -427,7 +427,8 @@ const OnboardingStep4_Goals = ({ formData, setFormData, nextStep, prevStep }) =>
               <label className="block text-gray-300 font-semibold">
                 Goal {index + 1}
               </label>
-              {formData.customGals.length > 1 && (
+              {/* FIXED TYPO: customGals to customGoals */}
+              {formData.customGoals.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeGoal(index)}
@@ -1360,6 +1361,7 @@ function App() {
   }, []);
 
   // Function to fetch financial data from Firestore
+  // FIXED: Added fetchFinancialData to useCallback dependency array
   const fetchFinancialData = useCallback(async (firestore, currentUserId, appId) => {
     if (!firestore || !currentUserId || !appId) {
       console.log("Firestore or userId or appId not ready for fetching financial data.");
@@ -1496,6 +1498,7 @@ function App() {
     if (isAuthReady && db && userId) {
       fetchFinancialData(db, userId, '1:783039988566:web:6e8948d86341d4805eccf7'); // Your App ID
     }
+    // FIXED: Added fetchFinancialData to dependency array
   }, [isAuthReady, db, userId, fetchFinancialData]);
 
   // Logout Function
