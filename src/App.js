@@ -69,7 +69,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
-const Step1 = ({ formData, handleChange, nextStep }) => {
+const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
       <div className="animate-fade-in-scale">
@@ -83,7 +83,7 @@ const Step1 = ({ formData, handleChange, nextStep }) => {
       </div>
     );
 };
-const Step2 = ({ formData, handleChange, nextStep, prevStep }) => (
+const OnboardingStep2 = ({ formData, handleChange, nextStep, prevStep }) => (
   <div className="animate-fade-in-scale">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">Your Financial Foundation</h3>
     <p className="text-lg text-gray-400 mb-8 text-center">Now, let's look at your financial overview.</p>
@@ -94,7 +94,7 @@ const Step2 = ({ formData, handleChange, nextStep, prevStep }) => (
     </div>
   </div>
 );
-const Step3 = ({ formData, setFormData, nextStep, prevStep }) => {
+const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
   const expenseCategories = [{ name: 'housing', label: 'Housing (Rent/EMI)' }, { name: 'food', label: 'Food' }, { name: 'transportation', label: 'Transportation' }, { name: 'utilities', label: 'Utilities' }, { name: 'entertainment', label: 'Entertainment' }, { name: 'healthcare', label: 'Healthcare' }, { name: 'personalCare', label: 'Personal Care' }, { name: 'education', label: 'Education' }, { name: 'debtPayments', label: 'Debt Payments' }, { name: 'miscellaneous', label: 'Miscellaneous' }];
   const handleExpenseChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, expenses: { ...prev.expenses, [name]: value.replace(/[^0-9]/g, '') } })); };
   return (
@@ -105,7 +105,7 @@ const Step3 = ({ formData, setFormData, nextStep, prevStep }) => {
     </div>
   );
 };
-const Step4 = ({ formData, setFormData, nextStep, prevStep }) => {
+const OnboardingStep4 = ({ formData, setFormData, nextStep, prevStep }) => {
   const today = new Date().toISOString().split('T')[0];
   const handleGoalChange = (index, e) => { const { name, value } = e.target; const newGoals = [...formData.customGoals]; newGoals[index] = { ...newGoals[index], [name]: name === 'name' ? value : value.replace(/[^0-9-]/g, '') }; setFormData(p => ({ ...p, customGoals: newGoals })); };
   const addGoal = () => setFormData(p => ({ ...p, customGoals: [...p.customGoals, { name: '', targetAmount: '', amountSaved: '', targetDate: '' }] }));
@@ -125,14 +125,14 @@ const Step4 = ({ formData, setFormData, nextStep, prevStep }) => {
     </div>
   );
 };
-const Step5 = ({ formData, handleChange, prevStep, handleSubmit }) => (
+const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit }) => (
   <div className="animate-fade-in-scale">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">A Little More About You</h3>
     <div className="space-y-6">
-      <div><label className="block text-lg font-semibold mb-2">Risk Tolerance</label><select name="riskTolerance" value={formData.riskTolerance} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
-      <div><label className="block text-lg font-semibold mt-4 mb-2">Current Investments</label><textarea name="currentInvestments" value={formData.currentInvestments} onChange={handleChange} rows="3" className="w-full p-3 border rounded-xl bg-gray-800"></textarea></div>
-      <div><label className="block text-lg font-semibold mt-4 mb-2">Number of Dependents</label><input type="text" inputMode="numeric" name="dependents" value={formData.dependents} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" /></div>
-      <div><label className="block text-lg font-semibold mt-4 mb-2">Total Debt (₹)</label><input type="text" inputMode="numeric" name="debt" value={formData.debt} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" /></div>
+      <div><label className="block text-lg font-semibold mb-2">Risk Tolerance</label><select name="riskTolerance" value={formData.riskTolerance} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="low">Low (Prefer safety over high returns)</option><option value="medium">Medium (Balanced approach)</option><option value="high">High (Comfortable with risk for higher returns)</option></select></div>
+      <div><label className="block text-lg font-semibold mt-4 mb-2">Current Investments</label><textarea name="currentInvestments" value={formData.currentInvestments} onChange={handleChange} rows="3" className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., Stocks, Mutual Funds, FD, Gold..."></textarea></div>
+      <div><label className="block text-lg font-semibold mt-4 mb-2">Number of Dependents</label><input type="text" inputMode="numeric" name="dependents" value={formData.dependents} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., 0, 1, 2" /></div>
+      <div><label className="block text-lg font-semibold mt-4 mb-2">Total Debt (₹)</label><input type="text" inputMode="numeric" name="debt" value={formData.debt} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., 150000 (home loan, personal loan, etc.)" /></div>
     </div>
     <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={handleSubmit} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 text-xl rounded-xl">Complete Onboarding</button></div>
   </div>
@@ -145,7 +145,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
   const handleSubmit = () => { const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0); onSubmit({ ...formData, monthlyExpenses: tME }); };
-  return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<Step1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<Step2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<Step3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<Step4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<Step5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
+  return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
@@ -153,7 +153,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   const chatHistoryRef = useRef(null);
   useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [chatHistory]);
   const handleSendMessage = (e) => { e.preventDefault(); if (chatInput.trim() === '') return; callGeminiAPI(chatInput); setChatInput(''); };
-  return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
+  return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
 const TaxSaver = () => {
@@ -161,15 +161,15 @@ const TaxSaver = () => {
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
-    const fL = { sI: "Salary Income", oI: "Other Income", i80C: "80C Investments", hra: "HRA", hLI: "Home Loan Interest", mI80D: "80D Insurance" };
-    const hNC = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
-    const cT = (tI, iOR) => { let tax = 0; const slabs = iOR ? [{ l: 1000000, r: 0.30, b: 112500 }, { l: 500000, r: 0.20, b: 12500 }] : [{ l: 1500000, r: 0.30, b: 150000 }, { l: 1200000, r: 0.20, b: 90000 }, { l: 900000, r: 0.15, b: 45000 }, { l: 600000, r: 0.10, b: 15000 }]; for (const s of slabs) { if (tI > s.l) { tax = s.b + (tI - s.l) * s.r; break; } } return Math.round(tax * 1.04); };
-    const hTC = async () => {
+    const fieldLabels = { salaryIncome: "Annual Salary Income (from Form 16)", otherIncome: "Annual Income from Other Sources (e.g., Interest, Rent)", investments80C: "Total Investments under Section 80C (PPF, ELSS, etc.)", hra: "House Rent Allowance (HRA) Exemption Claimed", homeLoanInterest: "Interest on Home Loan (Section 24)", medicalInsurance80D: "Medical Insurance Premium (Section 80D)", nps_80ccd1b: "NPS Contribution (Section 80CCD(1B))", educationLoanInterest_80e: "Interest on Education Loan (Section 80E)" };
+    const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
+    const calculateTax = (taxableIncome, isOldRegime) => { let tax = 0; const slabs = isOldRegime ? [{ l: 1000000, r: 0.30, b: 112500 }, { l: 500000, r: 0.20, b: 12500 }] : [{ l: 1500000, r: 0.30, b: 150000 }, { l: 1200000, r: 0.20, b: 90000 }, { l: 900000, r: 0.15, b: 45000 }, { l: 600000, r: 0.10, b: 15000 }]; for (const s of slabs) { if (taxableIncome > s.l) { tax = s.b + (taxableIncome - s.l) * s.r; break; } } return Math.round(tax * 1.04); };
+    const handleTaxCalculation = async () => {
         setIsCalculating(true); setAiAnalysis('');
-        const gI = parseFloat(taxData.sI || 0) + parseFloat(taxData.oI || 0);
-        const nRT = cT(Math.max(0, gI - 50000), false);
-        const tD = (parseFloat(taxData.i80C || 0) + parseFloat(taxData.hra || 0) + parseFloat(taxData.hLI || 0) + parseFloat(taxData.mI80D || 0));
-        const oRT = cT(Math.max(0, gI - 50000 - tD), true);
+        const gI = parseFloat(taxData.salaryIncome || 0) + parseFloat(taxData.otherIncome || 0);
+        const nRT = calculateTax(Math.max(0, gI - 50000), false);
+        const tD = (parseFloat(taxData.investments80C || 0) + parseFloat(taxData.hra || 0) + parseFloat(taxData.homeLoanInterest || 0) + parseFloat(taxData.medicalInsurance80D || 0) + parseFloat(taxData.nps_80ccd1b || 0) + parseFloat(taxData.educationLoanInterest_80e || 0));
+        const oRT = calculateTax(Math.max(0, gI - 50000 - tD), true);
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT) });
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: `Analyze Tax: Gross Income ₹${gI}, Deductions ₹${tD}. Old Tax ₹${oRT}, New Tax ₹${nRT}. Recommend better option and give one tip.` }] }] }) });
@@ -178,7 +178,7 @@ const TaxSaver = () => {
             setAiAnalysis(result.candidates[0].content.parts[0].text);
         } catch (e) { setAiAnalysis("Could not fetch AI analysis."); } finally { setIsCalculating(false); }
     };
-    return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fL).map((k) => (<div key={k}><label className="block mb-1">{fL[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={hNC} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={hTC} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Comparison</h3><p className="text-center text-lg">The **{taxResult.bO} Regime** is better. You save **₹{taxResult.s.toLocaleString()}**!</p></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
+    return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Comparison</h3><p className="text-center text-lg">The **{taxResult.bO} Regime** is better. You save **₹{taxResult.s.toLocaleString()}**!</p></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
 
 const Dashboard = ({ financialSummary, callGeminiAPI }) => {
@@ -208,7 +208,7 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
       setGoalPlanResults(p => ({ ...p, [i]: result.candidates[0].content.parts[0].text }));
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: ${e.message}` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
-  return ( <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80"><h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2> {financialSummary ? (<div> <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3><div className="grid md:grid-cols-3 gap-6"> <div className="bg-gray-800 p-5 rounded-xl"><span>Net Worth:</span><span className="font-bold text-3xl"> ₹{parseFloat(financialSummary.netWorth || 0).toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Income:</span><span className="font-bold text-3xl text-green-400"> ₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Savings Rate:</span><span className="font-bold text-3xl text-green-400"> {sR}%</span></div></div> <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Your Goals</h3>{financialSummary.customGoals?.some(g=>g.name) ? (<div className="space-y-4">{financialSummary.customGoals.map((g,i)=>{const pr=cGP(g); return pr ? (<div key={i} className="bg-gray-800 p-5 rounded-xl"><div className="flex justify-between mb-2"><span className="font-semibold text-xl">{g.name}</span><span>Target: ₹{parseFloat(g.targetAmount).toLocaleString()}</span></div><div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{width:`${pr.p}%`}}></div></div><p className="text-sm text-right">Saved: ₹{parseFloat(g.amountSaved||0).toLocaleString()} ({pr.s})</p><button onClick={()=>hGGP(g,i)} className="mt-3 w-full bg-yellow-600 font-bold py-2 rounded-xl" disabled={isGeneratingGoalPlan[i]}>{isGeneratingGoalPlan[i] ? 'Generating...' : 'Generate Plan'}</button>{goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]}/></div>)}</div>) : null;})}</div>) : (<p>No goals set.</p>)}<h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis</h3><div className="bg-gray-700 p-5 rounded-xl"><button onClick={hAB} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>{isAnalyzingBudget?'Analyzing...':'Get Budget Tips'}</button>{budgetAnalysisResult && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={budgetAnalysisResult}/></div>)}</div></div>) : <p>Loading...</p>}</section> );
+  return ( <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80"><h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2> {financialSummary ? (<div> <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> <div className="bg-gray-800 p-5 rounded-xl"><span>Net Worth:</span><span className="font-bold text-3xl"> ₹{parseFloat(financialSummary.netWorth || 0).toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Income:</span><span className="font-bold text-3xl text-green-400"> ₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Expenses:</span><span className="font-bold text-3xl text-yellow-400"> ₹{tME.toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Savings:</span><span className="font-bold text-3xl text-green-400"> ₹{mS.toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Savings Rate:</span><span className="font-bold text-3xl text-green-400"> {sR}%</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Risk Tolerance:</span><span className="font-bold text-3xl capitalize"> {financialSummary.riskTolerance || 'N/A'}</span></div></div> <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Your Goals</h3>{financialSummary.customGoals?.some(g=>g.name) ? (<div className="space-y-4">{financialSummary.customGoals.map((g,i)=>{const pr=cGP(g); return pr ? (<div key={i} className="bg-gray-800 p-5 rounded-xl"><div className="flex justify-between mb-2"><span className="font-semibold text-xl">{g.name}</span><span>Target: ₹{parseFloat(g.targetAmount).toLocaleString()}</span></div><div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{width:`${pr.p}%`}}></div></div><p className="text-sm text-right">Saved: ₹{parseFloat(g.amountSaved||0).toLocaleString()} ({pr.s})</p><button onClick={()=>hGGP(g,i)} className="mt-3 w-full bg-yellow-600 font-bold py-2 rounded-xl" disabled={isGeneratingGoalPlan[i]}>{isGeneratingGoalPlan[i] ? 'Generating...' : 'Generate Plan'}</button>{goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]}/></div>)}</div>) : null;})}</div>) : (<p>No goals set.</p>)}<h3 className="text-2xl font-bold text-green-400 mt-6 mb-3">General Suggestions</h3><div className="bg-gray-700 p-5 rounded-xl"><ul className="list-disc list-inside space-y-2"><li>Consider increasing your monthly savings to accelerate goal achievement.</li><li>Explore investment options aligned with your risk tolerance for better returns.</li><li>Review your monthly expenses to identify areas for potential cost reduction.</li><li>Utilize the Tax Saver tool to optimize your tax liabilities.</li><li>Don't hesitate to use the AI Chat for personalized advice on any financial topic!</li></ul></div><h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis</h3><div className="bg-gray-700 p-5 rounded-xl"><button onClick={hAB} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>{isAnalyzingBudget?'Analyzing...':'Get Budget Tips'}</button>{budgetAnalysisResult && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={budgetAnalysisResult}/></div>)}</div></div>) : <p>Loading...</p>}</section> );
 };
 
 function App() {
@@ -307,4 +307,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
