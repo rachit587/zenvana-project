@@ -256,12 +256,10 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
   
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
-  // THIS IS THE ONLY FUNCTION THAT HAS CHANGED
   const handleAnalyzeBudget = async () => {
     setIsAnalyzingBudget(true); 
     setBudgetAnalysisResult('');
 
-    // The new, more detailed prompt for the AI
     const prompt = `
 As ZENVANA, your personal AI financial advisor, please provide a detailed and encouraging analysis of the following budget for ${financialSummary.name}.
 
@@ -323,14 +321,15 @@ End with an empowering and positive statement, reinforcing that they are on the 
       <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2>
       {financialSummary ? (
         <div>
+          {/* THIS IS THE ONLY SECTION THAT HAS CHANGED */}
           <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-800 p-5 rounded-xl"><span>Net Worth:</span><span className="font-bold text-3xl"> ₹{parseFloat(financialSummary.netWorth || 0).toLocaleString()}</span></div>
-            <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Income:</span><span className="font-bold text-3xl text-green-400"> ₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString()}</span></div>
-            <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Expenses:</span><span className="font-bold text-3xl text-yellow-400"> ₹{tME.toLocaleString()}</span></div>
-            <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Savings:</span><span className="font-bold text-3xl text-green-400"> ₹{mS.toLocaleString()}</span></div>
-            <div className="bg-gray-800 p-5 rounded-xl"><span>Savings Rate:</span><span className="font-bold text-3xl text-green-400"> {sR}%</span></div>
-            <div className="bg-gray-800 p-5 rounded-xl"><span>Risk Tolerance:</span><span className="font-bold text-3xl capitalize"> {financialSummary.riskTolerance || 'N/A'}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Net Worth</span><span className="font-bold text-3xl text-white mt-1">₹{parseFloat(financialSummary.netWorth || 0).toLocaleString('en-IN')}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Income</span><span className="font-bold text-3xl text-green-400 mt-1">₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString('en-IN')}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Expenses</span><span className="font-bold text-3xl text-yellow-400 mt-1">₹{tME.toLocaleString('en-IN')}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Savings</span><span className="font-bold text-3xl text-green-400 mt-1">₹{mS.toLocaleString('en-IN')}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className="font-bold text-3xl text-green-400 mt-1">{sR}%</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
           </div>
           
           <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Expense Breakdown</h3>
