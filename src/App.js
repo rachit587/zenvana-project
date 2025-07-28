@@ -153,7 +153,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
 
 // --- CORRECTED: AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
-  const [chatInput, setChatInput] useState('');
+const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
   useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [chatHistory]);
   const handleSendMessage = (e) => { e.preventDefault(); if (chatInput.trim() === '') return; callGeminiAPI(chatInput); setChatInput(''); };
