@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -151,7 +151,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
-// --- AI Chat Component (No changes) ---
+// --- CORRECTED: AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
@@ -160,8 +160,8 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
-// --- Tax Saver Component (No changes) ---
-const TaxSaver = () => {
+// --- CORRECTED: Tax Saver Component ---
+const TaxSaver = ({ apiKey }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
@@ -182,7 +182,11 @@ const TaxSaver = () => {
         const prompt = `Namaste! As ZENVANA, your financial advisor, let's break down your tax situation for the Financial Year 2024-25 (Assessment Year 2025-26). Based on the provided data, the **${nRT < oRT ? 'New Regime' : 'Old Regime'} is significantly better for you, saving you ₹${Math.abs(nRT - oRT).toLocaleString('en-IN')}** compared to the other regime. ## Tax Slab Analysis Under the **Old Tax Regime**, your taxable income (after deductions) is ₹${tI_old.toLocaleString('en-IN')}, which places you in the **${oRSlab} tax bracket**. Under the **New Tax Regime**, your taxable income (after standard deduction) is ₹${tI_new.toLocaleString('en-IN')}, which also places you in the **${nRSlab} tax bracket**. ## Detailed Analysis and Actionable Advice Here's the breakdown of your tax liability under each regime: - **Old Tax Regime:** - Gross Income: ₹${gI.toLocaleString('en-IN')} - Less: Total Deductions: ₹${tD.toLocaleString('en-IN')} - Taxable Income: ₹${tI_old.toLocaleString('en-IN')} - **Estimated Tax Payable: ₹${oRT.toLocaleString('en-IN')}** (including 4% Health & Education Cess) - **New Tax Regime:** - Gross Income: ₹${gI.toLocaleString('en-IN')} - Less: Standard Deduction: ₹50,000 - Taxable Income: ₹${tI_new.toLocaleString('en-IN')} - **Estimated Tax Payable: ₹${nRT.toLocaleString('en-IN')}** (including 4% Health & Education Cess)`;
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+            });
             if (!response.ok) throw new Error('AI analysis failed');
             const result = await response.json();
             setAiAnalysis(result.candidates[0].content.parts[0].text);
@@ -243,8 +247,8 @@ const ExpensePieChart = ({ expenses }) => {
 };
 
 
-// --- UPDATED: Dashboard Component ---
-const Dashboard = ({ financialSummary, callGeminiAPI }) => {
+// --- CORRECTED: Dashboard Component ---
+const Dashboard = ({ financialSummary, callGeminiAPI, apiKey }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
@@ -292,8 +296,9 @@ End with an empowering and positive statement, reinforcing that they are on the 
 `;
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { 
-          method: 'POST', 
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
       });
       if (!response.ok) throw new Error('Budget analysis failed');
@@ -309,14 +314,17 @@ End with an empowering and positive statement, reinforcing that they are on the 
   const hGGP = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: `Create investment plan for ${financialSummary.riskTolerance} risk tolerance. Goal: ${g.name}, Target: ₹${g.targetAmount}, Saved: ₹${g.amountSaved}, Date: ${g.targetDate}. Monthly surplus: ₹${mS}. Suggest 1-2 investment types.` }] }] }) });
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: `Create investment plan for ${financialSummary.riskTolerance} risk tolerance. Goal: ${g.name}, Target: ₹${g.targetAmount}, Saved: ₹${g.amountSaved}, Date: ${g.targetDate}. Monthly surplus: ₹${mS}. Suggest 1-2 investment types.` }] }] }) 
+      });
       if (!response.ok) throw new Error('Goal plan generation failed');
       const result = await response.json();
       setGoalPlanResults(p => ({ ...p, [i]: result.candidates[0].content.parts[0].text }));
-    } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: ${e.message}` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
+    } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: Goal plan generation failed` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
 
-  // Helper function to format the date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -341,7 +349,6 @@ End with an empowering and positive statement, reinforcing that they are on the 
           <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Expense Breakdown</h3>
           <ExpensePieChart expenses={financialSummary.expenses} />
 
-          {/* THIS IS THE ONLY SECTION THAT HAS CHANGED */}
           <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Your Goals</h3>
           {financialSummary.customGoals?.some(g => g.name) ? (
             <div className="space-y-4">
@@ -398,16 +405,20 @@ End with an empowering and positive statement, reinforcing that they are on the 
 };
 
 
-// --- Main App Component (No changes to logic) ---
+// --- CORRECTED: Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
+  const [firebaseConfig, setFirebaseConfig] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentPage, setCurrentPage] = useState('welcome');
   const [financialSummary, setFinancialSummary] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
+  
+  // This is the correct way to handle the API key
+  const apiKey = "";
 
   const fetchFinancialData = useCallback(async (firestore, currentUserId, appId) => {
     if (!firestore || !currentUserId || !appId) return;
@@ -419,21 +430,36 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const appId = '1:783039988566:web:6e8948d86341d4805eccf7';
-    const firebaseConfig = { apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ", authDomain: "zenvana-web.firebaseapp.com", projectId: "zenvana-web", storageBucket: "zenvana-web.firebasestorage.app", messagingSenderId: "783039988566", appId: "1:783039988566:web:6e8948d86341d4805eccf7", measurementId: "G-TVZF4SK0YG" };
+    const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    if (!config) {
+        console.error("Firebase config not found!");
+        return;
+    }
+    setFirebaseConfig(config);
+    const appId = config.appId;
+
     try {
-      const app = initializeApp(firebaseConfig);
+      const app = initializeApp(config);
       const firestore = getFirestore(app);
       const firebaseAuth = getAuth(app);
       setDb(firestore);
       setAuth(firebaseAuth);
+
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
         if (user) {
           setUserId(user.uid);
           setIsAuthReady(true);
           fetchFinancialData(firestore, user.uid, appId);
         } else {
-          signInAnonymously(firebaseAuth).catch(err => console.error("Anon auth error:", err));
+            const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (token) {
+                signInWithCustomToken(firebaseAuth, token).catch(err => {
+                    console.error("Custom token auth error, falling back to anonymous:", err);
+                    signInAnonymously(firebaseAuth).catch(err => console.error("Anon auth error:", err));
+                });
+            } else {
+                signInAnonymously(firebaseAuth).catch(err => console.error("Anon auth error:", err));
+            }
         }
       });
       return () => unsubscribe();
@@ -441,9 +467,9 @@ function App() {
   }, [fetchFinancialData]);
 
   const saveFinancialData = async (data) => {
-    if (!db || !userId) return;
+    if (!db || !userId || !firebaseConfig) return;
     try {
-      const appId = '1:783039988566:web:6e8948d86341d4805eccf7';
+      const appId = firebaseConfig.appId;
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
       const expensesParsed = {};
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
@@ -460,7 +486,11 @@ function App() {
     const currentChat = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(currentChat);
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { method: 'POST', body: JSON.stringify({ contents: [...currentChat.slice(-10), { role: 'user', parts: [{ text: contextPrompt }] }] }) });
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [...currentChat.slice(-10), { role: 'user', parts: [{ text: contextPrompt }] }] }) 
+      });
       if (!response.ok) throw new Error('API call failed');
       const result = await response.json();
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result.candidates[0].content.parts[0].text }] }]);
@@ -468,9 +498,9 @@ function App() {
   };
 
   const handleLogout = async () => {
-    if (!auth || !db || !userId) return;
+    if (!auth || !db || !userId || !firebaseConfig) return;
     try {
-      const appId = '1:783039988566:web:6e8948d86341d4805eccf7';
+      const appId = firebaseConfig.appId;
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
       await signOut(auth);
       setFinancialSummary(null); setChatHistory([]); setUserId(null); setIsAuthReady(false); setCurrentPage('welcome');
@@ -486,8 +516,8 @@ function App() {
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGeminiAPI={callGeminiAPI} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver />)}
+          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGeminiAPI={callGeminiAPI} apiKey={apiKey} />)}
+          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} />)}
           {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />)}
         </Layout>
       )}
