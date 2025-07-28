@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
-// Import Recharts components for the pie chart
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 
@@ -193,14 +192,12 @@ const TaxSaver = () => {
 };
 
 
-// --- NEW: Expense Pie Chart Component ---
+// --- Expense Pie Chart Component (No changes) ---
 const ExpensePieChart = ({ expenses }) => {
-  // Process expenses data for the chart. We only include categories with a value > 0.
   const chartData = Object.entries(expenses || {})
     .map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) }))
     .filter(item => item.value > 0);
 
-  // Define a color palette that matches the Zenvana theme
   const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
 
   if (chartData.length === 0) {
@@ -232,9 +229,9 @@ const ExpensePieChart = ({ expenses }) => {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1F2937', // gray-800
-              borderColor: '#374151', // gray-700
-              color: '#F9FAFB' // gray-50
+              backgroundColor: '#1F2937',
+              borderColor: '#374151',
+              color: '#F9FAFB'
             }}
             formatter={(value) => `₹${value.toLocaleString('en-IN')}`}
           />
@@ -259,14 +256,56 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
   
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
-  const hAB = async () => {
-    setIsAnalyzingBudget(true); setBudgetAnalysisResult('');
+  // THIS IS THE ONLY FUNCTION THAT HAS CHANGED
+  const handleAnalyzeBudget = async () => {
+    setIsAnalyzingBudget(true); 
+    setBudgetAnalysisResult('');
+
+    // The new, more detailed prompt for the AI
+    const prompt = `
+As ZENVANA, your personal AI financial advisor, please provide a detailed and encouraging analysis of the following budget for ${financialSummary.name}.
+
+**User's Financial Data:**
+- Monthly Income: ₹${financialSummary.monthlyIncome}
+- Monthly Expenses: ${JSON.stringify(financialSummary.expenses, null, 2)}
+- Risk Tolerance: ${financialSummary.riskTolerance}
+
+**Your Task:**
+Generate a response in Markdown format that includes the following sections:
+
+## Hello ${financialSummary.name}, Here's Your Budget Analysis!
+Provide a brief, encouraging overview of their financial picture based on their income and savings.
+
+## Key Observation
+Identify the single most important insight from their budget (e.g., high savings rate, a specific expense category being very high, etc.). Explain *why* this is significant in a detailed paragraph.
+
+## Expense Breakdown
+- Briefly analyze the top 2-3 spending categories.
+- Mention if the spending seems reasonable or if there are potential areas for optimization.
+
+## Actionable Recommendations
+Provide 2-3 clear, specific, and actionable tips for improvement. These should be tailored to their data. For example:
+- "Your housing expense is X% of your income. To boost savings, consider exploring ways to reduce utility costs."
+- "You have a strong savings rate of Y%! To accelerate your goals, consider allocating a small portion of your 'entertainment' budget towards an extra SIP."
+- "I notice your 'transportation' costs are high. Could exploring public transport options or carpooling free up more cash for your emergency fund?"
+
+## Your Path Forward
+End with an empowering and positive statement, reinforcing that they are on the right track and that Zenvana is here to help them on their journey to financial freedom.
+`;
+
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { method: 'POST', body: JSON.stringify({ contents: [{ parts: [{ text: `Analyze budget: Income ₹${financialSummary.monthlyIncome}, Expenses ${JSON.stringify(financialSummary.expenses)}. Give one key insight.` }] }] }) });
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc`, { 
+          method: 'POST', 
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+      });
       if (!response.ok) throw new Error('Budget analysis failed');
       const result = await response.json();
       setBudgetAnalysisResult(result.candidates[0].content.parts[0].text);
-    } catch (e) { setBudgetAnalysisResult(`Error: ${e.message}`); } finally { setIsAnalyzingBudget(false); }
+    } catch (e) { 
+      setBudgetAnalysisResult(`Sorry, there was an error generating the analysis. Please try again.`);
+    } finally { 
+      setIsAnalyzingBudget(false); 
+    }
   };
 
   const hGGP = async (g, i) => {
@@ -294,7 +333,6 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
             <div className="bg-gray-800 p-5 rounded-xl"><span>Risk Tolerance:</span><span className="font-bold text-3xl capitalize"> {financialSummary.riskTolerance || 'N/A'}</span></div>
           </div>
           
-          {/* New Expense Breakdown Section with Pie Chart */}
           <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Expense Breakdown</h3>
           <ExpensePieChart expenses={financialSummary.expenses} />
 
@@ -320,7 +358,16 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
           <div className="bg-gray-700 p-5 rounded-xl"><ul className="list-disc list-inside space-y-2"><li>Consider increasing your monthly savings to accelerate goal achievement.</li><li>Explore investment options aligned with your risk tolerance for better returns.</li><li>Review your monthly expenses to identify areas for potential cost reduction.</li><li>Utilize the Tax Saver tool to optimize your tax liabilities.</li><li>Don't hesitate to use the AI Chat for personalized advice on any financial topic!</li></ul></div>
           
           <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis</h3>
-          <div className="bg-gray-700 p-5 rounded-xl"><button onClick={hAB} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>{isAnalyzingBudget ? 'Analyzing...' : 'Get Budget Tips'}</button>{budgetAnalysisResult && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={budgetAnalysisResult} /></div>)}</div>
+          <div className="bg-gray-700 p-5 rounded-xl">
+            <button onClick={handleAnalyzeBudget} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>
+              {isAnalyzingBudget ? 'Analyzing...' : 'Get Detailed Budget Analysis'}
+            </button>
+            {budgetAnalysisResult && (
+              <div className="mt-4 p-3 bg-gray-800 rounded-xl">
+                  <MarkdownRenderer text={budgetAnalysisResult} />
+              </div>
+            )}
+          </div>
         </div>
       ) : <p>Loading...</p>}
     </section>
