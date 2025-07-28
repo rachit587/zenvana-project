@@ -409,7 +409,7 @@ End with an empowering and positive statement, reinforcing that they are on the 
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
-  const [firebaseConfig, setFirebaseConfig] = useState(null);
+  const [appId, setAppId] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentPage, setCurrentPage] = useState('welcome');
@@ -417,61 +417,50 @@ function App() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   
-  // This is the correct way to handle the API key
   const apiKey = "";
 
-  const fetchFinancialData = useCallback(async (firestore, currentUserId, appId) => {
-    if (!firestore || !currentUserId || !appId) return;
-    try {
-      const docRef = doc(firestore, `artifacts/${appId}/users/${currentUserId}/financial_data`, 'summary');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) { setFinancialSummary(docSnap.data()); }
-    } catch (error) { console.error("Error fetching data:", error); }
-  }, []);
-
   useEffect(() => {
-    // This is the correct way to get the config in the environment
     const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
     if (!configString) {
         console.error("Firebase config not found!");
+        setIsAuthReady(true); 
         return;
     }
     const config = JSON.parse(configString);
-    setFirebaseConfig(config);
-    const appId = config.appId;
+    const currentAppId = config.appId;
+    setAppId(currentAppId); 
 
-    try {
-      const app = initializeApp(config);
-      const firestore = getFirestore(app);
-      const firebaseAuth = getAuth(app);
-      setDb(firestore);
-      setAuth(firebaseAuth);
+    const app = initializeApp(config);
+    const firestore = getFirestore(app);
+    const firebaseAuth = getAuth(app);
+    setDb(firestore);
+    setAuth(firebaseAuth);
 
-      const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
         if (user) {
-          setUserId(user.uid);
-          setIsAuthReady(true);
-          fetchFinancialData(firestore, user.uid, appId);
+            setUserId(user.uid);
+            const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setFinancialSummary(docSnap.data());
+            }
+            setIsAuthReady(true);
         } else {
             const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (token) {
-                signInWithCustomToken(firebaseAuth, token).catch(err => {
-                    console.error("Custom token auth error, falling back to anonymous:", err);
-                    signInAnonymously(firebaseAuth).catch(err => console.error("Anon auth error:", err));
-                });
+                signInWithCustomToken(firebaseAuth, token).catch(() => signInAnonymously(firebaseAuth));
             } else {
-                signInAnonymously(firebaseAuth).catch(err => console.error("Anon auth error:", err));
+                signInAnonymously(firebaseAuth);
             }
         }
-      });
-      return () => unsubscribe();
-    } catch (error) { console.error("Firebase init error:", error); }
-  }, [fetchFinancialData]);
+    });
+
+    return () => unsubscribe();
+  }, []); 
 
   const saveFinancialData = async (data) => {
-    if (!db || !userId || !firebaseConfig) return;
+    if (!db || !userId || !appId) return;
     try {
-      const appId = firebaseConfig.appId;
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
       const expensesParsed = {};
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
@@ -500,9 +489,8 @@ function App() {
   };
 
   const handleLogout = async () => {
-    if (!auth || !db || !userId || !firebaseConfig) return;
+    if (!auth || !db || !userId || !appId) return;
     try {
-      const appId = firebaseConfig.appId;
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
       await signOut(auth);
       setFinancialSummary(null); setChatHistory([]); setUserId(null); setIsAuthReady(false); setCurrentPage('welcome');
