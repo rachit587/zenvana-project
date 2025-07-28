@@ -316,12 +316,18 @@ End with an empowering and positive statement, reinforcing that they are on the 
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: ${e.message}` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
 
+  // Helper function to format the date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-IN', options);
+  };
+
   return (
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
       <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2>
       {financialSummary ? (
         <div>
-          {/* THIS IS THE ONLY SECTION THAT HAS CHANGED */}
           <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Net Worth</span><span className="font-bold text-3xl text-white mt-1">₹{parseFloat(financialSummary.netWorth || 0).toLocaleString('en-IN')}</span></div>
@@ -335,6 +341,7 @@ End with an empowering and positive statement, reinforcing that they are on the 
           <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Expense Breakdown</h3>
           <ExpensePieChart expenses={financialSummary.expenses} />
 
+          {/* THIS IS THE ONLY SECTION THAT HAS CHANGED */}
           <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Your Goals</h3>
           {financialSummary.customGoals?.some(g => g.name) ? (
             <div className="space-y-4">
@@ -342,11 +349,28 @@ End with an empowering and positive statement, reinforcing that they are on the 
                 const pr = cGP(g);
                 return pr ? (
                   <div key={i} className="bg-gray-800 p-5 rounded-xl">
-                    <div className="flex justify-between mb-2"><span className="font-semibold text-xl">{g.name}</span><span>Target: ₹{parseFloat(g.targetAmount).toLocaleString()}</span></div>
-                    <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
-                    <p className="text-sm text-right">Saved: ₹{parseFloat(g.amountSaved || 0).toLocaleString()} ({pr.s})</p>
-                    <button onClick={() => hGGP(g, i)} className="mt-3 w-full bg-yellow-600 font-bold py-2 rounded-xl" disabled={isGeneratingGoalPlan[i]}>{isGeneratingGoalPlan[i] ? 'Generating...' : 'Generate Plan'}</button>
-                    {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
+                    <div className="flex justify-between items-start mb-3">
+                        <h4 className="font-semibold text-xl text-white">{g.name}</h4>
+                        <div className="text-right">
+                            <p className="text-sm text-gray-400">Target</p>
+                            <p className="font-bold text-lg text-white">₹{parseFloat(g.targetAmount).toLocaleString('en-IN')}</p>
+                        </div>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-gray-400 mb-2">
+                        <span>Progress</span>
+                        <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <span>By {formatDate(g.targetDate)}</span>
+                        </div>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-4 mb-2">
+                        <div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div>
+                    </div>
+                    <p className="text-sm text-right text-gray-300">Saved: ₹{parseFloat(g.amountSaved || 0).toLocaleString('en-IN')} <span className="text-green-400">({pr.s})</span></p>
+                    <button onClick={() => hGGP(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors" disabled={isGeneratingGoalPlan[i]}>
+                        {isGeneratingGoalPlan[i] ? 'Generating...' : 'Generate AI Plan'}
+                    </button>
+                    {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
                   </div>
                 ) : null;
               })}
@@ -356,7 +380,7 @@ End with an empowering and positive statement, reinforcing that they are on the 
           <h3 className="text-2xl font-bold text-green-400 mt-6 mb-3">General Suggestions</h3>
           <div className="bg-gray-700 p-5 rounded-xl"><ul className="list-disc list-inside space-y-2"><li>Consider increasing your monthly savings to accelerate goal achievement.</li><li>Explore investment options aligned with your risk tolerance for better returns.</li><li>Review your monthly expenses to identify areas for potential cost reduction.</li><li>Utilize the Tax Saver tool to optimize your tax liabilities.</li><li>Don't hesitate to use the AI Chat for personalized advice on any financial topic!</li></ul></div>
           
-          <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis</h3>
+          <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis & Optimisation</h3>
           <div className="bg-gray-700 p-5 rounded-xl">
             <button onClick={handleAnalyzeBudget} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>
               {isAnalyzingBudget ? 'Analyzing...' : 'Get Detailed Budget Analysis'}
