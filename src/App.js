@@ -248,7 +248,7 @@ const ExpensePieChart = ({ expenses }) => {
 
 
 // --- CORRECTED: Dashboard Component ---
-const Dashboard = ({ financialSummary, callGeminiAPI, apiKey }) => {
+const Dashboard = ({ financialSummary, apiKey }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
@@ -430,11 +430,13 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-    if (!config) {
+    // This is the correct way to get the config in the environment
+    const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+    if (!configString) {
         console.error("Firebase config not found!");
         return;
     }
+    const config = JSON.parse(configString);
     setFirebaseConfig(config);
     const appId = config.appId;
 
@@ -516,7 +518,7 @@ function App() {
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGeminiAPI={callGeminiAPI} apiKey={apiKey} />)}
+          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
           {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} />)}
           {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />)}
         </Layout>
