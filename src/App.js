@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+// Import Recharts components for the pie chart
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// --- Markdown Renderer Component ---
+
+// --- Markdown Renderer Component (No changes) ---
 const MarkdownRenderer = ({ text }) => {
   if (!text) return null;
   const renderInlineFormatting = (line) => {
@@ -24,7 +27,7 @@ const MarkdownRenderer = ({ text }) => {
   return <div className="text-gray-300">{elements}</div>;
 };
 
-// --- Layout Component ---
+// --- Layout Component (No changes) ---
 const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 to-gray-900 font-sans text-gray-100">
       <nav className="w-64 bg-gray-900 shadow-lg p-6 flex flex-col rounded-r-3xl transition-all duration-300 ease-in-out transform hover:shadow-2xl">
@@ -42,6 +45,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
     </div>
 );
 
+// --- Welcome Page Component (No changes) ---
 const WelcomePage = ({ onGetStarted }) => (
   <div className="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-hidden">
     <div className="absolute inset-0 z-0 opacity-10"><div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div><div className="absolute top-1/2 right-1/4 w-48 h-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div><div className="absolute bottom-1/4 left-1/2 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div></div>
@@ -69,6 +73,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
+// --- Onboarding Components (No changes) ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -137,7 +142,6 @@ const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit }) => 
     <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={handleSubmit} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 text-xl rounded-xl">Complete Onboarding</button></div>
   </div>
 );
-
 const OnboardingFlow = ({ onSubmit, initialData }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || { name: '', dateOfBirth: '', monthlyIncome: '', netWorth: '', expenses: {}, customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }], riskTolerance: '', currentInvestments: '', dependents: '', debt: '' });
@@ -148,6 +152,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
+// --- AI Chat Component (No changes) ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
@@ -156,6 +161,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
+// --- Tax Saver Component (No changes) ---
 const TaxSaver = () => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
@@ -186,15 +192,73 @@ const TaxSaver = () => {
     return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
 
+
+// --- NEW: Expense Pie Chart Component ---
+const ExpensePieChart = ({ expenses }) => {
+  // Process expenses data for the chart. We only include categories with a value > 0.
+  const chartData = Object.entries(expenses || {})
+    .map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) }))
+    .filter(item => item.value > 0);
+
+  // Define a color palette that matches the Zenvana theme
+  const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
+
+  if (chartData.length === 0) {
+    return (
+        <div className="bg-gray-800 p-5 rounded-xl flex items-center justify-center h-full min-h-[300px]">
+            <p className="text-gray-400">No expense data to display. Please complete your profile.</p>
+        </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800 p-5 rounded-xl h-[400px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            outerRadius={120}
+            fill="#8884d8"
+            dataKey="value"
+            nameKey="name"
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#1F2937', // gray-800
+              borderColor: '#374151', // gray-700
+              color: '#F9FAFB' // gray-50
+            }}
+            formatter={(value) => `₹${value.toLocaleString('en-IN')}`}
+          />
+          <Legend wrapperStyle={{ color: '#D1D5DB' }} />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+
+// --- UPDATED: Dashboard Component ---
 const Dashboard = ({ financialSummary, callGeminiAPI }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
+  
   const tME = Object.values(financialSummary?.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
   const mS = (financialSummary?.monthlyIncome || 0) - tME;
-  const sR = financialSummary?.monthlyIncome ? ((mS / financialSummary.monthlyIncome) * 100).toFixed(2) : 0;
+  const sR = financialSummary?.monthlyIncome ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
+  
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
+
   const hAB = async () => {
     setIsAnalyzingBudget(true); setBudgetAnalysisResult('');
     try {
@@ -204,6 +268,7 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
       setBudgetAnalysisResult(result.candidates[0].content.parts[0].text);
     } catch (e) { setBudgetAnalysisResult(`Error: ${e.message}`); } finally { setIsAnalyzingBudget(false); }
   };
+
   const hGGP = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
     try {
@@ -213,9 +278,57 @@ const Dashboard = ({ financialSummary, callGeminiAPI }) => {
       setGoalPlanResults(p => ({ ...p, [i]: result.candidates[0].content.parts[0].text }));
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: ${e.message}` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
-  return ( <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80"><h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2> {financialSummary ? (<div> <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> <div className="bg-gray-800 p-5 rounded-xl"><span>Net Worth:</span><span className="font-bold text-3xl"> ₹{parseFloat(financialSummary.netWorth || 0).toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Income:</span><span className="font-bold text-3xl text-green-400"> ₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Expenses:</span><span className="font-bold text-3xl text-yellow-400"> ₹{tME.toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Savings:</span><span className="font-bold text-3xl text-green-400"> ₹{mS.toLocaleString()}</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Savings Rate:</span><span className="font-bold text-3xl text-green-400"> {sR}%</span></div> <div className="bg-gray-800 p-5 rounded-xl"><span>Risk Tolerance:</span><span className="font-bold text-3xl capitalize"> {financialSummary.riskTolerance || 'N/A'}</span></div></div> <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Your Goals</h3>{financialSummary.customGoals?.some(g=>g.name) ? (<div className="space-y-4">{financialSummary.customGoals.map((g,i)=>{const pr=cGP(g); return pr ? (<div key={i} className="bg-gray-800 p-5 rounded-xl"><div className="flex justify-between mb-2"><span className="font-semibold text-xl">{g.name}</span><span>Target: ₹{parseFloat(g.targetAmount).toLocaleString()}</span></div><div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{width:`${pr.p}%`}}></div></div><p className="text-sm text-right">Saved: ₹{parseFloat(g.amountSaved||0).toLocaleString()} ({pr.s})</p><button onClick={()=>hGGP(g,i)} className="mt-3 w-full bg-yellow-600 font-bold py-2 rounded-xl" disabled={isGeneratingGoalPlan[i]}>{isGeneratingGoalPlan[i] ? 'Generating...' : 'Generate Plan'}</button>{goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]}/></div>)}</div>) : null;})}</div>) : (<p>No goals set.</p>)}<h3 className="text-2xl font-bold text-green-400 mt-6 mb-3">General Suggestions</h3><div className="bg-gray-700 p-5 rounded-xl"><ul className="list-disc list-inside space-y-2"><li>Consider increasing your monthly savings to accelerate goal achievement.</li><li>Explore investment options aligned with your risk tolerance for better returns.</li><li>Review your monthly expenses to identify areas for potential cost reduction.</li><li>Utilize the Tax Saver tool to optimize your tax liabilities.</li><li>Don't hesitate to use the AI Chat for personalized advice on any financial topic!</li></ul></div><h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis</h3><div className="bg-gray-700 p-5 rounded-xl"><button onClick={hAB} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>{isAnalyzingBudget?'Analyzing...':'Get Budget Tips'}</button>{budgetAnalysisResult && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={budgetAnalysisResult}/></div>)}</div></div>) : <p>Loading...</p>}</section> );
+
+  return (
+    <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
+      <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2>
+      {financialSummary ? (
+        <div>
+          <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-800 p-5 rounded-xl"><span>Net Worth:</span><span className="font-bold text-3xl"> ₹{parseFloat(financialSummary.netWorth || 0).toLocaleString()}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Income:</span><span className="font-bold text-3xl text-green-400"> ₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString()}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Expenses:</span><span className="font-bold text-3xl text-yellow-400"> ₹{tME.toLocaleString()}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl"><span>Monthly Savings:</span><span className="font-bold text-3xl text-green-400"> ₹{mS.toLocaleString()}</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl"><span>Savings Rate:</span><span className="font-bold text-3xl text-green-400"> {sR}%</span></div>
+            <div className="bg-gray-800 p-5 rounded-xl"><span>Risk Tolerance:</span><span className="font-bold text-3xl capitalize"> {financialSummary.riskTolerance || 'N/A'}</span></div>
+          </div>
+          
+          {/* New Expense Breakdown Section with Pie Chart */}
+          <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Expense Breakdown</h3>
+          <ExpensePieChart expenses={financialSummary.expenses} />
+
+          <h3 className="text-2xl font-bold text-yellow-400 mt-8 mb-3">Your Goals</h3>
+          {financialSummary.customGoals?.some(g => g.name) ? (
+            <div className="space-y-4">
+              {financialSummary.customGoals.map((g, i) => {
+                const pr = cGP(g);
+                return pr ? (
+                  <div key={i} className="bg-gray-800 p-5 rounded-xl">
+                    <div className="flex justify-between mb-2"><span className="font-semibold text-xl">{g.name}</span><span>Target: ₹{parseFloat(g.targetAmount).toLocaleString()}</span></div>
+                    <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
+                    <p className="text-sm text-right">Saved: ₹{parseFloat(g.amountSaved || 0).toLocaleString()} ({pr.s})</p>
+                    <button onClick={() => hGGP(g, i)} className="mt-3 w-full bg-yellow-600 font-bold py-2 rounded-xl" disabled={isGeneratingGoalPlan[i]}>{isGeneratingGoalPlan[i] ? 'Generating...' : 'Generate Plan'}</button>
+                    {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
+                  </div>
+                ) : null;
+              })}
+            </div>
+          ) : (<p>No goals set.</p>)}
+
+          <h3 className="text-2xl font-bold text-green-400 mt-6 mb-3">General Suggestions</h3>
+          <div className="bg-gray-700 p-5 rounded-xl"><ul className="list-disc list-inside space-y-2"><li>Consider increasing your monthly savings to accelerate goal achievement.</li><li>Explore investment options aligned with your risk tolerance for better returns.</li><li>Review your monthly expenses to identify areas for potential cost reduction.</li><li>Utilize the Tax Saver tool to optimize your tax liabilities.</li><li>Don't hesitate to use the AI Chat for personalized advice on any financial topic!</li></ul></div>
+          
+          <h3 className="text-2xl font-bold text-yellow-400 mt-6 mb-3">Budget Analysis</h3>
+          <div className="bg-gray-700 p-5 rounded-xl"><button onClick={hAB} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isAnalyzingBudget}>{isAnalyzingBudget ? 'Analyzing...' : 'Get Budget Tips'}</button>{budgetAnalysisResult && (<div className="mt-4 p-3 bg-gray-800 rounded-xl"><MarkdownRenderer text={budgetAnalysisResult} /></div>)}</div>
+        </div>
+      ) : <p>Loading...</p>}
+    </section>
+  );
 };
 
+
+// --- Main App Component (No changes to logic) ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
