@@ -153,7 +153,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
 
 // --- CORRECTED: AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
-  const [chatInput, setChatInput] = useState('');
+  const [chatInput, setChatInput] useState('');
   const chatHistoryRef = useRef(null);
   useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [chatHistory]);
   const handleSendMessage = (e) => { e.preventDefault(); if (chatInput.trim() === '') return; callGeminiAPI(chatInput); setChatInput(''); };
@@ -420,13 +420,13 @@ function App() {
   const apiKey = "";
 
   useEffect(() => {
-    const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-    if (!configString) {
-        console.error("Firebase config not found!");
-        setIsAuthReady(true); 
+    // This check prevents the app from crashing during the build process on Netlify
+    if (typeof window.__firebase_config === 'undefined') {
+        setIsAuthReady(true); // Allow the app to render a loading state
         return;
     }
-    const config = JSON.parse(configString);
+    
+    const config = JSON.parse(window.__firebase_config);
     const currentAppId = config.appId;
     setAppId(currentAppId); 
 
@@ -446,7 +446,7 @@ function App() {
             }
             setIsAuthReady(true);
         } else {
-            const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
             if (token) {
                 signInWithCustomToken(firebaseAuth, token).catch(() => signInAnonymously(firebaseAuth));
             } else {
