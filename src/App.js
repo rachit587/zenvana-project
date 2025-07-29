@@ -4,8 +4,7 @@ import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCust
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-
-// --- Markdown Renderer Component (No changes) ---
+// --- Markdown Renderer Component ---
 const MarkdownRenderer = ({ text }) => {
   if (!text) return null;
   const renderInlineFormatting = (line) => {
@@ -26,7 +25,7 @@ const MarkdownRenderer = ({ text }) => {
   return <div className="text-gray-300">{elements}</div>;
 };
 
-// --- Layout Component (No changes) ---
+// --- Layout Component ---
 const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 to-gray-900 font-sans text-gray-100">
       <nav className="w-64 bg-gray-900 shadow-lg p-6 flex flex-col rounded-r-3xl transition-all duration-300 ease-in-out transform hover:shadow-2xl">
@@ -44,7 +43,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
     </div>
 );
 
-// --- Welcome Page Component (No changes) ---
+// --- Welcome Page Component ---
 const WelcomePage = ({ onGetStarted }) => (
   <div className="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-hidden">
     <div className="absolute inset-0 z-0 opacity-10"><div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div><div className="absolute top-1/2 right-1/4 w-48 h-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div><div className="absolute bottom-1/4 left-1/2 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div></div>
@@ -72,7 +71,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
-// --- Onboarding Components (No changes) ---
+// --- Onboarding Components ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -151,16 +150,16 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
-// --- CORRECTED: AI Chat Component ---
+// --- AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
-const [chatInput, setChatInput] = useState('');
+  const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
   useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [chatHistory]);
   const handleSendMessage = (e) => { e.preventDefault(); if (chatInput.trim() === '') return; callGeminiAPI(chatInput); setChatInput(''); };
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
-// --- CORRECTED: Tax Saver Component ---
+// --- Tax Saver Component ---
 const TaxSaver = ({ apiKey }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
@@ -178,9 +177,7 @@ const TaxSaver = ({ apiKey }) => {
         const tI_old = Math.max(0, gI - 50000 - tD);
         const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, true);
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
-        
         const prompt = `Namaste! As ZENVANA, your financial advisor, let's break down your tax situation for the Financial Year 2024-25 (Assessment Year 2025-26). Based on the provided data, the **${nRT < oRT ? 'New Regime' : 'Old Regime'} is significantly better for you, saving you ₹${Math.abs(nRT - oRT).toLocaleString('en-IN')}** compared to the other regime. ## Tax Slab Analysis Under the **Old Tax Regime**, your taxable income (after deductions) is ₹${tI_old.toLocaleString('en-IN')}, which places you in the **${oRSlab} tax bracket**. Under the **New Tax Regime**, your taxable income (after standard deduction) is ₹${tI_new.toLocaleString('en-IN')}, which also places you in the **${nRSlab} tax bracket**. ## Detailed Analysis and Actionable Advice Here's the breakdown of your tax liability under each regime: - **Old Tax Regime:** - Gross Income: ₹${gI.toLocaleString('en-IN')} - Less: Total Deductions: ₹${tD.toLocaleString('en-IN')} - Taxable Income: ₹${tI_old.toLocaleString('en-IN')} - **Estimated Tax Payable: ₹${oRT.toLocaleString('en-IN')}** (including 4% Health & Education Cess) - **New Tax Regime:** - Gross Income: ₹${gI.toLocaleString('en-IN')} - Less: Standard Deduction: ₹50,000 - Taxable Income: ₹${tI_new.toLocaleString('en-IN')} - **Estimated Tax Payable: ₹${nRT.toLocaleString('en-IN')}** (including 4% Health & Education Cess)`;
-
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
                 method: 'POST', 
@@ -195,15 +192,12 @@ const TaxSaver = ({ apiKey }) => {
     return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
 
-
-// --- Expense Pie Chart Component (No changes) ---
+// --- Expense Pie Chart Component ---
 const ExpensePieChart = ({ expenses }) => {
   const chartData = Object.entries(expenses || {})
     .map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) }))
     .filter(item => item.value > 0);
-
   const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
-
   if (chartData.length === 0) {
     return (
         <div className="bg-gray-800 p-5 rounded-xl flex items-center justify-center h-full min-h-[300px]">
@@ -247,26 +241,22 @@ const ExpensePieChart = ({ expenses }) => {
 };
 
 
-// --- CORRECTED: Dashboard Component ---
+// --- Dashboard Component ---
 const Dashboard = ({ financialSummary, apiKey }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
-  
   const tME = Object.values(financialSummary?.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
   const mS = (financialSummary?.monthlyIncome || 0) - tME;
   const sR = financialSummary?.monthlyIncome ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
-  
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
   const handleAnalyzeBudget = async () => {
     setIsAnalyzingBudget(true); 
     setBudgetAnalysisResult('');
-
     const prompt = `
 As ZENVANA, your personal AI financial advisor, please provide a detailed and encouraging analysis of the following budget for ${financialSummary.name}.
-
 **User's Financial Data:**
 - Monthly Income: ₹${financialSummary.monthlyIncome}
 - Monthly Expenses: ${JSON.stringify(financialSummary.expenses, null, 2)}
@@ -277,20 +267,17 @@ Generate a response in Markdown format that includes the following sections:
 
 ## Hello ${financialSummary.name}, Here's Your Budget Analysis!
 Provide a brief, encouraging overview of their financial picture based on their income and savings.
-
 ## Key Observation
 Identify the single most important insight from their budget (e.g., high savings rate, a specific expense category being very high, etc.). Explain *why* this is significant in a detailed paragraph.
 
 ## Expense Breakdown
 - Briefly analyze the top 2-3 spending categories.
 - Mention if the spending seems reasonable or if there are potential areas for optimization.
-
 ## Actionable Recommendations
 Provide 2-3 clear, specific, and actionable tips for improvement. These should be tailored to their data. For example:
 - "Your housing expense is X% of your income. To boost savings, consider exploring ways to reduce utility costs."
 - "You have a strong savings rate of Y%! To accelerate your goals, consider allocating a small portion of your 'entertainment' budget towards an extra SIP."
 - "I notice your 'transportation' costs are high. Could exploring public transport options or carpooling free up more cash for your emergency fund?"
-
 ## Your Path Forward
 End with an empowering and positive statement, reinforcing that they are on the right track and that Zenvana is here to help them on their journey to financial freedom.
 `;
@@ -310,7 +297,6 @@ End with an empowering and positive statement, reinforcing that they are on the 
       setIsAnalyzingBudget(false); 
     }
   };
-
   const hGGP = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
     try {
@@ -322,15 +308,14 @@ End with an empowering and positive statement, reinforcing that they are on the 
       if (!response.ok) throw new Error('Goal plan generation failed');
       const result = await response.json();
       setGoalPlanResults(p => ({ ...p, [i]: result.candidates[0].content.parts[0].text }));
-    } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: Goal plan generation failed` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
+    } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: Goal plan generation failed` }));
+    } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
-
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
-
   return (
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
       <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2>
@@ -397,7 +382,7 @@ End with an empowering and positive statement, reinforcing that they are on the 
                   <MarkdownRenderer text={budgetAnalysisResult} />
               </div>
             )}
-          </div>
+           </div>
         </div>
       ) : <p>Loading...</p>}
     </section>
@@ -405,7 +390,7 @@ End with an empowering and positive statement, reinforcing that they are on the 
 };
 
 
-// --- CORRECTED: Main App Component ---
+// --- Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -416,8 +401,7 @@ function App() {
   const [financialSummary, setFinancialSummary] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
-  
-  const apiKey = "";
+  const apiKey = "AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc"; // ✨ I've placed your API key here!
 
   useEffect(() => {
     // This check prevents the app from crashing during the build process on Netlify
@@ -442,7 +426,7 @@ function App() {
             const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                setFinancialSummary(docSnap.data());
+                 setFinancialSummary(docSnap.data());
             }
             setIsAuthReady(true);
         } else {
@@ -456,7 +440,7 @@ function App() {
     });
 
     return () => unsubscribe();
-  }, []); 
+  }, []);
 
   const saveFinancialData = async (data) => {
     if (!db || !userId || !appId) return;
@@ -485,7 +469,8 @@ function App() {
       if (!response.ok) throw new Error('API call failed');
       const result = await response.json();
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result.candidates[0].content.parts[0].text }] }]);
-    } catch (error) { setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Error: ${error.message}` }] }]); } finally { setIsGeneratingResponse(false); }
+    } catch (error) { setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Error: ${error.message}` }] }]);
+    } finally { setIsGeneratingResponse(false); }
   };
 
   const handleLogout = async () => {
@@ -498,8 +483,9 @@ function App() {
   };
 
   if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
+  
   const navToOnboard = () => { if (financialSummary?.monthlyIncome > 0) { setCurrentPage('dashboard'); } else { setCurrentPage('onboarding'); }};
-
+  
   return (
     <div>
       {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
