@@ -129,7 +129,6 @@ const OnboardingStep4 = ({ formData, setFormData, nextStep, prevStep }) => {
     </div>
   );
 };
-// FIXED: Added isSubmitting prop to handle button state
 const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isSubmitting }) => (
   <div className="animate-fade-in-scale">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">A Little More About You</h3>
@@ -147,7 +146,7 @@ const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isSub
     </div>
   </div>
 );
-// FIXED: Added loading state and async handler for submission
+
 const OnboardingFlow = ({ onSubmit, initialData }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || { name: '', dateOfBirth: '', monthlyIncome: '', netWorth: '', expenses: {}, customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }], riskTolerance: '', currentInvestments: '', dependents: '', debt: '' });
@@ -157,16 +156,16 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
 
+  // FIXED: Added a finally block to ensure the button is always re-enabled.
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       const tME = Object.values(formData.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
       await onSubmit({ ...formData, monthlyExpenses: tME });
-      // Navigation is handled within the onSubmit function (saveFinancialData)
     } catch (error) {
       console.error("Submission failed:", error);
-      // Optionally, show an error message to the user here
-      setIsSubmitting(false); // Reset button on failure
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -189,7 +188,6 @@ const TaxSaver = ({ apiKey, financialSummary }) => {
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     
-    // FIXED: Added guard clause for stability during build.
     if (!financialSummary) {
         return <div className="text-center p-10">Loading financial data...</div>;
     }
@@ -329,7 +327,6 @@ const Dashboard = ({ financialSummary, apiKey }) => {
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
   
-  // FIXED: Added guard clause for stability during build.
   if (!financialSummary) {
     return (
       <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
@@ -341,7 +338,6 @@ const Dashboard = ({ financialSummary, apiKey }) => {
     );
   }
 
-  // Calculations are now safe because we've confirmed financialSummary exists.
   const tME = Object.values(financialSummary.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
   const mS = (financialSummary.monthlyIncome || 0) - tME;
   const sR = financialSummary.monthlyIncome ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
@@ -553,7 +549,6 @@ function App() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   
-  // FIXED: Added a new state to track if the initial data load is complete.
   const [isDataReady, setIsDataReady] = useState(false);
   
   const apiKey = "";
@@ -562,7 +557,7 @@ function App() {
     if (typeof window.__firebase_config === 'undefined' || !window.__firebase_config) {
         console.error("Firebase config not found.");
         setIsAuthReady(true); 
-        setIsDataReady(true); // Mark data as "ready" to unblock rendering
+        setIsDataReady(true);
         return;
     }
     
@@ -580,13 +575,13 @@ function App() {
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
           if (user) {
               setUserId(user.uid);
-              setIsAuthReady(true); // Auth is ready first
+              setIsAuthReady(true);
               const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
                   setFinancialSummary(docSnap.data());
               }
-              setIsDataReady(true); // Now data is ready
+              setIsDataReady(true);
           } else {
               const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
               if (token) {
@@ -594,7 +589,6 @@ function App() {
               } else {
                   signInAnonymously(firebaseAuth);
               }
-              // If no user, there's no data to wait for.
               setIsAuthReady(true);
               setIsDataReady(true);
           }
@@ -608,11 +602,10 @@ function App() {
     }
   }, []); 
 
-  // FIXED: Made this function more robust to handle errors during submission
   const saveFinancialData = async (data) => {
     if (!db || !userId || !appId) {
       console.error("Save aborted: Firebase not ready");
-      throw new Error("Firebase not ready"); // Throw an error to be caught by the caller
+      throw new Error("Firebase not ready");
     }
     try {
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
@@ -624,7 +617,7 @@ function App() {
       setCurrentPage('dashboard');
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
-      throw error; // Re-throw the error so the caller's catch block can handle it
+      throw error;
     }
   };
 
@@ -672,12 +665,11 @@ ${JSON.stringify(financialSummary, null, 2)}
       setChatHistory([]); 
       setUserId(null); 
       setIsAuthReady(false); 
-      setIsDataReady(false); // Reset data ready state
+      setIsDataReady(false);
       setCurrentPage('welcome');
     } catch (error) { console.error("Logout error:", error); }
   };
 
-  // FIXED: Show a single loading indicator until both auth and data are ready.
   if (!isAuthReady || !isDataReady) { 
     return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); 
   }
@@ -705,4 +697,4 @@ ${JSON.stringify(financialSummary, null, 2)}
   );
 }
 
-export default App
+export default App;
