@@ -129,7 +129,8 @@ const OnboardingStep4 = ({ formData, setFormData, nextStep, prevStep }) => {
     </div>
   );
 };
-const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit }) => (
+// FIXED: Added isSubmitting prop to handle button state
+const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isSubmitting }) => (
   <div className="animate-fade-in-scale">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">A Little More About You</h3>
     <div className="space-y-6">
@@ -138,17 +139,38 @@ const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit }) => 
       <div><label className="block text-lg font-semibold mt-4 mb-2">Number of Dependents</label><input type="text" inputMode="numeric" name="dependents" value={formData.dependents} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., 0, 1, 2" /></div>
       <div><label className="block text-lg font-semibold mt-4 mb-2">Total Debt (₹)</label><input type="text" inputMode="numeric" name="debt" value={formData.debt} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., 150000 (home loan, personal loan, etc.)" /></div>
     </div>
-    <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={handleSubmit} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 text-xl rounded-xl">Complete Onboarding</button></div>
+    <div className="flex justify-between mt-8">
+        <button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button>
+        <button onClick={handleSubmit} disabled={isSubmitting} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 text-xl rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
+            {isSubmitting ? 'Saving...' : 'Complete Onboarding'}
+        </button>
+    </div>
   </div>
 );
+// FIXED: Added loading state and async handler for submission
 const OnboardingFlow = ({ onSubmit, initialData }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || { name: '', dateOfBirth: '', monthlyIncome: '', netWorth: '', expenses: {}, customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }], riskTolerance: '', currentInvestments: '', dependents: '', debt: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleChange = (e) => { const { name, value } = e.target; const nF = ['monthlyIncome', 'netWorth', 'dependents', 'debt']; setFormData(p => ({ ...p, [name]: nF.includes(name) ? value.replace(/[^0-9]/g, '') : value })); };
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
-  const handleSubmit = () => { const tME = Object.values(formData.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0); onSubmit({ ...formData, monthlyExpenses: tME }); };
-  return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const tME = Object.values(formData.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
+      await onSubmit({ ...formData, monthlyExpenses: tME });
+      // Navigation is handled within the onSubmit function (saveFinancialData)
+    } catch (error) {
+      console.error("Submission failed:", error);
+      // Optionally, show an error message to the user here
+      setIsSubmitting(false); // Reset button on failure
+    }
+  };
+
+  return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />)} </div> </div> );
 };
 
 // --- AI Chat Component (No functional changes) ---
@@ -286,7 +308,7 @@ const ExpensePieChart = ({ expenses }) => {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1F2937',
+              backgroundColor: '#1F2B37',
               borderColor: '#374151',
               color: '#F9FAFB'
             }}
@@ -586,8 +608,12 @@ function App() {
     }
   }, []); 
 
+  // FIXED: Made this function more robust to handle errors during submission
   const saveFinancialData = async (data) => {
-    if (!db || !userId || !appId) return;
+    if (!db || !userId || !appId) {
+      console.error("Save aborted: Firebase not ready");
+      throw new Error("Firebase not ready"); // Throw an error to be caught by the caller
+    }
     try {
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
       const expensesParsed = {};
@@ -596,7 +622,10 @@ function App() {
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
       setCurrentPage('dashboard');
-    } catch (error) { console.error("Error saving data:", error); }
+    } catch (error) {
+      console.error("!!! Critical Error saving data:", error);
+      throw error; // Re-throw the error so the caller's catch block can handle it
+    }
   };
 
   const callGeminiAPI = async (userMessage) => {
