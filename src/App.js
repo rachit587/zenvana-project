@@ -66,13 +66,13 @@ const WelcomePage = ({ onGetStarted }) => (
           <li className="flex items-start"><span className="text-green-400 text-2xl mr-3">✓</span><strong>Smart Tax Saving:</strong> Leverage AI to identify personalized opportunities to save more on your taxes.</li>
         </ul>
       </section>
-      <footer className="text-gray-400 text-md mt-10">Made with ❤️ by Rachit Banthia</footer>
+      <footer className="text-gray-400 text-md mt-10">Made with love ❤️ by Rachit Banthia</footer>
     </div>
     <style dangerouslySetInnerHTML={{ __html: `@keyframes fade-in-down{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:translateY(0)}}@keyframes fade-in-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}@keyframes fade-in-scale{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}@keyframes bounce-once{0%,100%{transform:translateY(0)}20%{transform:translateY(-15px)}40%{transform:translateY(0)}60%{transform:translateY(-8px)}80%{transform:translateY(0)}}@keyframes blob{0%{transform:translate(0px,0px) scale(1)}33%{transform:translate(30px,-50px) scale(1.1)}66%{transform:translate(-20px,20px) scale(.9)}100%{transform:translate(0px,0px) scale(1)}}.animate-fade-in-down{animation:fade-in-down .8s ease-out forwards}.animate-fade-in-up{animation:fade-in-up .8s ease-out forwards}.animate-fade-in-scale{animation:fade-in-scale .7s ease-out forwards}.animate-bounce-once{animation:bounce-once 1.5s ease-out forwards}.animate-blob{animation:blob 7s infinite cubic-bezier(.6,.01,.3,.9)}.delay-300{animation-delay:.2s}.shadow-gold-glow{box-shadow:0 0 20px rgba(255,215,0,.6)}` }} />
   </div>
 );
 
-// --- Onboarding Components (No changes) ---
+// --- Onboarding Components ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -147,11 +147,12 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   const handleChange = (e) => { const { name, value } = e.target; const nF = ['monthlyIncome', 'netWorth', 'dependents', 'debt']; setFormData(p => ({ ...p, [name]: nF.includes(name) ? value.replace(/[^0-9]/g, '') : value })); };
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
+  // FIXED: Added initial value '0' to reduce function for stability.
   const handleSubmit = () => { const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0); onSubmit({ ...formData, monthlyExpenses: tME }); };
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
-// --- AI Chat Component (No functional changes, uses improved callGeminiAPI) ---
+// --- AI Chat Component (No functional changes) ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
 const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
@@ -160,7 +161,7 @@ const [chatInput, setChatInput] = useState('');
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
-// --- UPGRADED & FIXED: Tax Saver Component ---
+// --- Tax Saver Component (No functional changes) ---
 const TaxSaver = ({ apiKey, financialSummary }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
@@ -295,16 +296,29 @@ const ExpensePieChart = ({ expenses }) => {
 };
 
 
-// --- UPGRADED & FIXED: Dashboard Component ---
+// --- Dashboard Component ---
 const Dashboard = ({ financialSummary, apiKey }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
   
-  const tME = Object.values(financialSummary?.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
-  const mS = (financialSummary?.monthlyIncome || 0) - tME;
-  const sR = financialSummary?.monthlyIncome ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
+  // FIXED: Moved calculations inside a check to prevent errors when financialSummary is null.
+  if (!financialSummary) {
+    return (
+      <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
+        <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome!</h2>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-400 text-lg">Loading your financial dashboard...</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Calculations are now safe because we've confirmed financialSummary exists.
+  const tME = Object.values(financialSummary.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
+  const mS = (financialSummary.monthlyIncome || 0) - tME;
+  const sR = financialSummary.monthlyIncome ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
   
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
@@ -318,22 +332,22 @@ You are ZENVANA, an expert AI financial advisor. Your tone is encouraging, insig
 The current date is ${currentDate}.
 
 **User's Profile:**
-- Name: ${financialSummary?.name || 'User'}
-- Age: ${financialSummary?.dateOfBirth ? (new Date().getFullYear() - new Date(financialSummary.dateOfBirth).getFullYear()) : 'N/A'}
-- Monthly Income: ₹${financialSummary?.monthlyIncome || 0}
+- Name: ${financialSummary.name || 'User'}
+- Age: ${financialSummary.dateOfBirth ? (new Date().getFullYear() - new Date(financialSummary.dateOfBirth).getFullYear()) : 'N/A'}
+- Monthly Income: ₹${financialSummary.monthlyIncome || 0}
 - Total Monthly Expenses: ₹${tME}
 - Monthly Savings: ₹${mS}
 - Savings Rate: ${sR}%
-- Risk Tolerance: ${financialSummary?.riskTolerance || 'not specified'}
-- Current Investments: ${financialSummary?.currentInvestments || 'Not specified'}
-- Dependents: ${financialSummary?.dependents || 'Not specified'}
-- Debt: ₹${financialSummary?.debt || 0}
-- Expense Breakdown: ${JSON.stringify(financialSummary?.expenses, null, 2)}
+- Risk Tolerance: ${financialSummary.riskTolerance || 'not specified'}
+- Current Investments: ${financialSummary.currentInvestments || 'Not specified'}
+- Dependents: ${financialSummary.dependents || 'Not specified'}
+- Debt: ₹${financialSummary.debt || 0}
+- Expense Breakdown: ${JSON.stringify(financialSummary.expenses, null, 2)}
 
 **Your Task:**
 Generate a well-structured and high-quality budget analysis in Markdown format.
 
-## Hello ${financialSummary?.name || 'User'}, Here is Your Budget Analysis!
+## Hello ${financialSummary.name || 'User'}, Here is Your Budget Analysis!
 Start with a warm, personalized greeting. Briefly summarize their financial health, highlighting their savings rate as a key metric.
 
 ## Key Observation
@@ -348,7 +362,7 @@ Identify the single most important insight from their budget (e.g., a very high 
 Provide 2-3 clear, specific, and actionable tips for improvement, directly tied to their personal data and risk tolerance. For example:
 - **If savings are high and risk is high:** "With your strong savings rate of ${sR}% and high-risk tolerance, you're in a great position to accelerate wealth creation. Consider allocating an additional ₹[suggested amount] from your monthly surplus towards a diversified equity mutual fund SIP."
 - **If a specific expense is high:** "Your 'Entertainment' spending is about [X]% of your take-home pay. While enjoying life is important, trimming this by just 10% could free up ₹[amount] monthly to fast-track your '[Goal Name]' goal."
-- **If debt exists:** "Tackling your debt of ₹${financialSummary?.debt || 0} should be a priority. Consider using the 'snowball' or 'avalanche' method to pay it down faster."
+- **If debt exists:** "Tackling your debt of ₹${financialSummary.debt || 0} should be a priority. Consider using the 'snowball' or 'avalanche' method to pay it down faster."
 
 ## Your Path Forward
 End with an empowering and positive statement. Reassure them that they are in control of their financial journey and that Zenvana is here to support them every step of the way.
@@ -378,8 +392,8 @@ You are ZENVANA, an expert AI financial advisor. Your tone is strategic, clear, 
 The current date is ${currentDate}.
 
 **User & Goal Context:**
-- User's Name: ${financialSummary?.name || 'User'}
-- User's Risk Tolerance: ${financialSummary?.riskTolerance || 'not specified'}
+- User's Name: ${financialSummary.name || 'User'}
+- User's Risk Tolerance: ${financialSummary.riskTolerance || 'not specified'}
 - Monthly Surplus (Income - Expenses): ₹${mS.toLocaleString('en-IN')}
 - Goal: Achieve "${g.name}"
 - Target Amount: ₹${parseFloat(g.targetAmount).toLocaleString('en-IN')}
@@ -387,7 +401,7 @@ The current date is ${currentDate}.
 - Target Date: ${formatDate(g.targetDate)}
 
 **Your Task:**
-Create a personalized, actionable, and structured investment plan in Markdown to help ${financialSummary?.name || 'User'} achieve this specific goal.
+Create a personalized, actionable, and structured investment plan in Markdown to help ${financialSummary.name || 'User'} achieve this specific goal.
 
 ## Investment Plan for: ${g.name}
 Start with an encouraging sentence acknowledging the goal.
@@ -398,7 +412,7 @@ Start with an encouraging sentence acknowledging the goal.
 - Calculate the required monthly investment (SIP) to reach the goal. State this clearly.
 
 ## Recommended Investment Strategy
-Based on the user's **${financialSummary?.riskTolerance || 'not specified'} risk tolerance** and the goal's timeline, recommend 1-2 specific types of investments.
+Based on the user's **${financialSummary.riskTolerance || 'not specified'} risk tolerance** and the goal's timeline, recommend 1-2 specific types of investments.
 - **For Low Risk:** Suggest options like a Recurring Deposit (RD) or a Debt Mutual Fund. Explain *why* (capital preservation).
 - **For Medium Risk:** Suggest a mix, like a Hybrid Mutual Fund or a combination of an Index Fund and a Debt Fund. Explain *why* (balanced growth and risk).
 - **For High Risk:** Suggest options like a Flexi-cap or Mid-cap Equity Mutual Fund SIP. Explain *why* (potential for higher returns over the long term).
@@ -431,8 +445,7 @@ End with a motivational sentence.
 
   return (
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
-      <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary?.name || 'User'}!</span></h2>
-      {financialSummary ? (
+      <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary.name || 'User'}!</span></h2>
         <div>
           <h3 className="text-2xl font-bold mt-6 mb-3">Your Financial Overview</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -497,13 +510,12 @@ End with a motivational sentence.
             )}
           </div>
         </div>
-      ) : <p>Loading...</p>}
     </section>
   );
 };
 
 
-// --- UPGRADED & FIXED: Main App Component ---
+// --- Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -518,41 +530,48 @@ function App() {
   const apiKey = "";
 
   useEffect(() => {
-    if (typeof window.__firebase_config === 'undefined') {
+    // FIXED: Added extra checks for robustness during build.
+    if (typeof window.__firebase_config === 'undefined' || !window.__firebase_config) {
+        console.error("Firebase config not found.");
         setIsAuthReady(true); 
         return;
     }
     
-    const config = JSON.parse(window.__firebase_config);
-    const currentAppId = config.appId;
-    setAppId(currentAppId); 
+    try {
+      const config = JSON.parse(window.__firebase_config);
+      const currentAppId = config.appId;
+      setAppId(currentAppId); 
 
-    const app = initializeApp(config);
-    const firestore = getFirestore(app);
-    const firebaseAuth = getAuth(app);
-    setDb(firestore);
-    setAuth(firebaseAuth);
+      const app = initializeApp(config);
+      const firestore = getFirestore(app);
+      const firebaseAuth = getAuth(app);
+      setDb(firestore);
+      setAuth(firebaseAuth);
 
-    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
-        if (user) {
-            setUserId(user.uid);
-            const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setFinancialSummary(docSnap.data());
-            }
-            setIsAuthReady(true);
-        } else {
-            const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
-            if (token) {
-                signInWithCustomToken(firebaseAuth, token).catch(() => signInAnonymously(firebaseAuth));
-            } else {
-                signInAnonymously(firebaseAuth);
-            }
-        }
-    });
+      const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+          if (user) {
+              setUserId(user.uid);
+              const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                  setFinancialSummary(docSnap.data());
+              }
+              setIsAuthReady(true);
+          } else {
+              const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
+              if (token) {
+                  signInWithCustomToken(firebaseAuth, token).catch(() => signInAnonymously(firebaseAuth));
+              } else {
+                  signInAnonymously(firebaseAuth);
+              }
+          }
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error initializing Firebase:", error);
+      setIsAuthReady(true);
+    }
   }, []); 
 
   const saveFinancialData = async (data) => {
