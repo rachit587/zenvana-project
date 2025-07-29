@@ -289,11 +289,6 @@ const Dashboard = ({ financialSummary, apiKey }) => {
       setGoalPlanResults(p => ({ ...p, [i]: result.candidates[0].content.parts[0].text }));
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: Goal plan generation failed` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
   
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
