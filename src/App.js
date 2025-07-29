@@ -151,7 +151,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
-// --- CORRECTED: AI Chat Component ---
+// --- AI Chat Component (No functional changes, uses improved callGeminiAPI) ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
 const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
@@ -160,26 +160,74 @@ const [chatInput, setChatInput] = useState('');
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
-// --- CORRECTED: Tax Saver Component ---
-const TaxSaver = ({ apiKey }) => {
+// --- UPGRADED: Tax Saver Component ---
+const TaxSaver = ({ apiKey, financialSummary }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
+    
     const fieldLabels = { salaryIncome: "Annual Salary Income (from Form 16)", otherIncome: "Annual Income from Other Sources (e.g., Interest, Rent)", investments80C: "Total Investments under Section 80C (PPF, ELSS, etc.)", hra: "House Rent Allowance (HRA) Exemption Claimed", homeLoanInterest: "Interest on Home Loan (Section 24)", medicalInsurance80D: "Medical Insurance Premium (Section 80D)", nps_80ccd1b: "NPS Contribution (Section 80CCD(1B))", educationLoanInterest_80e: "Interest on Education Loan (Section 80E)" };
+    
     const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
+    
     const calculateTax = (taxableIncome, isOldRegime) => { let tax = 0; let taxSlab = '0%'; const slabs = isOldRegime ? [{ l: 1000000, r: 0.30, b: 112500 }, { l: 500000, r: 0.20, b: 12500 }] : [{ l: 1500000, r: 0.30, b: 150000 }, { l: 1200000, r: 0.20, b: 90000 }, { l: 900000, r: 0.15, b: 45000 }, { l: 600000, r: 0.10, b: 15000 }]; for (const s of slabs) { if (taxableIncome > s.l) { tax = s.b + (taxableIncome - s.l) * s.r; taxSlab = `${s.r * 100}%`; break; } } return { tax: Math.round(tax * 1.04), slab: taxSlab }; };
+    
     const handleTaxCalculation = async () => {
-        setIsCalculating(true); setAiAnalysis('');
+        setIsCalculating(true); 
+        setAiAnalysis('');
+        
         const gI = parseFloat(taxData.salaryIncome || 0) + parseFloat(taxData.otherIncome || 0);
         const tI_new = Math.max(0, gI - 50000);
         const { tax: nRT, slab: nRSlab } = calculateTax(tI_new, false);
         const tD = (parseFloat(taxData.investments80C || 0) + parseFloat(taxData.hra || 0) + parseFloat(taxData.homeLoanInterest || 0) + parseFloat(taxData.medicalInsurance80D || 0) + parseFloat(taxData.nps_80ccd1b || 0) + parseFloat(taxData.educationLoanInterest_80e || 0));
         const tI_old = Math.max(0, gI - 50000 - tD);
         const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, true);
+        
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
         
-        const prompt = `Namaste! As ZENVANA, your financial advisor, let's break down your tax situation for the Financial Year 2024-25 (Assessment Year 2025-26). Based on the provided data, the **${nRT < oRT ? 'New Regime' : 'Old Regime'} is significantly better for you, saving you ₹${Math.abs(nRT - oRT).toLocaleString('en-IN')}** compared to the other regime. ## Tax Slab Analysis Under the **Old Tax Regime**, your taxable income (after deductions) is ₹${tI_old.toLocaleString('en-IN')}, which places you in the **${oRSlab} tax bracket**. Under the **New Tax Regime**, your taxable income (after standard deduction) is ₹${tI_new.toLocaleString('en-IN')}, which also places you in the **${nRSlab} tax bracket**. ## Detailed Analysis and Actionable Advice Here's the breakdown of your tax liability under each regime: - **Old Tax Regime:** - Gross Income: ₹${gI.toLocaleString('en-IN')} - Less: Total Deductions: ₹${tD.toLocaleString('en-IN')} - Taxable Income: ₹${tI_old.toLocaleString('en-IN')} - **Estimated Tax Payable: ₹${oRT.toLocaleString('en-IN')}** (including 4% Health & Education Cess) - **New Tax Regime:** - Gross Income: ₹${gI.toLocaleString('en-IN')} - Less: Standard Deduction: ₹50,000 - Taxable Income: ₹${tI_new.toLocaleString('en-IN')} - **Estimated Tax Payable: ₹${nRT.toLocaleString('en-IN')}** (including 4% Health & Education Cess)`;
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const financialYear = currentDate.getMonth() >= 3 ? `${currentYear}-${(currentYear + 1).toString().slice(-2)}` : `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+        const assessmentYear = `${currentYear + 1}-${(currentYear + 2).toString().slice(-2)}`;
+
+        const prompt = `
+You are ZENVANA, an expert AI financial advisor in India. Your tone is encouraging, clear, and professional.
+The current date is ${currentDate.toLocaleDateString('en-IN')}. The analysis is for Financial Year ${financialYear} (Assessment Year ${assessmentYear}).
+
+User's Name: ${financialSummary.name}
+User's Risk Tolerance: ${financialSummary.riskTolerance}
+
+Analyze the following tax data and provide a personalized, structured, and high-quality report in Markdown format.
+
+**Tax Calculation Inputs:**
+- Gross Income: ₹${gI.toLocaleString('en-IN')}
+- Total Deductions Claimed (for Old Regime): ₹${tD.toLocaleString('en-IN')}
+- Taxable Income (Old Regime): ₹${tI_old.toLocaleString('en-IN')}
+- Taxable Income (New Regime): ₹${tI_new.toLocaleString('en-IN')}
+- Calculated Tax (Old Regime): ₹${oRT.toLocaleString('en-IN')}
+- Calculated Tax (New Regime): ₹${nRT.toLocaleString('en-IN')}
+- Recommended Regime: ${nRT < oRT ? 'New' : 'Old'} Regime
+- Potential Savings: ₹${Math.abs(nRT - oRT).toLocaleString('en-IN')}
+
+**Your Task:**
+Generate a response with the following structure:
+
+## Namaste ${financialSummary.name}, Here's Your Tax Analysis!
+Start with a friendly, personalized greeting. State the recommended tax regime and the potential savings clearly and upfront.
+
+## Detailed Comparison
+Provide a clear, side-by-side comparison of the Old vs. New tax regimes using the data provided above. Explain why one is better than the other in this specific case.
+
+## Personalized Actionable Advice
+Based on the user's inputs and their risk tolerance (${financialSummary.riskTolerance}), provide 2-3 specific, actionable suggestions to further optimize their taxes for the *next* financial year. For example:
+- If 80C is not fully utilized, suggest specific investment options (like ELSS for a high-risk user, or PPF for a low-risk user).
+- If HRA is low, suggest they ensure they are claiming the full eligible amount.
+- Mention other sections they might not be using, like 80G for donations.
+
+## Your Path Forward
+End with an empowering and positive statement, reinforcing that Zenvana is here to help them make smart financial decisions.
+`;
 
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
@@ -190,7 +238,7 @@ const TaxSaver = ({ apiKey }) => {
             if (!response.ok) throw new Error('AI analysis failed');
             const result = await response.json();
             setAiAnalysis(result.candidates[0].content.parts[0].text);
-        } catch (e) { setAiAnalysis("Could not fetch AI analysis."); } finally { setIsCalculating(false); }
+        } catch (e) { setAiAnalysis("Could not fetch AI analysis. Please try again."); } finally { setIsCalculating(false); }
     };
     return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
@@ -247,7 +295,7 @@ const ExpensePieChart = ({ expenses }) => {
 };
 
 
-// --- CORRECTED: Dashboard Component ---
+// --- UPGRADED: Dashboard Component ---
 const Dashboard = ({ financialSummary, apiKey }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
@@ -263,36 +311,47 @@ const Dashboard = ({ financialSummary, apiKey }) => {
   const handleAnalyzeBudget = async () => {
     setIsAnalyzingBudget(true); 
     setBudgetAnalysisResult('');
+    const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const prompt = `
-As ZENVANA, your personal AI financial advisor, please provide a detailed and encouraging analysis of the following budget for ${financialSummary.name}.
+You are ZENVANA, an expert AI financial advisor. Your tone is encouraging, insightful, and highly personalized.
+The current date is ${currentDate}.
 
-**User's Financial Data:**
+**User's Profile:**
+- Name: ${financialSummary.name}
+- Age: ${new Date().getFullYear() - new Date(financialSummary.dateOfBirth).getFullYear()}
 - Monthly Income: ₹${financialSummary.monthlyIncome}
-- Monthly Expenses: ${JSON.stringify(financialSummary.expenses, null, 2)}
+- Total Monthly Expenses: ₹${tME}
+- Monthly Savings: ₹${mS}
+- Savings Rate: ${sR}%
 - Risk Tolerance: ${financialSummary.riskTolerance}
+- Current Investments: ${financialSummary.currentInvestments || 'Not specified'}
+- Dependents: ${financialSummary.dependents || 'Not specified'}
+- Debt: ₹${financialSummary.debt || 0}
+- Expense Breakdown: ${JSON.stringify(financialSummary.expenses, null, 2)}
 
 **Your Task:**
-Generate a response in Markdown format that includes the following sections:
+Generate a well-structured and high-quality budget analysis in Markdown format.
 
-## Hello ${financialSummary.name}, Here's Your Budget Analysis!
-Provide a brief, encouraging overview of their financial picture based on their income and savings.
+## Hello ${financialSummary.name}, Here is Your Budget Analysis!
+Start with a warm, personalized greeting. Briefly summarize their financial health, highlighting their savings rate as a key metric.
 
 ## Key Observation
-Identify the single most important insight from their budget (e.g., high savings rate, a specific expense category being very high, etc.). Explain *why* this is significant in a detailed paragraph.
+Identify the single most important insight from their budget (e.g., a very high savings rate, a specific expense category being disproportionately high, or a low debt-to-income ratio). Explain *why* this is significant in a detailed, insightful paragraph.
 
-## Expense Breakdown
-- Briefly analyze the top 2-3 spending categories.
-- Mention if the spending seems reasonable or if there are potential areas for optimization.
+## Expense Deep Dive
+- Analyze their top 2-3 spending categories in detail.
+- Compare their spending to common financial rules of thumb (like the 50/30/20 rule) but emphasize that these are just guidelines and personalization is key.
+- Mention if the spending seems reasonable for their income or if there are clear areas for optimization.
 
-## Actionable Recommendations
-Provide 2-3 clear, specific, and actionable tips for improvement. These should be tailored to their data. For example:
-- "Your housing expense is X% of your income. To boost savings, consider exploring ways to reduce utility costs."
-- "You have a strong savings rate of Y%! To accelerate your goals, consider allocating a small portion of your 'entertainment' budget towards an extra SIP."
-- "I notice your 'transportation' costs are high. Could exploring public transport options or carpooling free up more cash for your emergency fund?"
+## Actionable & Personalized Recommendations
+Provide 2-3 clear, specific, and actionable tips for improvement, directly tied to their personal data and risk tolerance. For example:
+- **If savings are high and risk is high:** "With your strong savings rate of ${sR}% and high-risk tolerance, you're in a great position to accelerate wealth creation. Consider allocating an additional ₹[suggested amount] from your monthly surplus towards a diversified equity mutual fund SIP."
+- **If a specific expense is high:** "Your 'Entertainment' spending is about [X]% of your take-home pay. While enjoying life is important, trimming this by just 10% could free up ₹[amount] monthly to fast-track your '[Goal Name]' goal."
+- **If debt exists:** "Tackling your debt of ₹${financialSummary.debt} should be a priority. Consider using the 'snowball' or 'avalanche' method to pay it down faster."
 
 ## Your Path Forward
-End with an empowering and positive statement, reinforcing that they are on the right track and that Zenvana is here to help them on their journey to financial freedom.
+End with an empowering and positive statement. Reassure them that they are in control of their financial journey and that Zenvana is here to support them every step of the way.
 `;
 
     try {
@@ -313,11 +372,50 @@ End with an empowering and positive statement, reinforcing that they are on the 
 
   const hGGP = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
+    const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+    const prompt = `
+You are ZENVANA, an expert AI financial advisor. Your tone is strategic, clear, and encouraging.
+The current date is ${currentDate}.
+
+**User & Goal Context:**
+- User's Name: ${financialSummary.name}
+- User's Risk Tolerance: ${financialSummary.riskTolerance}
+- Monthly Surplus (Income - Expenses): ₹${mS.toLocaleString('en-IN')}
+- Goal: Achieve "${g.name}"
+- Target Amount: ₹${parseFloat(g.targetAmount).toLocaleString('en-IN')}
+- Amount Already Saved: ₹${parseFloat(g.amountSaved || 0).toLocaleString('en-IN')}
+- Target Date: ${formatDate(g.targetDate)}
+
+**Your Task:**
+Create a personalized, actionable, and structured investment plan in Markdown to help ${financialSummary.name} achieve this specific goal.
+
+## Investment Plan for: ${g.name}
+Start with an encouraging sentence acknowledging the goal.
+
+## Current Status & Required Investment
+- Calculate the remaining amount needed: ₹${(parseFloat(g.targetAmount) - parseFloat(g.amountSaved || 0)).toLocaleString('en-IN')}.
+- Calculate the number of months until the target date.
+- Calculate the required monthly investment (SIP) to reach the goal. State this clearly.
+
+## Recommended Investment Strategy
+Based on the user's **${financialSummary.riskTolerance} risk tolerance** and the goal's timeline, recommend 1-2 specific types of investments.
+- **For Low Risk:** Suggest options like a Recurring Deposit (RD) or a Debt Mutual Fund. Explain *why* (capital preservation).
+- **For Medium Risk:** Suggest a mix, like a Hybrid Mutual Fund or a combination of an Index Fund and a Debt Fund. Explain *why* (balanced growth and risk).
+- **For High Risk:** Suggest options like a Flexi-cap or Mid-cap Equity Mutual Fund SIP. Explain *why* (potential for higher returns over the long term).
+- **Crucially, do not recommend specific stocks or fund names.** Stick to categories.
+
+## Next Steps
+Provide a clear, 2-step action plan. For example:
+1.  **Research:** "Explore platforms like [Platform Example like Zerodha Coin or Groww] to find a suitable [Recommended Fund Category] with a good track record."
+2.  **Automate:** "Set up an automatic monthly SIP for the calculated amount to ensure consistency and discipline."
+
+End with a motivational sentence.
+`;
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: `Create investment plan for ${financialSummary.riskTolerance} risk tolerance. Goal: ${g.name}, Target: ₹${g.targetAmount}, Saved: ₹${g.amountSaved}, Date: ${g.targetDate}. Monthly surplus: ₹${mS}. Suggest 1-2 investment types.` }] }] }) 
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
       });
       if (!response.ok) throw new Error('Goal plan generation failed');
       const result = await response.json();
@@ -405,7 +503,7 @@ End with an empowering and positive statement, reinforcing that they are on the 
 };
 
 
-// --- CORRECTED: Main App Component ---
+// --- UPGRADED: Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -420,9 +518,8 @@ function App() {
   const apiKey = "";
 
   useEffect(() => {
-    // This check prevents the app from crashing during the build process on Netlify
     if (typeof window.__firebase_config === 'undefined') {
-        setIsAuthReady(true); // Allow the app to render a loading state
+        setIsAuthReady(true); 
         return;
     }
     
@@ -473,19 +570,38 @@ function App() {
 
   const callGeminiAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
-    const contextPrompt = `User Profile: ${JSON.stringify(financialSummary)}. User message: "${userMessage}"`;
+    const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const systemInstruction = `You are ZENVANA, a friendly, expert AI financial advisor for users in India. Your primary goal is to provide helpful, safe, and accurate financial advice.
+- The current date is ${currentDate}.
+- Your responses must be structured, polite, and encouraging.
+- **Crucially, you must ONLY answer questions related to personal finance, economics, investing, budgeting, and other money-related topics.**
+- **If the user asks a question that is NOT related to finance (e.g., about politics, celebrities, general knowledge, or personal opinions), you MUST politely decline.**
+- When declining, respond gently like this: "As ZENVANA, your AI financial companion, my expertise is focused on helping you with your financial questions. I can help you with topics like budgeting, saving, investing, or understanding taxes. How can I assist you with your finances today?" Do not answer the off-topic question at all.
+
+**User's Financial Profile (for context):**
+${JSON.stringify(financialSummary, null, 2)}
+`;
+
     const currentChat = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(currentChat);
+
+    // We combine the system instruction with the latest user message for the API call
+    const apiPayloadContents = [
+        ...currentChat.slice(-10), // Keep last 10 messages for context
+        { role: 'user', parts: [{ text: `${systemInstruction}\n\nUser message: "${userMessage}"` }] }
+    ];
+
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [...currentChat.slice(-10), { role: 'user', parts: [{ text: contextPrompt }] }] }) 
+          body: JSON.stringify({ contents: apiPayloadContents }) 
       });
       if (!response.ok) throw new Error('API call failed');
       const result = await response.json();
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result.candidates[0].content.parts[0].text }] }]);
-    } catch (error) { setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Error: ${error.message}` }] }]); } finally { setIsGeneratingResponse(false); }
+    } catch (error) { setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, I encountered an error. Please try again. Error: ${error.message}` }] }]); } finally { setIsGeneratingResponse(false); }
   };
 
   const handleLogout = async () => {
@@ -507,7 +623,7 @@ function App() {
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
           {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} />)}
+          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} financialSummary={financialSummary} />)}
           {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />)}
         </Layout>
       )}
