@@ -600,7 +600,7 @@ function App() {
       throw new Error("Firebase not ready");
     }
     
-    setIsSubmitting(true); // Control state from the parent
+    setIsSubmitting(true);
     try {
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
       const expensesParsed = {};
@@ -608,14 +608,25 @@ function App() {
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
-      setCurrentPage('dashboard');
+      // DEFINITIVE FIX: Navigation is now handled by the useEffect below, not here.
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
-      throw error;
+      // Even if there's an error, we must stop submitting
     } finally {
-      setIsSubmitting(false); // ALWAYS reset the state
+      setIsSubmitting(false);
     }
   };
+
+  // DEFINITIVE FIX: This new useEffect handles navigation AFTER data is successfully saved.
+  useEffect(() => {
+    // This effect runs when financialSummary data changes.
+    // If we have new data and we are on the onboarding page, it means the user just finished.
+    // We also check that we are not in the middle of submitting to avoid race conditions.
+    if (financialSummary && currentPage === 'onboarding' && !isSubmitting) {
+      setCurrentPage('dashboard');
+    }
+  }, [financialSummary, currentPage, isSubmitting]);
+
 
   const callGeminiAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
