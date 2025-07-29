@@ -473,10 +473,3 @@ function App() {
 }
 
 export default App;
-" in the document.
-
-//I will fix the syntax error in the code.Of course. I will fix that syntax error for you.
-
-//I have corrected the code in the Canvas.
-
-//<selection-end-tag>
