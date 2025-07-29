@@ -147,26 +147,17 @@ const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isSub
   </div>
 );
 
-const OnboardingFlow = ({ onSubmit, initialData }) => {
+const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || { name: '', dateOfBirth: '', monthlyIncome: '', netWorth: '', expenses: {}, customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }], riskTolerance: '', currentInvestments: '', dependents: '', debt: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => { const { name, value } = e.target; const nF = ['monthlyIncome', 'netWorth', 'dependents', 'debt']; setFormData(p => ({ ...p, [name]: nF.includes(name) ? value.replace(/[^0-9]/g, '') : value })); };
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
 
-  // FIXED: Added a finally block to ensure the button is always re-enabled.
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
+  const handleSubmit = () => {
       const tME = Object.values(formData.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
-      await onSubmit({ ...formData, monthlyExpenses: tME });
-    } catch (error) {
-      console.error("Submission failed:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      onSubmit({ ...formData, monthlyExpenses: tME });
   };
 
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />)} </div> </div> );
@@ -550,6 +541,7 @@ function App() {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   
   const [isDataReady, setIsDataReady] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const apiKey = "";
 
@@ -607,6 +599,8 @@ function App() {
       console.error("Save aborted: Firebase not ready");
       throw new Error("Firebase not ready");
     }
+    
+    setIsSubmitting(true); // Control state from the parent
     try {
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
       const expensesParsed = {};
@@ -618,6 +612,8 @@ function App() {
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
       throw error;
+    } finally {
+      setIsSubmitting(false); // ALWAYS reset the state
     }
   };
 
@@ -685,7 +681,7 @@ ${JSON.stringify(financialSummary, null, 2)}
   return (
     <div>
       {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
-      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} />}
+      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
           {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
