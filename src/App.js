@@ -147,8 +147,7 @@ const OnboardingFlow = ({ onSubmit, initialData }) => {
   const handleChange = (e) => { const { name, value } = e.target; const nF = ['monthlyIncome', 'netWorth', 'dependents', 'debt']; setFormData(p => ({ ...p, [name]: nF.includes(name) ? value.replace(/[^0-9]/g, '') : value })); };
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
-  // FIXED: Added initial value '0' to reduce function for stability.
-  const handleSubmit = () => { const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0); onSubmit({ ...formData, monthlyExpenses: tME }); };
+  const handleSubmit = () => { const tME = Object.values(formData.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0); onSubmit({ ...formData, monthlyExpenses: tME }); };
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
 };
 
@@ -161,13 +160,18 @@ const [chatInput, setChatInput] = useState('');
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
-// --- Tax Saver Component (No functional changes) ---
+// --- Tax Saver Component ---
 const TaxSaver = ({ apiKey, financialSummary }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     
+    // FIXED: Added guard clause for stability during build.
+    if (!financialSummary) {
+        return <div className="text-center p-10">Loading financial data...</div>;
+    }
+
     const fieldLabels = { salaryIncome: "Annual Salary Income (from Form 16)", otherIncome: "Annual Income from Other Sources (e.g., Interest, Rent)", investments80C: "Total Investments under Section 80C (PPF, ELSS, etc.)", hra: "House Rent Allowance (HRA) Exemption Claimed", homeLoanInterest: "Interest on Home Loan (Section 24)", medicalInsurance80D: "Medical Insurance Premium (Section 80D)", nps_80ccd1b: "NPS Contribution (Section 80CCD(1B))", educationLoanInterest_80e: "Interest on Education Loan (Section 80E)" };
     
     const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
@@ -196,8 +200,8 @@ const TaxSaver = ({ apiKey, financialSummary }) => {
 You are ZENVANA, an expert AI financial advisor in India. Your tone is encouraging, clear, and professional.
 The current date is ${currentDate.toLocaleDateString('en-IN')}. The analysis is for Financial Year ${financialYear} (Assessment Year ${assessmentYear}).
 
-User's Name: ${financialSummary?.name || 'User'}
-User's Risk Tolerance: ${financialSummary?.riskTolerance || 'not specified'}
+User's Name: ${financialSummary.name || 'User'}
+User's Risk Tolerance: ${financialSummary.riskTolerance || 'not specified'}
 
 Analyze the following tax data and provide a personalized, structured, and high-quality report in Markdown format.
 
@@ -214,14 +218,14 @@ Analyze the following tax data and provide a personalized, structured, and high-
 **Your Task:**
 Generate a response with the following structure:
 
-## Namaste ${financialSummary?.name || 'User'}, Here's Your Tax Analysis!
+## Namaste ${financialSummary.name || 'User'}, Here's Your Tax Analysis!
 Start with a friendly, personalized greeting. State the recommended tax regime and the potential savings clearly and upfront.
 
 ## Detailed Comparison
 Provide a clear, side-by-side comparison of the Old vs. New tax regimes using the data provided above. Explain why one is better than the other in this specific case.
 
 ## Personalized Actionable Advice
-Based on the user's inputs and their risk tolerance (${financialSummary?.riskTolerance || 'not specified'}), provide 2-3 specific, actionable suggestions to further optimize their taxes for the *next* financial year. For example:
+Based on the user's inputs and their risk tolerance (${financialSummary.riskTolerance || 'not specified'}), provide 2-3 specific, actionable suggestions to further optimize their taxes for the *next* financial year. For example:
 - If 80C is not fully utilized, suggest specific investment options (like ELSS for a high-risk user, or PPF for a low-risk user).
 - If HRA is low, suggest they ensure they are claiming the full eligible amount.
 - Mention other sections they might not be using, like 80G for donations.
@@ -303,7 +307,7 @@ const Dashboard = ({ financialSummary, apiKey }) => {
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
   
-  // FIXED: Moved calculations inside a check to prevent errors when financialSummary is null.
+  // FIXED: Added guard clause for stability during build.
   if (!financialSummary) {
     return (
       <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
@@ -527,13 +531,16 @@ function App() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   
+  // FIXED: Added a new state to track if the initial data load is complete.
+  const [isDataReady, setIsDataReady] = useState(false);
+  
   const apiKey = "";
 
   useEffect(() => {
-    // FIXED: Added extra checks for robustness during build.
     if (typeof window.__firebase_config === 'undefined' || !window.__firebase_config) {
         console.error("Firebase config not found.");
         setIsAuthReady(true); 
+        setIsDataReady(true); // Mark data as "ready" to unblock rendering
         return;
     }
     
@@ -551,12 +558,13 @@ function App() {
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
           if (user) {
               setUserId(user.uid);
+              setIsAuthReady(true); // Auth is ready first
               const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
                   setFinancialSummary(docSnap.data());
               }
-              setIsAuthReady(true);
+              setIsDataReady(true); // Now data is ready
           } else {
               const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
               if (token) {
@@ -564,6 +572,9 @@ function App() {
               } else {
                   signInAnonymously(firebaseAuth);
               }
+              // If no user, there's no data to wait for.
+              setIsAuthReady(true);
+              setIsDataReady(true);
           }
       });
 
@@ -571,6 +582,7 @@ function App() {
     } catch (error) {
       console.error("Error initializing Firebase:", error);
       setIsAuthReady(true);
+      setIsDataReady(true);
     }
   }, []); 
 
@@ -605,9 +617,8 @@ ${JSON.stringify(financialSummary, null, 2)}
     const currentChat = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(currentChat);
 
-    // We combine the system instruction with the latest user message for the API call
     const apiPayloadContents = [
-        ...currentChat.slice(-10), // Keep last 10 messages for context
+        ...currentChat.slice(-10), 
         { role: 'user', parts: [{ text: `${systemInstruction}\n\nUser message: "${userMessage}"` }] }
     ];
 
@@ -628,12 +639,27 @@ ${JSON.stringify(financialSummary, null, 2)}
     try {
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
       await signOut(auth);
-      setFinancialSummary(null); setChatHistory([]); setUserId(null); setIsAuthReady(false); setCurrentPage('welcome');
+      setFinancialSummary(null); 
+      setChatHistory([]); 
+      setUserId(null); 
+      setIsAuthReady(false); 
+      setIsDataReady(false); // Reset data ready state
+      setCurrentPage('welcome');
     } catch (error) { console.error("Logout error:", error); }
   };
 
-  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
-  const navToOnboard = () => { if (financialSummary?.monthlyIncome > 0) { setCurrentPage('dashboard'); } else { setCurrentPage('onboarding'); }};
+  // FIXED: Show a single loading indicator until both auth and data are ready.
+  if (!isAuthReady || !isDataReady) { 
+    return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); 
+  }
+
+  const navToOnboard = () => { 
+    if (financialSummary) { 
+        setCurrentPage('dashboard'); 
+    } else { 
+        setCurrentPage('onboarding'); 
+    }
+  };
 
   return (
     <div>
