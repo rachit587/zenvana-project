@@ -237,7 +237,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
     const chatHistoryRef = useRef(null);
     useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [chatHistory]);
     const handleSendMessage = (e) => { e.preventDefault(); if (chatInput.trim() === '') return; callGeminiAPI(chatInput); setChatInput(''); };
-    return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
+    return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> section> );
 };
 
 /**
@@ -566,21 +566,24 @@ function App() {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
         if (user) {
             setUserId(user.uid);
+            // We only check for data here. We don't set the page yet.
             const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 setFinancialSummary(data);
-                // Set initial chat history with a welcoming message from AI
-                setChatHistory([
-                    { role: "model", parts: [{ text: `Namaste ${data.name}! I'm Zenvana, your personal AI financial advisor. How can I help you achieve your financial goals today?` }] }
-                ]);
-                setCurrentPage('dashboard');
+                setCurrentPage('dashboard'); 
             } else {
+                // If no data, the user needs to onboard.
+                setFinancialSummary(null); // Ensure summary is cleared
                 setCurrentPage('onboarding');
             }
             setIsAuthReady(true);
         } else {
+            // Handle user sign-out or initial anonymous sign-in
+            setUserId(null);
+            setFinancialSummary(null);
+            setCurrentPage('welcome');
             const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
             if (token) {
                 signInWithCustomToken(firebaseAuth, token).catch((error) => {
@@ -604,8 +607,11 @@ function App() {
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
+      
+      // CRITICAL FIX: After saving, update the state and explicitly set the page to dashboard.
       setFinancialSummary(dataToSave);
       setCurrentPage('dashboard');
+
     } catch (error) { console.error("Error saving data:", error); }
   };
 
@@ -654,31 +660,32 @@ function App() {
     try {
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
       await signOut(auth);
-      setFinancialSummary(null); setChatHistory([]); setUserId(null); setIsAuthReady(false); setCurrentPage('welcome');
+      // Reset all relevant states on logout
+      setFinancialSummary(null); 
+      setChatHistory([]); 
+      setUserId(null); 
+      setIsAuthReady(false); // Trigger re-authentication
+      setCurrentPage('welcome');
     } catch (error) { console.error("Logout error:", error); }
   };
 
   if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading Zenvana...</div>); }
-  
-  const getInitialPage = () => {
-      if (!userId) return 'welcome';
-      if (financialSummary) return 'dashboard';
-      return 'onboarding';
-  };
 
   const renderPage = () => {
-    const page = currentPage === 'welcome' ? getInitialPage() : currentPage;
-
-    switch (page) {
+    switch (currentPage) {
         case 'dashboard':
+            // Ensure we have financial data before showing the dashboard
+            if (!financialSummary) return <OnboardingFlow onSubmit={saveFinancialData} initialData={null} />;
             return <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
                        <Dashboard financialSummary={financialSummary} apiKey={apiKey} />
                    </Layout>;
         case 'taxSaver':
+            if (!financialSummary) return <OnboardingFlow onSubmit={saveFinancialData} initialData={null} />;
             return <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
                        <TaxSaver apiKey={apiKey} financialSummary={financialSummary} />
                    </Layout>;
         case 'aiChat':
+            if (!financialSummary) return <OnboardingFlow onSubmit={saveFinancialData} initialData={null} />;
             return <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
                        <AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />
                    </Layout>;
