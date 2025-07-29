@@ -32,7 +32,7 @@ const getCurrentFinancialYears = () => {
 };
 
 
-// --- UI & HELPER COMPONENTS (No major changes) ---
+// --- UI & HELPER COMPONENTS ---
 const MarkdownRenderer = ({ text }) => {
   if (!text) return null;
   const renderInlineFormatting = (line) => {
@@ -97,7 +97,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
-// --- ONBOARDING COMPONENTS (No changes) ---
+// --- ONBOARDING COMPONENTS ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -123,13 +123,27 @@ const OnboardingStep2 = ({ formData, handleChange, nextStep, prevStep }) => (
     </div>
   </div>
 );
+
+// For better performance and readability, define this constant outside the component.
+const EXPENSE_CATEGORIES = [
+    { name: 'housing', label: 'Housing (Rent/EMI)' }, 
+    { name: 'food', label: 'Food' }, 
+    { name: 'transportation', label: 'Transportation' }, 
+    { name: 'utilities', label: 'Utilities' }, 
+    { name: 'entertainment', label: 'Entertainment' }, 
+    { name: 'healthcare', label: 'Healthcare' }, 
+    { name: 'personalCare', label: 'Personal Care' }, 
+    { name: 'education', label: 'Education' }, 
+    { name: 'debtPayments', label: 'Debt Payments' }, 
+    { name: 'miscellaneous', label: 'Miscellaneous' }
+];
+
 const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
-  const expenseCategories = [{ name: 'housing', label: 'Housing (Rent/EMI)' }, { name: 'food', label: 'Food' }, { name: 'transportation', label: 'Transportation' }, { name: 'utilities', label: 'Utilities' }, { name: 'entertainment', label: 'Entertainment' }, { name: 'healthcare', label: 'Healthcare' }, { name: 'personalCare', label: 'Personal Care' }, { name: 'education', label: 'Education' }, { name: 'debtPayments', label: 'Debt Payments' }, { name: 'miscellaneous', label: 'Miscellaneous' }];
   const handleExpenseChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, expenses: { ...prev.expenses, [name]: value.replace(/[^0-9]/g, '') } })); };
   return (
     <div className="animate-fade-in-scale">
       <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">Your Monthly Expenses</h3>
-      <div className="space-y-4">{expenseCategories.map(c => (<div key={c.name}><label htmlFor={c.name} className="block text-gray-300 font-semibold mb-1">{c.label} (₹)</label><input type="text" inputMode="numeric" id={c.name} name={c.name} value={formData.expenses?.[c.name] || ''} onChange={handleExpenseChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white" placeholder="0" /></div>))}</div>
+      <div className="space-y-4">{EXPENSE_CATEGORIES.map(c => (<div key={c.name}><label htmlFor={c.name} className="block text-gray-300 font-semibold mb-1">{c.label} (₹)</label><input type="text" inputMode="numeric" id={c.name} name={c.name} value={formData.expenses?.[c.name] || ''} onChange={handleExpenseChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white" placeholder="0" /></div>))}</div>
       <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={nextStep} className="bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-xl">Next</button></div>
     </div>
   );
@@ -228,10 +242,6 @@ const ExpensePieChart = ({ expenses }) => {
 
 // --- ENHANCED AI COMPONENTS ---
 
-/**
- * AI Chat Component
- * Now includes a system prompt for hyper-personalization.
- */
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
     const [chatInput, setChatInput] = useState('');
     const chatHistoryRef = useRef(null);
@@ -258,10 +268,6 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
     );
 };
 
-/**
- * Tax Saver Component
- * Now uses dynamic dates and an enhanced AI prompt for better advice.
- */
 const TaxSaver = ({ apiKey, financialSummary }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
@@ -283,7 +289,6 @@ const TaxSaver = ({ apiKey, financialSummary }) => {
         const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, true);
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
         
-        // Enhanced prompt with dynamic dates and personalization
         const prompt = `
           As ZENVANA, the expert AI financial advisor for ${financialSummary.name}, provide a detailed and encouraging tax analysis for the Financial Year ${financialYear} (Assessment Year ${assessmentYear}).
 
@@ -329,10 +334,6 @@ const TaxSaver = ({ apiKey, financialSummary }) => {
     return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver (FY {financialYear})</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
 
-/**
- * Dashboard Component
- * Features the new Financial Health Score, AI Opportunity Finder, and enhanced goal planning.
- */
 const Dashboard = ({ financialSummary, apiKey }) => {
   const [analysisResult, setAnalysisResult] = useState({ text: '', score: null, opportunity: '' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -396,7 +397,6 @@ const Dashboard = ({ financialSummary, apiKey }) => {
       if (!response.ok) throw new Error('Budget analysis failed');
       const result = await response.json();
       const rawText = result.candidates[0].content.parts[0].text;
-      // Clean the raw text to ensure it's valid JSON
       const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsedResult = JSON.parse(cleanedText);
       setAnalysisResult({
@@ -555,19 +555,21 @@ function App() {
   const [appId, setAppId] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [currentPage, setCurrentPage] = useState('welcome');
+  
+  // This state now determines the primary view: 'auth', 'onboarding', or 'app'
+  const [appStatus, setAppStatus] = useState('auth'); 
+  const [currentPage, setCurrentPage] = useState('dashboard'); // For navigation within the app
   const [financialSummary, setFinancialSummary] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   
-  // IMPORTANT: Your API Key is placed here.
   const apiKey = "AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc";
 
   useEffect(() => {
-    // This check prevents the app from crashing during the build process on Netlify
     if (typeof window.__firebase_config === 'undefined') {
-        console.warn("Firebase config not found. App will be in a loading state.");
-        setIsAuthReady(true); // Allow the app to render a loading state
+        console.warn("Firebase config not found.");
+        setIsAuthReady(true);
+        setAppStatus('auth'); // Stay on a loading/auth screen
         return;
     }
     
@@ -584,34 +586,29 @@ function App() {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
         if (user) {
             setUserId(user.uid);
-            // We only check for data here. We don't set the page yet.
             const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 setFinancialSummary(data);
-                setCurrentPage('dashboard'); 
+                setAppStatus('app'); // User has data, go to the main app
+                setCurrentPage('dashboard');
             } else {
-                // If no data, the user needs to onboard.
-                setFinancialSummary(null); // Ensure summary is cleared
-                setCurrentPage('onboarding');
+                setFinancialSummary(null);
+                setAppStatus('onboarding'); // User exists but has no data, needs onboarding
             }
-            setIsAuthReady(true);
         } else {
-            // Handle user sign-out or initial anonymous sign-in
             setUserId(null);
             setFinancialSummary(null);
-            setCurrentPage('welcome');
+            setAppStatus('auth'); // No user, show welcome/auth page
             const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
             if (token) {
-                signInWithCustomToken(firebaseAuth, token).catch((error) => {
-                    console.error("Custom token sign-in failed, falling back to anonymous", error);
-                    signInAnonymously(firebaseAuth);
-                });
+                signInWithCustomToken(firebaseAuth, token).catch(() => signInAnonymously(firebaseAuth));
             } else {
                 signInAnonymously(firebaseAuth);
             }
         }
+        setIsAuthReady(true);
     });
 
     return () => unsubscribe();
@@ -626,16 +623,18 @@ function App() {
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       
-      // CRITICAL FIX: After saving, update the state and explicitly set the page to dashboard.
+      // **RELIABLE FIX**: After saving, update the local state. This will trigger the effect
+      // that correctly sets the appStatus to 'app', ensuring navigation.
       setFinancialSummary(dataToSave);
+      setAppStatus('app');
       setCurrentPage('dashboard');
 
     } catch (error) { console.error("Error saving data:", error); }
   };
 
   const callGeminiAPI = async (userMessage) => {
+    if (!financialSummary) return; // Don't call API if data isn't loaded
     setIsGeneratingResponse(true);
-    // Hyper-personalization: Create a system context note for the AI
     const systemContext = `
       System Note for Zenvana AI: You are an expert, empathetic Indian financial advisor. 
       You are currently advising ${financialSummary.name}. 
@@ -650,11 +649,10 @@ function App() {
     const currentChat = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(currentChat);
 
-    // We combine the system context with the recent chat history
     const apiPayload = [
         { role: 'user', parts: [{ text: systemContext }] },
         { role: 'model', parts: [{ text: "Understood. I will provide personalized advice to the user." }] },
-        ...currentChat.slice(-10) // Get the last 10 messages to maintain conversation flow
+        ...currentChat.slice(-10)
     ];
 
     try {
@@ -678,44 +676,38 @@ function App() {
     try {
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
       await signOut(auth);
-      // Reset all relevant states on logout
       setFinancialSummary(null); 
       setChatHistory([]); 
       setUserId(null); 
-      setIsAuthReady(false); // Trigger re-authentication
-      setCurrentPage('welcome');
+      setAppStatus('auth');
+      setIsAuthReady(false); 
     } catch (error) { console.error("Logout error:", error); }
   };
 
-  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading Zenvana...</div>); }
+  if (!isAuthReady) { 
+    return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Initializing Zenvana...</div>); 
+  }
 
-  const renderPage = () => {
-    switch (currentPage) {
-        case 'dashboard':
-            // Ensure we have financial data before showing the dashboard
-            if (!financialSummary) return <OnboardingFlow onSubmit={saveFinancialData} initialData={null} />;
-            return <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-                       <Dashboard financialSummary={financialSummary} apiKey={apiKey} />
-                   </Layout>;
-        case 'taxSaver':
-            if (!financialSummary) return <OnboardingFlow onSubmit={saveFinancialData} initialData={null} />;
-            return <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-                       <TaxSaver apiKey={apiKey} financialSummary={financialSummary} />
-                   </Layout>;
-        case 'aiChat':
-            if (!financialSummary) return <OnboardingFlow onSubmit={saveFinancialData} initialData={null} />;
-            return <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-                       <AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />
-                   </Layout>;
-        case 'onboarding':
-            return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} />;
-        case 'welcome':
-        default:
-            return <WelcomePage onGetStarted={() => setCurrentPage('onboarding')} />;
-    }
-  };
+  // This is the new, robust rendering logic
+  if (appStatus === 'app' && financialSummary) {
+      const pages = {
+          dashboard: <Dashboard financialSummary={financialSummary} apiKey={apiKey} />,
+          taxSaver: <TaxSaver apiKey={apiKey} financialSummary={financialSummary} />,
+          aiChat: <AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />,
+      };
+      return (
+          <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
+              {pages[currentPage] || <Dashboard financialSummary={financialSummary} apiKey={apiKey} />}
+          </Layout>
+      );
+  }
+  
+  if (appStatus === 'onboarding') {
+      return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} />;
+  }
 
-  return <div>{renderPage()}</div>;
+  // Default to the welcome page if not in 'app' or 'onboarding'
+  return <WelcomePage onGetStarted={() => setAppStatus('onboarding')} />;
 }
 
 export default App;
