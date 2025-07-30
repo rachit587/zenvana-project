@@ -73,7 +73,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
-// --- CORRECTED: Onboarding Components ---
+// --- Onboarding Components ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -168,7 +168,7 @@ const OnboardingFlow = ({ onSubmit, initialData, setCurrentPage }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isLoading={isLoading} />)} </div> </div> );
 };
 
-// --- AI Chat Component (No changes) ---
+// --- AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
@@ -177,7 +177,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callGeminiAPI }) => {
   return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> {!apiKey && (<div className="bg-red-800 text-white p-3 rounded-xl mb-4 text-center"><strong>Warning:</strong> API key is not configured. AI features are disabled.</div>)} <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={apiKey ? "Ask about your finances..." : "AI Chat Disabled"} className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse || !apiKey} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse || !apiKey}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
 };
 
-// --- Tax Saver Component (No changes) ---
+// --- Tax Saver Component ---
 const TaxSaver = ({ apiKey }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
@@ -207,7 +207,7 @@ const TaxSaver = ({ apiKey }) => {
     return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
 
-// --- Expense Pie Chart Component (No changes) ---
+// --- Expense Pie Chart Component ---
 const ExpensePieChart = ({ expenses }) => {
   const chartData = Object.entries(expenses || {}).map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) })).filter(item => item.value > 0);
   const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
@@ -227,7 +227,7 @@ const ExpensePieChart = ({ expenses }) => {
   );
 };
 
-// --- Dashboard Component (No changes) ---
+// --- Dashboard Component ---
 const Dashboard = ({ financialSummary, apiKey }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
@@ -313,14 +313,13 @@ const Dashboard = ({ financialSummary, apiKey }) => {
   );
 };
 
-
-// --- FINAL CORRECTED: Main App Component ---
+// --- FINAL, ROBUST App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [currentPage, setCurrentPage] = useState('loading'); // Start with a loading page
+  const [currentPage, setCurrentPage] = useState('loading');
   const [financialSummary, setFinancialSummary] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
@@ -363,7 +362,7 @@ function App() {
 
   const saveFinancialData = async (data) => {
     if (!db || !userId) {
-        return { success: false, error: "Authentication error: User ID not found. Please try again." };
+        return { success: false, error: "Authentication error: User ID not found. Please logout and start again." };
     }
     try {
       const docRef = doc(db, "users", userId);
@@ -395,10 +394,13 @@ function App() {
       setChatHistory([]);
       setUserId(null);
       setCurrentPage('welcome');
-    } catch (error) { console.error("Logout error:", error); }
+    } catch (error) { 
+        console.error("Logout error:", error);
+        alert("Error logging out. Please try again.");
+    }
   };
   
-    const callGeminiAPI = async (userMessage) => {
+  const callGeminiAPI = async (userMessage) => {
     if (!apiKey) {
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: "I can't respond right now. The API key is not configured correctly." }] }]);
       return;
@@ -424,19 +426,28 @@ function App() {
       return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Initializing your secure session...</div>);
   }
 
-  return (
-    <div>
-      {currentPage === 'welcome' && <WelcomePage onGetStarted={handleGetStarted} />}
-      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} setCurrentPage={setCurrentPage} />}
-      {(currentPage === 'dashboard' || currentPage === 'taxSaver' || currentPage === 'aiChat') && (
-        <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} />)}
-          {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />)}
-        </Layout>
-      )}
-    </div>
-  );
+  const renderCurrentPage = () => {
+      switch(currentPage) {
+          case 'welcome':
+              return <WelcomePage onGetStarted={handleGetStarted} />;
+          case 'onboarding':
+              return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} setCurrentPage={setCurrentPage} />;
+          case 'dashboard':
+          case 'taxSaver':
+          case 'aiChat':
+              return (
+                  <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
+                      {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
+                      {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} />)}
+                      {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />)}
+                  </Layout>
+              );
+          default:
+              return <div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>;
+      }
+  }
+
+  return <div>{renderCurrentPage()}</div>;
 }
 
 export default App;
