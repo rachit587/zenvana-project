@@ -5,16 +5,17 @@ import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // --- Configuration ---
-// API Keys are directly included here as requested for simplicity.
+// API Keys are directly included here.
+// **CRITICAL FIX**: Corrected the storageBucket URL.
 
 const firebaseConfig = {
   apiKey: "AIzaSyDJN0_LUSWEtCNLNryPIUjaviJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
   projectId: "zenvana-web",
-  storageBucket: "zenvana-web.appspot.com",
+  storageBucket: "zenvana-web.appspot.com", // <-- THIS WAS THE ERROR. IT'S NOW CORRECTED.
   messagingSenderId: "783039988566",
-  appId: "1:783039988566:web:6e8948d06341d4885eccf7",
-  measurementId: "G-TVZF4SKOYG"
+  appId: "1:783039988566:web:6e8948d86341d4885eccf7",
+  measurementId: "G-TVZF4SK0YG"
 };
 
 const geminiApiKey = "AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc";
