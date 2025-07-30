@@ -279,7 +279,7 @@ End with an empowering and positive statement, reinforcing that Zenvana is here 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
             });
-            if (!response.ok) throw new Error('AI analysis failed');
+            if (!response.ok) throw new Error('API call failed');
             const result = await response.json();
             setAiAnalysis(result.candidates[0].content.parts[0].text);
         } catch (e) { setAiAnalysis("Could not fetch AI analysis. Please try again."); } finally { setIsCalculating(false); }
@@ -415,7 +415,7 @@ End with an empowering and positive statement. Reassure them that they are in co
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
       });
-      if (!response.ok) throw new Error('Budget analysis failed');
+      if (!response.ok) throw new Error('API call failed');
       const result = await response.json();
       setBudgetAnalysisResult(result.candidates[0].content.parts[0].text);
     } catch (e) { 
@@ -582,6 +582,7 @@ function App() {
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
           if (user) {
               setUserId(user.uid);
+              // Using a simple path for Firestore rules
               const docRef = doc(firestore, `users/${user.uid}/financial_data/summary`);
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
@@ -616,7 +617,7 @@ function App() {
       setFinancialSummary(dataToSave);
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Ensure button is re-enabled on error
       throw error;
     } 
   };
