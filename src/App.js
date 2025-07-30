@@ -394,6 +394,40 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
         setIsPlanningEmergency(false);
     }
   };
+  
+  const handleGenerateGoalPlan = async (g, i) => {
+    setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
+    const prompt = `
+You are ZENVANA, an expert AI financial advisor. Your tone is strategic, clear, and encouraging.
+**User & Goal Context:**
+- User's Name: ${financialSummary.name || 'User'}
+- User's Risk Tolerance: ${financialSummary.riskTolerance || 'not specified'}
+- Monthly Surplus (Income - Expenses): ₹${mS.toLocaleString('en-IN')}
+- Goal: Achieve "${g.name}"
+- Target Amount: ₹${parseFloat(g.targetAmount).toLocaleString('en-IN')}
+- Amount Already Saved: ₹${parseFloat(g.amountSaved || 0).toLocaleString('en-IN')}
+- Target Date: ${formatDate(g.targetDate)}
+**Your Task:**
+Create a personalized, actionable, and structured investment plan in Markdown.
+## Investment Plan for: ${g.name}
+Start with an encouraging sentence.
+## Current Status & Required Investment
+- Calculate the remaining amount needed.
+- Calculate the number of months until the target date.
+- Calculate the required monthly investment (SIP) to reach the goal. State this clearly.
+## Recommended Investment Strategy
+Based on the user's risk tolerance and the goal's timeline, recommend 1-2 specific types of investments (e.g., RD, Debt Fund, Hybrid Fund, Equity Fund). Explain *why* for each. Do not recommend specific stocks or fund names.
+## Next Steps
+Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with SIP).`;
+    try {
+        const result = await callGeminiAPIWithRetry(prompt);
+        setGoalPlanResults(p => ({ ...p, [i]: result }));
+    } catch (e) {
+        setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
+    } finally {
+        setIsGeneratingGoalPlan(p => ({ ...p, [i]: false }));
+    }
+  };
 
   const formatDate = (dateString) => { if (!dateString) return 'N/A'; const options = { year: 'numeric', month: 'short', day: 'numeric' }; return new Date(dateString).toLocaleDateString('en-IN', options); };
 
@@ -401,7 +435,6 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80 space-y-8">
       <h2 className="text-4xl font-bold text-green-400">Welcome, <span className="text-yellow-400">{financialSummary.name || 'User'}!</span></h2>
       
-      {/* --- NEW Financial Health Score --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Financial Health Score</h3>
         <div className="bg-gray-800 p-5 rounded-xl">
@@ -420,7 +453,6 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
         </div>
       </div>
 
-      {/* --- Financial Overview --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Financial Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -433,13 +465,11 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
         </div>
       </div>
 
-      {/* --- Expense Breakdown --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Expense Breakdown</h3>
         <ExpensePieChart expenses={financialSummary.expenses} />
       </div>
 
-      {/* --- NEW Emergency Fund Planner --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Emergency Fund Planner</h3>
         <div className="bg-gray-800 p-5 rounded-xl">
@@ -452,7 +482,6 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
         </div>
       </div>
 
-      {/* --- Your Goals --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Goals</h3>
         {financialSummary.customGoals?.some(g => g.name) ? (
@@ -465,6 +494,10 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
                   <div className="flex justify-between items-center text-sm text-gray-400 mb-2"><span>Progress</span><div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>By {formatDate(g.targetDate)}</span></div></div>
                   <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
                   <p className="text-sm text-right text-gray-300">Saved: ₹{parseFloat(g.amountSaved || 0).toLocaleString('en-IN')} <span className="text-green-400">({pr.s})</span></p>
+                  <button onClick={() => handleGenerateGoalPlan(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors" disabled={isGeneratingGoalPlan[i]}>
+                      {isGeneratingGoalPlan[i] ? 'Generating Plan...' : 'Generate AI Plan'}
+                  </button>
+                  {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
                 </div>
               ) : null;
             })}
@@ -472,7 +505,6 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
         ) : (<p className="text-center text-gray-400 p-4">You haven't set any financial goals yet.</p>)}
       </div>
 
-      {/* --- Detailed Budget Analysis --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Detailed Financial Analysis</h3>
         <div className="bg-gray-800 p-5 rounded-xl">
@@ -609,7 +641,7 @@ function App() {
   
   return (
     <div>
-      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
+      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnbord} />}
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
