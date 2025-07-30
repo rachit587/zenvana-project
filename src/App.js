@@ -641,7 +641,7 @@ function App() {
   
   return (
     <div>
-      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnbord} />}
+      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
