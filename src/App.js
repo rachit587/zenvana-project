@@ -71,7 +71,7 @@ const WelcomePage = ({ onGetStarted }) => {
   );
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-x-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-y-auto overflow-x-hidden">
       <div className="absolute inset-0 z-0 opacity-10"><div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div><div className="absolute top-1/2 right-1/4 w-48 h-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div><div className="absolute bottom-1/4 left-1/2 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div></div>
       <div className="relative z-10 flex flex-col items-center w-full max-w-6xl mx-auto px-4 py-20 text-center">
         <h1 data-aos="fade-down" className="text-7xl md:text-8xl font-extrabold text-white mb-4 drop-shadow-lg bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-yellow-300">Welcome to ZENVANA</h1>
@@ -668,7 +668,7 @@ function App() {
     if (!db || !userId) { console.error("Save aborted: Firebase not ready"); throw new Error("Firebase not ready"); }
     setIsSubmitting(true);
     try {
-      const docRef = doc(db, `users/${userId}/financial_data/summary`);
+      const docRef = doc(db, `users/${user.uid}/financial_data/summary`);
       const expensesParsed = {};
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
