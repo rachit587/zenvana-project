@@ -314,13 +314,13 @@ const Dashboard = ({ financialSummary, apiKey }) => {
 };
 
 
-// --- CORRECTED: Main App Component ---
+// --- FINAL CORRECTED: Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [currentPage, setCurrentPage] = useState('welcome');
+  const [currentPage, setCurrentPage] = useState('loading'); // Start with a loading page
   const [financialSummary, setFinancialSummary] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
@@ -329,11 +329,11 @@ function App() {
     if (typeof window.__firebase_config === 'undefined') {
         console.warn("Firebase config not found. Running in a limited mode.");
         setIsAuthReady(true);
+        setCurrentPage('welcome');
         return;
     }
     
     const config = JSON.parse(window.__firebase_config);
-
     const app = initializeApp(config);
     const firestore = getFirestore(app);
     const firebaseAuth = getAuth(app);
@@ -349,18 +349,13 @@ function App() {
                 setFinancialSummary(docSnap.data());
                 setCurrentPage('dashboard');
             } else {
-                setCurrentPage('onboarding');
+                setFinancialSummary(null);
+                setCurrentPage('welcome');
             }
-            setIsAuthReady(true);
         } else {
-            const token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : null;
-            if (token) {
-                signInWithCustomToken(firebaseAuth, token).catch(() => signInAnonymously(firebaseAuth));
-            } else {
-                signInAnonymously(firebaseAuth);
-            }
-            setCurrentPage('welcome');
+            signInAnonymously(firebaseAuth).catch(err => console.error("Anonymous sign-in failed:", err));
         }
+        setIsAuthReady(true);
     });
 
     return () => unsubscribe();
@@ -368,7 +363,7 @@ function App() {
 
   const saveFinancialData = async (data) => {
     if (!db || !userId) {
-        return { success: false, error: "Authentication error: User ID not found. Please try logging out and back in." };
+        return { success: false, error: "Authentication error: User ID not found. Please try again." };
     }
     try {
       const docRef = doc(db, "users", userId);
@@ -382,8 +377,28 @@ function App() {
         return { success: false, error: error.message };
     }
   };
-
-  const callGeminiAPI = async (userMessage) => {
+  
+  const handleGetStarted = () => {
+    if (financialSummary) {
+        setCurrentPage('dashboard');
+    } else {
+        setCurrentPage('onboarding');
+    }
+  };
+  
+  const handleLogout = async () => {
+    if (!auth || !db || !userId) return;
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      await signOut(auth);
+      setFinancialSummary(null);
+      setChatHistory([]);
+      setUserId(null);
+      setCurrentPage('welcome');
+    } catch (error) { console.error("Logout error:", error); }
+  };
+  
+    const callGeminiAPI = async (userMessage) => {
     if (!apiKey) {
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: "I can't respond right now. The API key is not configured correctly." }] }]);
       return;
@@ -405,35 +420,15 @@ function App() {
     } finally { setIsGeneratingResponse(false); }
   };
 
-  const handleLogout = async () => {
-    if (!auth || !db || !userId) return;
-    try {
-      await deleteDoc(doc(db, "users", userId));
-      await signOut(auth);
-      setFinancialSummary(null);
-      setChatHistory([]);
-      setUserId(null);
-      setIsAuthReady(false);
-      setCurrentPage('welcome');
-      signInAnonymously(auth);
-    } catch (error) { console.error("Logout error:", error); }
-  };
-
-  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading Zenvana...</div>); }
-  
-  const navToOnboardOrDash = () => {
-      if (financialSummary) {
-        setCurrentPage('dashboard');
-      } else {
-        setCurrentPage('onboarding');
-      }
-  };
+  if (!isAuthReady) { 
+      return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Initializing your secure session...</div>);
+  }
 
   return (
     <div>
-      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboardOrDash} />}
+      {currentPage === 'welcome' && <WelcomePage onGetStarted={handleGetStarted} />}
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} setCurrentPage={setCurrentPage} />}
-      {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
+      {(currentPage === 'dashboard' || currentPage === 'taxSaver' || currentPage === 'aiChat') && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
           {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
           {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} />)}
