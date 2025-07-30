@@ -659,10 +659,19 @@ ${JSON.stringify(financialSummary, null, 2)}
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: apiPayloadContents }) 
       });
-      if (!response.ok) throw new Error('API call failed');
+      if (!response.ok) {
+        const errorBody = await response.json();
+        console.error("API Error Response:", errorBody);
+        throw new Error(`API call failed with status: ${response.status}`);
+      }
       const result = await response.json();
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result.candidates[0].content.parts[0].text }] }]);
-    } catch (error) { setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, I encountered an error. Please try again. Error: ${error.message}` }] }]); } finally { setIsGeneratingResponse(false); }
+    } catch (error) { 
+      console.error("Full error object:", error);
+      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, I encountered an error. Please try again. Error: ${error.message}` }] }]); 
+    } finally { 
+      setIsGeneratingResponse(false); 
+    }
   };
 
   const handleLogout = async () => {
