@@ -628,8 +628,9 @@ function App() {
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       });
 
-      if (response.status >= 500 && retries > 0) {
-        console.warn(`Server error (${response.status}). Retrying in ${delay / 1000}s...`);
+      // Handle both 503 (Server Unavailable) and 429 (Too Many Requests) errors
+      if ((response.status === 503 || response.status === 429) && retries > 0) {
+        console.warn(`API Error (${response.status}). Retrying in ${delay / 1000}s...`);
         await new Promise(res => setTimeout(res, delay));
         return callGeminiAPIWithRetry(prompt, retries - 1, delay * 2); // Exponential backoff
       }
@@ -667,13 +668,10 @@ ${JSON.stringify(financialSummary, null, 2)}
     const currentChat = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(currentChat);
 
-    const apiPayloadContents = [
-        ...currentChat.slice(-10), 
-        { role: 'user', parts: [{ text: `${systemInstruction}\n\nUser message: "${userMessage}"` }] }
-    ];
-
+    const promptForChat = `${systemInstruction}\n\n**Chat History (for context):**\n${currentChat.slice(-10).map(m => `${m.role}: ${m.parts[0].text}`).join('\n')}`;
+    
     try {
-      const result = await callGeminiAPIWithRetry(JSON.stringify(apiPayloadContents));
+      const result = await callGeminiAPIWithRetry(promptForChat);
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result }] }]);
     } catch (error) { 
       console.error("Full error object:", error);
