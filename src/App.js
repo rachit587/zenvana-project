@@ -56,21 +56,46 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
     </div>
 );
 
-// --- Welcome Page Component ---
+// --- Welcome Page Component (NEW & IMPROVED) ---
 const WelcomePage = ({ onGetStarted }) => {
   useEffect(() => { AOS.init({ duration: 1000, once: true }); }, []);
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-10"><div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div><div className="absolute top-1/2 right-1/4 w-48 h-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div><div className="absolute bottom-1/4 left-1/2 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div></div>
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto">
         <h1 data-aos="fade-down" className="text-7xl font-extrabold text-white mb-4 drop-shadow-lg">Welcome to ZENVANA</h1>
-        <p data-aos="fade-up" className="text-3xl text-gray-300 mb-10 max-w-3xl">Our mission: To empower every Indian with the knowledge and tools to achieve financial literacy and freedom.</p>
-        <button data-aos="zoom-in" data-aos-delay="200" onClick={onGetStarted} className="bg-gradient-to-r from-green-600 to-yellow-600 hover:from-green-700 hover:to-yellow-700 text-gray-900 font-bold py-5 px-12 rounded-full text-2xl transition duration-200 ease-in-out transform hover:-translate-y-2 hover:shadow-gold-glow shadow-lg mb-16">Get Started</button>
-        <section data-aos="fade-up" data-aos-delay="400" className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-10 rounded-3xl shadow-2xl border border-gray-700 mb-8 max-w-4xl w-full">
-          <h2 className="text-4xl font-bold text-green-400 mb-6">About Us & Our Vision</h2>
-          <p className="text-lg text-gray-300 mb-4 leading-relaxed">At ZENVANA, we envision a world where managing your money is intuitive, trustworthy, and stress-free. We are building the most intuitive, trustworthy, and empowering AI-driven personal finance companion, guiding users to their financial nirvana by simplifying complex financial concepts and providing actionable, personalized strategies.</p>
+        <p data-aos="fade-up" className="text-3xl text-gray-300 mb-10 max-w-3xl">Your AI financial advisor for your financial freedom</p>
+        
+        <section data-aos="fade-up" data-aos-delay="200" className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-gray-700 mb-8 max-w-3xl w-full">
+          <h2 className="text-4xl font-bold text-green-400 mb-4">Our Mission</h2>
+          <p className="text-xl text-gray-300 leading-relaxed">We believe financial expertise shouldn't be a luxury. Our mission is to empower every Indian with a personal AI advisor, making financial well-being and peace of mind a reality for all.</p>
         </section>
-        <footer className="text-gray-400 text-md mt-10">Made with love ❤️ by Rachit Banthia</footer>
+
+        <button data-aos="zoom-in" data-aos-delay="400" onClick={onGetStarted} className="bg-gradient-to-r from-green-600 to-yellow-600 hover:from-green-700 hover:to-yellow-700 text-gray-900 font-bold py-5 px-12 rounded-full text-2xl transition duration-200 ease-in-out transform hover:-translate-y-2 hover:shadow-gold-glow shadow-lg mb-16">Get Started for Free</button>
+        
+        <section data-aos="fade-up" data-aos-delay="600" className="w-full">
+            <h2 className="text-4xl font-bold text-yellow-400 mb-8">All The Tools You Need. Powered by AI.</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 text-left">
+                    <h3 className="text-2xl font-bold text-green-400 mb-3">Financial Health Score</h3>
+                    <p className="text-gray-300">Get your free, real-time Financial Health Score to understand your standing at a glance and receive a personalized plan to improve it.</p>
+                </div>
+                <div className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 text-left">
+                    <h3 className="text-2xl font-bold text-green-400 mb-3">Smart Tax Saver</h3>
+                    <p className="text-gray-300">Our interactive AI tool compares tax regimes and analyzes your income to find every possible saving for you.</p>
+                </div>
+                <div className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 text-left">
+                    <h3 className="text-2xl font-bold text-green-400 mb-3">AI Financial Mentor</h3>
+                    <p className="text-gray-300">Your personal AI finance expert, ready 24/7 to answer any question, from complex investment queries to simple budgeting tips.</p>
+                </div>
+                <div className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 text-left">
+                    <h3 className="text-2xl font-bold text-green-400 mb-3">Personalized Dashboard</h3>
+                    <p className="text-gray-300">A single, clear view of your entire financial life—net worth, expenses, savings, and goals—all in one place.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer className="text-gray-400 text-md mt-16">Made with ❤️ by Rachit Banthia</footer>
       </div>
       <style dangerouslySetInnerHTML={{ __html: `@keyframes blob{0%{transform:translate(0px,0px) scale(1)}33%{transform:translate(30px,-50px) scale(1.1)}66%{transform:translate(-20px,20px) scale(.9)}100%{transform:translate(0px,0px) scale(1)}}.animate-blob{animation:blob 7s infinite cubic-bezier(.6,.01,.3,.9)}.shadow-gold-glow{box-shadow:0 0 20px rgba(255,215,0,.6)}` }} />
     </div>
@@ -294,12 +319,9 @@ const Dashboard = ({ financialSummary, callGeminiAPIWithRetry }) => {
 
   // --- useEffect for Health Score Calculation ---
   useEffect(() => {
-    // Guard clause: Don't run if financialSummary isn't loaded yet.
-    if (!financialSummary) {
-        return;
-    }
-    
+    // This function is defined inside useEffect to capture the correct state
     const handleCalculateHealthScore = async () => {
+      if (!financialSummary) return; // Guard clause
       setIsCalculatingHealth(true);
       const prompt = `
 You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial Health Score (out of 100).
@@ -316,7 +338,7 @@ You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial 
 - **Health Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
 - **Goal Setting (10 points):** 'yes' = 10 pts. 'no' = 0 pts.
 **YOUR TASK:**
-1. Calculate the final score.
+1. Calculate the final score based on the logic.
 2. Respond ONLY in this JSON format: {"score": <calculated_score>}`;
       try {
           const result = await callGeminiAPIWithRetry(prompt);
@@ -324,7 +346,7 @@ You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial 
           setHealthScore(parsedResult.score);
       } catch (e) {
           console.error("Failed to calculate health score:", e);
-          setHealthScore(0); // Set a default score on error
+          setHealthScore(0);
       } finally {
           setIsCalculatingHealth(false);
       }
