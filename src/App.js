@@ -568,7 +568,7 @@ function App() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const apiKey = "AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc";
+  const apiKey = "AIzaSyCWwbMe2l8YRhYUPFWofqfNWhsvrTLMVVc";
 
   useEffect(() => {
     try {
