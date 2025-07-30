@@ -56,7 +56,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
     </div>
 );
 
-// --- Welcome Page Component (NEW & IMPROVED V2) ---
+// --- Welcome Page Component (NEW & IMPROVED V3 - LAYOUT FIX) ---
 const WelcomePage = ({ onGetStarted }) => {
   useEffect(() => { AOS.init({ duration: 1000, once: true }); }, []);
 
@@ -71,9 +71,9 @@ const WelcomePage = ({ onGetStarted }) => {
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center p-6 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100 relative overflow-x-hidden">
       <div className="absolute inset-0 z-0 opacity-10"><div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div><div className="absolute top-1/2 right-1/4 w-48 h-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div><div className="absolute bottom-1/4 left-1/2 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div></div>
-      <div className="relative z-10 flex flex-col items-center w-full max-w-6xl mx-auto px-4">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-6xl mx-auto px-4 py-20 text-center">
         <h1 data-aos="fade-down" className="text-7xl md:text-8xl font-extrabold text-white mb-4 drop-shadow-lg bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-yellow-300">Welcome to ZENVANA</h1>
         <p data-aos="fade-up" className="text-2xl md:text-3xl text-gray-300 mb-10 max-w-3xl">Your AI financial advisor for your financial freedom</p>
         
@@ -763,3 +763,4 @@ function App() {
 }
 
 export default App;
+
