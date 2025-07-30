@@ -558,7 +558,7 @@ function App() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const apiKey = "AIzaSyCWwbMe2l8YRhYUPFWofqfNWhsvrTLMVVc";
+  const groqApiKey = "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";
 
   useEffect(() => {
     try {
@@ -617,18 +617,24 @@ function App() {
     }
   }, [financialSummary, currentPage]);
 
-  const callGeminiAPIWithRetry = async (prompt, isSecondAttempt = false) => {
+  const callGroqAPIWithRetry = async (messages, retries = 1, delay = 3000) => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: messages,
+          model: "llama3-8b-8192"
+        })
       });
 
-      if (response.status === 503 && !isSecondAttempt) {
-        console.warn(`Server error (503). Retrying in 3s...`);
-        await new Promise(res => setTimeout(res, 3000));
-        return callGeminiAPIWithRetry(prompt, true);
+      if (response.status === 503 && retries > 0) {
+        console.warn(`Server error (503). Retrying in ${delay / 1000}s...`);
+        await new Promise(res => setTimeout(res, delay));
+        return callGroqAPIWithRetry(messages, retries - 1, delay);
       }
 
       if (!response.ok) {
@@ -638,8 +644,8 @@ function App() {
       }
 
       const result = await response.json();
-      if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
-        return result.candidates[0].content.parts[0].text;
+      if (result.choices && result.choices.length > 0 && result.choices[0].message) {
+        return result.choices[0].message.content;
       } else {
         console.error("Invalid response structure from API:", result);
         throw new Error("Received an invalid response from the AI.");
@@ -651,36 +657,32 @@ function App() {
     }
   };
 
+  const callDashboardAndTaxAPI = async (prompt) => {
+    const messages = [{ role: "user", content: prompt }];
+    return callGroqAPIWithRetry(messages);
+  };
+  
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
     const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const systemInstruction = `You are ZENVANA, a friendly, expert AI financial advisor for users in India. Your primary goal is to provide helpful, safe, and accurate financial advice.
-- The current date is ${currentDate}.
-- Your responses must be structured, polite, and encouraging.
-- **Crucially, you must ONLY answer questions related to personal finance, economics, investing, budgeting, and other money-related topics.**
-- **If the user asks a question that is NOT related to finance (e.g., about politics, celebrities, general knowledge, or personal opinions), you MUST politely decline.**
-- When declining, respond gently like this: "As ZENVANA, your AI financial companion, my expertise is focused on helping you with your financial questions. I can help you with topics like budgeting, saving, investing, or understanding taxes. How can I assist you with your finances today?" Do not answer the off-topic question at all.
+    const systemInstruction = `You are ZENVANA, a friendly, expert AI financial advisor for users in India. Your primary goal is to provide helpful, safe, and accurate financial advice. The current date is ${currentDate}. Your responses must be structured, polite, and encouraging. **Crucially, you must ONLY answer questions related to personal finance, economics, investing, budgeting, and other money-related topics.** If the user asks a question that is NOT related to finance, you MUST politely decline. When declining, respond gently like this: "As ZENVANA, your AI financial companion, my expertise is focused on helping you with your financial questions. I can help you with topics like budgeting, saving, investing, or understanding taxes. How can I assist you with your finances today?" Do not answer the off-topic question at all. Here is the user's financial profile for context: ${JSON.stringify(financialSummary, null, 2)}`;
 
-**User's Financial Profile (for context):**
-${JSON.stringify(financialSummary, null, 2)}
-`;
-
-    const currentChat = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
+    const currentChat = [...chatHistory, { role: "user", content: userMessage }];
     setChatHistory(currentChat);
 
-    const promptForChat = `${systemInstruction}\n\n**Chat History (for context):**\n${currentChat.slice(-10).map(m => `${m.role}: ${m.parts[0].text}`).join('\n')}`;
+    const messagesForAPI = [
+      { role: "system", content: systemInstruction },
+      ...currentChat.slice(-10) // Send the last 10 messages for context
+    ];
     
     try {
-      const result = await callGeminiAPIWithRetry(promptForChat);
-      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result }] }]);
+      const result = await callGroqAPIWithRetry(messagesForAPI);
+      setChatHistory(prev => [...prev, { role: "assistant", content: result }]);
     } catch (error) { 
       console.error("Full error object:", error);
-      let displayMessage = "Sorry, I encountered an error. Please try again.";
-      if (error.message.includes("429") || error.message.includes("503")) {
-          displayMessage = "My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.";
-      }
-      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: displayMessage }] }]); 
+      let displayMessage = "My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.";
+      setChatHistory(prev => [...prev, { role: "assistant", content: displayMessage }]); 
     } finally { 
       setIsGeneratingResponse(false); 
     }
@@ -717,9 +719,9 @@ ${JSON.stringify(financialSummary, null, 2)}
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} callGeminiAPIWithRetry={callGeminiAPIWithRetry} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} financialSummary={financialSummary} callGeminiAPIWithRetry={callGeminiAPIWithRetry} />)}
-          {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callChatAPI} />)}
+          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGeminiAPIWithRetry={callDashboardAndTaxAPI} />)}
+          {currentPage === 'taxSaver' && (<TaxSaver financialSummary={financialSummary} callGeminiAPIWithRetry={callDashboardAndTaxAPI} />)}
+          {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory.map(m => ({ role: m.role, parts: [{ text: m.content }] }))} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callChatAPI} />)}
         </Layout>
       )}
     </div>
