@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'; // 'useCallback' was removed here
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// --- THIS IS THE CRUCIAL CHANGE ---
-// It securely gets the API key from the Netlify environment variables you set up.
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
 // --- Markdown Renderer Component (No changes) ---
@@ -75,7 +73,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
-// --- Onboarding Components (No changes) ---
+// --- CORRECTED: Onboarding Components ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -132,7 +130,7 @@ const OnboardingStep4 = ({ formData, setFormData, nextStep, prevStep }) => {
     </div>
   );
 };
-const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit }) => (
+const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isLoading }) => (
   <div className="animate-fade-in-scale">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">A Little More About You</h3>
     <div className="space-y-6">
@@ -141,17 +139,33 @@ const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit }) => 
       <div><label className="block text-lg font-semibold mt-4 mb-2">Number of Dependents</label><input type="text" inputMode="numeric" name="dependents" value={formData.dependents} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., 0, 1, 2" /></div>
       <div><label className="block text-lg font-semibold mt-4 mb-2">Total Debt (₹)</label><input type="text" inputMode="numeric" name="debt" value={formData.debt} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800" placeholder="e.g., 150000 (home loan, personal loan, etc.)" /></div>
     </div>
-    <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={handleSubmit} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 text-xl rounded-xl">Complete Onboarding</button></div>
+    <div className="flex justify-between mt-8">
+        <button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button>
+        <button onClick={handleSubmit} disabled={isLoading} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 text-xl rounded-xl disabled:opacity-50 disabled:cursor-not-allowed ml-4">
+            {isLoading ? 'Saving...' : 'Complete Onboarding'}
+        </button>
+    </div>
   </div>
 );
-const OnboardingFlow = ({ onSubmit, initialData }) => {
+const OnboardingFlow = ({ onSubmit, initialData, setCurrentPage }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || { name: '', dateOfBirth: '', monthlyIncome: '', netWorth: '', expenses: {}, customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }], riskTolerance: '', currentInvestments: '', dependents: '', debt: '' });
+  const [isLoading, setIsLoading] = useState(false);
   const handleChange = (e) => { const { name, value } = e.target; const nF = ['monthlyIncome', 'netWorth', 'dependents', 'debt']; setFormData(p => ({ ...p, [name]: nF.includes(name) ? value.replace(/[^0-9]/g, '') : value })); };
   const nextStep = () => setCurrentStep(p => p + 1);
   const prevStep = () => setCurrentStep(p => p - 1);
-  const handleSubmit = () => { const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0); onSubmit({ ...formData, monthlyExpenses: tME }); };
-  return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} />)} </div> </div> );
+  const handleSubmit = async () => {
+      setIsLoading(true);
+      const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0);
+      const success = await onSubmit({ ...formData, monthlyExpenses: tME });
+      if (success) {
+          setCurrentPage('dashboard');
+      } else {
+          alert("There was an error saving your data. Please check your connection and try again.");
+          setIsLoading(false);
+      }
+  };
+  return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isLoading={isLoading} />)} </div> </div> );
 };
 
 // --- AI Chat Component (No changes) ---
@@ -300,7 +314,7 @@ const Dashboard = ({ financialSummary, apiKey }) => {
 };
 
 
-// --- Main App Component ---
+// --- CORRECTED: Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -313,10 +327,9 @@ function App() {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   
   useEffect(() => {
-    // This check prevents the app from crashing during the build process on Netlify
     if (typeof window.__firebase_config === 'undefined') {
         console.warn("Firebase config not found. Running in a limited mode.");
-        setIsAuthReady(true); // Allow the app to render a loading state
+        setIsAuthReady(true);
         return;
     }
     
@@ -337,9 +350,9 @@ function App() {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 setFinancialSummary(docSnap.data());
-                setCurrentPage('dashboard'); // User exists, go to dashboard
+                setCurrentPage('dashboard');
             } else {
-                setCurrentPage('onboarding'); // New user, go to onboarding
+                setCurrentPage('onboarding');
             }
             setIsAuthReady(true);
         } else {
@@ -357,7 +370,10 @@ function App() {
   }, []);
 
   const saveFinancialData = async (data) => {
-    if (!db || !userId || !appId) return;
+    if (!db || !userId || !appId) {
+        console.error("Save aborted: Missing db, userId, or appId");
+        return false;
+    }
     try {
       const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
       const expensesParsed = {};
@@ -365,8 +381,11 @@ function App() {
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
-      setCurrentPage('dashboard');
-    } catch (error) { console.error("Error saving data:", error); }
+      return true;
+    } catch (error) { 
+        console.error("Error saving data:", error);
+        return false;
+    }
   };
 
   const callGeminiAPI = async (userMessage) => {
@@ -394,18 +413,13 @@ function App() {
   const handleLogout = async () => {
     if (!auth || !db || !userId || !appId) return;
     try {
-      // The unused 'user' variable was removed from here
-      // Delete user data first
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
-      // Then sign out
       await signOut(auth);
-      // Reset all state
       setFinancialSummary(null);
       setChatHistory([]);
       setUserId(null);
-      setIsAuthReady(false); // Set to false to re-trigger auth flow
+      setIsAuthReady(false);
       setCurrentPage('welcome');
-      // Re-authenticate anonymously to get a new user session
       signInAnonymously(auth);
     } catch (error) { console.error("Logout error:", error); }
   };
@@ -423,7 +437,7 @@ function App() {
   return (
     <div>
       {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboardOrDash} />}
-      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} />}
+      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} setCurrentPage={setCurrentPage} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
           {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
