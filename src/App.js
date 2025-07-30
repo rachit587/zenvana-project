@@ -7,6 +7,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 // --- DEFINITIVE FIX: Firebase Configuration ---
+// The Firebase configuration is now hardcoded here to ensure a reliable connection.
 const firebaseConfig = {
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
