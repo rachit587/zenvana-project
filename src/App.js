@@ -5,14 +5,12 @@ import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // --- Configuration ---
-// API Keys are directly included here.
-// **CRITICAL FIX**: Corrected the storageBucket URL.
-
+// **DEBUGGING STEP**: We are logging this config to the console to ensure it's correct.
 const firebaseConfig = {
   apiKey: "AIzaSyDJN0_LUSWEtCNLNryPIUjaviJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
   projectId: "zenvana-web",
-  storageBucket: "zenvana-web.appspot.com", // <-- THIS WAS THE ERROR. IT'S NOW CORRECTED.
+  storageBucket: "zenvana-web.appspot.com",
   messagingSenderId: "783039988566",
   appId: "1:783039988566:web:6e8948d86341d4885eccf7",
   measurementId: "G-TVZF4SK0YG"
@@ -20,10 +18,22 @@ const firebaseConfig = {
 
 const geminiApiKey = "AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc";
 
+// --- Debugging ---
+console.log("Attempting to initialize Firebase with this configuration:", firebaseConfig);
+
 // --- Initialize Firebase ---
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+let app;
+let auth;
+let db;
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  console.log("Firebase initialized successfully.");
+} catch (error) {
+  console.error("CRITICAL: Firebase initialization failed.", error);
+  // If initialization itself fails, we can't proceed.
+}
 
 
 // --- Reusable Components ---
@@ -348,6 +358,11 @@ function App() {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
+    if (!auth || !db) {
+        setAuthError("Firebase failed to initialize. Please check the console for critical errors.");
+        setIsAuthReady(true);
+        return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setAuthError(null);
@@ -363,7 +378,13 @@ function App() {
       } else {
         signInAnonymously(auth).catch(err => {
           console.error("Firebase sign-in error:", err);
-          setAuthError("Could not connect to the database. Please ensure your Firebase API key is correct and that Anonymous Authentication is enabled in your Firebase project.");
+          // This detailed error message is key for debugging.
+          setAuthError(`Could not connect to the database. This usually means there is a problem with the Firebase project configuration.
+          Please double-check the following:
+          1. The API Key in the code is 100% correct.
+          2. 'Anonymous Authentication' is enabled in the Firebase Console.
+          3. There are no 'Website restrictions' on your API key in the Google Cloud Console, or if there are, 'www.zenvana.live' is on the allowed list.
+          4. Your browser cache is cleared (try a hard refresh: Ctrl+Shift+R).`);
         });
       }
       setIsAuthReady(true);
@@ -423,7 +444,7 @@ function App() {
 
   // Render logic
   if (authError) {
-    return <div className="flex items-center justify-center min-h-screen bg-red-900 text-white p-8 text-center"><h1 className="text-2xl">{authError}</h1></div>;
+    return <div className="flex items-center justify-center min-h-screen bg-red-900 text-white p-8 text-center"><h1 className="text-2xl whitespace-pre-wrap">{authError}</h1></div>;
   }
   if (!isAuthReady || currentPage === 'loading') {
     return <div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Initializing...</div>;
