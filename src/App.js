@@ -6,8 +6,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-// --- DEFINITIVE FIX: Firebase Configuration ---
-// The Firebase configuration is now hardcoded here to ensure a reliable connection.
+// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
