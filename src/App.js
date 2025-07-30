@@ -4,6 +4,18 @@ import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCust
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+// --- DEFINITIVE FIX: Firebase Configuration ---
+// The Firebase configuration is now hardcoded here to ensure a reliable connection.
+const firebaseConfig = {
+  apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
+  authDomain: "zenvana-web.firebaseapp.com",
+  projectId: "zenvana-web",
+  storageBucket: "zenvana-web.appspot.com",
+  messagingSenderId: "783039988566",
+  appId: "1:783039988566:web:6e8948d86341d4805eccf7",
+  measurementId: "G-TVZF4SK0YG"
+};
+
 
 // --- Markdown Renderer Component (No changes) ---
 const MarkdownRenderer = ({ text }) => {
