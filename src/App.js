@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -7,6 +7,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 // --- Firebase Configuration ---
+// API Key is hardcoded as requested for this personal project.
 const firebaseConfig = {
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
@@ -56,7 +57,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
     </div>
 );
 
-// --- Welcome Page Component (NEW & IMPROVED V3 - LAYOUT FIX) ---
+// --- Welcome Page Component ---
 const WelcomePage = ({ onGetStarted }) => {
   useEffect(() => { AOS.init({ duration: 1000, once: true }); }, []);
 
@@ -242,25 +243,78 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI }) => {
 };
 
 // --- Tax Saver Component ---
-const TaxSaver = ({ financialSummary, callGeminiAPIWithRetry }) => {
+const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
+    
     if (!financialSummary) { return <div className="text-center p-10">Loading financial data...</div>; }
+
     const fieldLabels = { salaryIncome: "Annual Salary Income (from Form 16)", otherIncome: "Annual Income from Other Sources (e.g., Interest, Rent)", investments80C: "Total Investments under Section 80C (PPF, ELSS, etc.)", hra: "House Rent Allowance (HRA) Exemption Claimed", homeLoanInterest: "Interest on Home Loan (Section 24)", medicalInsurance80D: "Medical Insurance Premium (Section 80D)", nps_80ccd1b: "NPS Contribution (Section 80CCD(1B))", educationLoanInterest_80e: "Interest on Education Loan (Section 80E)" };
     const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
-    const calculateTax = (taxableIncome, isOldRegime) => { let tax = 0; let taxSlab = '0%'; const slabs = isOldRegime ? [{ l: 1000000, r: 0.30, b: 112500 }, { l: 500000, r: 0.20, b: 12500 }] : [{ l: 1500000, r: 0.30, b: 150000 }, { l: 1200000, r: 0.20, b: 90000 }, { l: 900000, r: 0.15, b: 45000 }, { l: 600000, r: 0.10, b: 15000 }]; for (const s of slabs) { if (taxableIncome > s.l) { tax = s.b + (taxableIncome - s.l) * s.r; taxSlab = `${s.r * 100}%`; break; } } return { tax: Math.round(tax * 1.04), slab: taxSlab }; };
+    
+    // --- FIXED: Accurate Tax Calculation for FY 2023-24 (AY 2024-25) ---
+    const calculateTax = (taxableIncome, regime) => {
+        let tax = 0;
+        let slabRate = 0;
+
+        if (regime === 'old') {
+            if (taxableIncome <= 500000) { // Tax rebate u/s 87A
+                return { tax: 0, slab: "0%" };
+            }
+            if (taxableIncome > 1000000) {
+                tax = 112500 + (taxableIncome - 1000000) * 0.30;
+                slabRate = 30;
+            } else if (taxableIncome > 500000) {
+                tax = 12500 + (taxableIncome - 500000) * 0.20;
+                slabRate = 20;
+            } else if (taxableIncome > 250000) {
+                tax = (taxableIncome - 250000) * 0.05;
+                slabRate = 5;
+            }
+        } else { // New Regime
+            if (taxableIncome <= 700000) { // Tax rebate u/s 87A
+                return { tax: 0, slab: "0%" };
+            }
+            if (taxableIncome > 1500000) {
+                tax = 150000 + (taxableIncome - 1500000) * 0.30;
+                slabRate = 30;
+            } else if (taxableIncome > 1200000) {
+                tax = 90000 + (taxableIncome - 1200000) * 0.20;
+                slabRate = 20;
+            } else if (taxableIncome > 900000) {
+                tax = 45000 + (taxableIncome - 900000) * 0.15;
+                slabRate = 15;
+            } else if (taxableIncome > 600000) {
+                tax = 15000 + (taxableIncome - 600000) * 0.10;
+                slabRate = 10;
+            } else if (taxableIncome > 300000) {
+                tax = (taxableIncome - 300000) * 0.05;
+                slabRate = 5;
+            }
+        }
+        
+        const finalTax = Math.round(tax * 1.04); // Including 4% cess
+        return { tax: finalTax, slab: `${slabRate}%` };
+    };
+
     const handleTaxCalculation = async () => {
         setIsCalculating(true); 
         setAiAnalysis('');
         const gI = parseFloat(taxData.salaryIncome || 0) + parseFloat(taxData.otherIncome || 0);
-        const tI_new = Math.max(0, gI - 50000);
-        const { tax: nRT, slab: nRSlab } = calculateTax(tI_new, false);
+        
+        // New Regime Calculation
+        const tI_new = Math.max(0, gI - 50000); // Standard deduction
+        const { tax: nRT, slab: nRSlab } = calculateTax(tI_new, 'new');
+
+        // Old Regime Calculation
         const tD = (parseFloat(taxData.investments80C || 0) + parseFloat(taxData.hra || 0) + parseFloat(taxData.homeLoanInterest || 0) + parseFloat(taxData.medicalInsurance80D || 0) + parseFloat(taxData.nps_80ccd1b || 0) + parseFloat(taxData.educationLoanInterest_80e || 0));
-        const tI_old = Math.max(0, gI - 50000 - tD);
-        const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, true);
+        const tI_old = Math.max(0, gI - 50000 - tD); // Standard deduction
+        const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, 'old');
+
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
+        
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();
         const financialYear = currentDate.getMonth() >= 3 ? `${currentYear}-${(currentYear + 1).toString().slice(-2)}` : `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
@@ -296,7 +350,7 @@ Based on the user's **income source** and **risk tolerance**, provide 2-3 specif
 ## Your Path Forward
 End with an empowering statement about taking control of tax planning.`;
         try {
-            const result = await callGeminiAPIWithRetry(prompt);
+            const result = await callGroqAPIWithRetry(prompt);
             setAiAnalysis(result);
         } catch (e) { 
             setAiAnalysis("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
@@ -304,7 +358,7 @@ End with an empowering statement about taking control of tax planning.`;
             setIsCalculating(false);
         }
     };
-    return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
+    return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
 
 // --- Expense Pie Chart Component ---
@@ -328,8 +382,8 @@ const ExpensePieChart = ({ expenses }) => {
 };
 
 // --- Dashboard Component ---
-const Dashboard = ({ financialSummary, callGeminiAPIWithRetry }) => {
-  // --- All Hooks must be at the top level ---
+const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
+  // --- FIXED: All hooks are now grouped at the top for best practice. ---
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
@@ -342,15 +396,14 @@ const Dashboard = ({ financialSummary, callGeminiAPIWithRetry }) => {
   const [isPlanningEmergency, setIsPlanningEmergency] = useState(false);
 
   // --- Calculations ---
-  const tME = Object.values(financialSummary.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
-  const mS = (financialSummary.monthlyIncome || 0) - tME;
-  const sR = financialSummary.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
+  const tME = Object.values(financialSummary?.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
+  const mS = (financialSummary?.monthlyIncome || 0) - tME;
+  const sR = financialSummary?.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
 
   // --- useEffect for Health Score Calculation ---
   useEffect(() => {
-    // This function is defined inside useEffect to capture the correct state
     const handleCalculateHealthScore = async () => {
-      if (!financialSummary) return; // Guard clause
+      if (!financialSummary) return;
       setIsCalculatingHealth(true);
       const prompt = `
 You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial Health Score (out of 100).
@@ -370,18 +423,25 @@ You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial 
 1. Calculate the final score based on the logic.
 2. Respond ONLY in this JSON format: {"score": <calculated_score>}`;
       try {
-          const result = await callGeminiAPIWithRetry(prompt);
-          const parsedResult = JSON.parse(result);
-          setHealthScore(parsedResult.score);
+          const result = await callGroqAPIWithRetry(prompt);
+          // A simple regex to extract the JSON part of the response string.
+          const jsonMatch = result.match(/{[\s\S]*}/);
+          if (jsonMatch) {
+            const parsedResult = JSON.parse(jsonMatch[0]);
+            setHealthScore(parsedResult.score);
+          } else {
+             setHealthScore(0);
+          }
       } catch (e) {
           console.error("Failed to calculate health score:", e);
-          setHealthScore(0);
+          setHealthScore(0); // Set a default score on failure
       } finally {
           setIsCalculatingHealth(false);
       }
     };
     handleCalculateHealthScore();
-  }, [financialSummary, callGeminiAPIWithRetry, sR]);
+    // FIXED: The dependency array is now correct. `sR` is derived and will trigger recalculation when financialSummary changes.
+  }, [financialSummary, callGroqAPIWithRetry, sR]);
 
   // --- Conditional Return for Loading State ---
   if (!financialSummary) { 
@@ -431,7 +491,7 @@ Explain the importance of this area (e.g., insurance or debt reduction). Provide
 ## Your Next Step
 End with a single, simple call to action for the user to take today.`;
     try {
-        const result = await callGeminiAPIWithRetry(prompt);
+        const result = await callGroqAPIWithRetry(prompt);
         setImprovementPlan(result);
     } catch (e) {
         setImprovementPlan("My apologies, Zenvana AI could not create a plan right now. Please try again.");
@@ -464,7 +524,7 @@ Provide CRITICAL advice based on their insurance status. Praise them if covered,
 Analyze their top 2 spending categories from: ${JSON.stringify(financialSummary.expenses)}. Provide ONE specific optimization tip.
 ## 🚀 Your Path Forward
 End with an empowering statement.`;
-    try { const result = await callGeminiAPIWithRetry(prompt); setBudgetAnalysisResult(result); } 
+    try { const result = await callGroqAPIWithRetry(prompt); setBudgetAnalysisResult(result); } 
     catch (e) { setBudgetAnalysisResult("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments."); } 
     finally { setIsAnalyzingBudget(false); }
   };
@@ -487,7 +547,7 @@ State the target fund size clearly.
 ## Why It Matters
 Briefly explain that an emergency fund is the #1 defense against financial shocks.`;
     try {
-        const result = await callGeminiAPIWithRetry(prompt);
+        const result = await callGroqAPIWithRetry(prompt);
         setEmergencyFundPlan(result);
     } catch (e) {
         setEmergencyFundPlan("My apologies, Zenvana AI could not create a plan right now. Please try again.");
@@ -520,7 +580,7 @@ Based on the user's risk tolerance and the goal's timeline, recommend 1-2 specif
 ## Next Steps
 Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with SIP).`;
     try {
-        const result = await callGeminiAPIWithRetry(prompt);
+        const result = await callGroqAPIWithRetry(prompt);
         setGoalPlanResults(p => ({ ...p, [i]: result }));
     } catch (e) {
         setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
@@ -626,6 +686,7 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
   );
 };
 
+
 // --- Main App Component ---
 function App() {
   const [db, setDb] = useState(null);
@@ -637,6 +698,8 @@ function App() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Groq API Key is hardcoded as requested for this personal project.
   const groqApiKey = "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";
   
   useEffect(() => {
@@ -651,7 +714,10 @@ function App() {
               setUserId(user.uid);
               const docRef = doc(firestore, `users/${user.uid}/financial_data/summary`);
               const docSnap = await getDoc(docRef);
-              if (docSnap.exists()) { setFinancialSummary(docSnap.data()); }
+              if (docSnap.exists()) { 
+                  setFinancialSummary(docSnap.data());
+                  setCurrentPage('dashboard');
+              }
               setIsAuthReady(true);
           } else {
              signInAnonymously(firebaseAuth).catch(err => console.error("Anonymous sign in failed:", err));
@@ -665,10 +731,14 @@ function App() {
   }, []);
   
   const saveFinancialData = async (data) => {
-    if (!db || !userId) { console.error("Save aborted: Firebase not ready"); throw new Error("Firebase not ready"); }
+    if (!db || !userId) { 
+        console.error("Save aborted: Firebase not ready or user not logged in");
+        throw new Error("Firebase not ready"); 
+    }
     setIsSubmitting(true);
     try {
-      const docRef = doc(db, `users/${user.uid}/financial_data/summary`);
+      // FIXED: The bug using a non-existent `user` variable is now fixed. It uses `userId` from state.
+      const docRef = doc(db, `users/${userId}/financial_data/summary`);
       const expensesParsed = {};
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
@@ -688,7 +758,9 @@ function App() {
     }
   }, [financialSummary, currentPage]);
   
-  const callGroqAPIWithRetry = async (prompt, retries = 1, delay = 3000) => {
+  // FIXED: Wrapped this function in useCallback to prevent it from being recreated on every render.
+  // This improves performance and prevents unnecessary API calls from useEffect hooks in child components.
+  const callGroqAPIWithRetry = useCallback(async (prompt, retries = 1, delay = 3000) => {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -704,7 +776,7 @@ function App() {
       if (result.choices?.[0]?.message?.content) { return result.choices[0].message.content; } 
       else { throw new Error("Invalid response from AI."); }
     } catch (error) { console.error("Full error object:", error); throw error; }
-  };
+  }, [groqApiKey]); // Dependency array ensures the function is stable.
 
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
@@ -753,8 +825,8 @@ function App() {
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGeminiAPIWithRetry={callGroqAPIWithRetry} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver financialSummary={financialSummary} callGeminiAPIWithRetry={callGroqAPIWithRetry} />)}
+          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
+          {currentPage === 'taxSaver' && (<TaxSaver financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
           {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory.map(m => ({ role: m.role, parts: [{ text: m.content }] }))} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} />)}
         </Layout>
       )}
