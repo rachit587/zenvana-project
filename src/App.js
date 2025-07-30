@@ -281,7 +281,9 @@ const Dashboard = ({ financialSummary, callGeminiAPIWithRetry }) => {
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
   const [healthScore, setHealthScore] = useState(null);
   const [healthReport, setHealthReport] = useState('');
-  const [isCalculatingHealth, setIsCalculatingHealth] = useState(false);
+  const [isCalculatingHealth, setIsCalculatingHealth] = useState(true); // Start in loading state
+  const [improvementPlan, setImprovementPlan] = useState('');
+  const [isGeneratingImprovement, setIsGeneratingImprovement] = useState(false);
   const [emergencyFundPlan, setEmergencyFundPlan] = useState('');
   const [isPlanningEmergency, setIsPlanningEmergency] = useState(false);
 
@@ -289,13 +291,85 @@ const Dashboard = ({ financialSummary, callGeminiAPIWithRetry }) => {
 
   const tME = Object.values(financialSummary.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
   const mS = (financialSummary.monthlyIncome || 0) - tME;
-  const sR = financialSummary.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
+  const sR = financialSummary.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0; // Allow negative
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
   const formatOptionText = (option) => {
     if (!option) return 'Not Specified';
     const map = { 'salaried': 'Salaried', 'self_employed': 'Self-Employed / Business', 'freelancer': 'Freelancer', 'other': 'Other', 'low': 'Low (Prioritizes safety)', 'medium': 'Medium (Balanced approach)', 'high': 'High (Seeks higher returns)', 'retirement': 'Saving enough for retirement', 'debt': 'Getting out of debt', 'taxes': 'High taxes', 'investing': 'Not knowing where to invest', 'expenses': 'Managing daily expenses', 'yes': 'Yes', 'no': 'No', 'not_sure': 'Not Sure' };
     return map[option] || option.charAt(0).toUpperCase() + option.slice(1);
+  };
+
+  useEffect(() => {
+    const handleCalculateHealthScore = async () => {
+      setIsCalculatingHealth(true);
+      const prompt = `
+You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial Health Score (out of 100) and provide a report based on the user's data.
+**USER DATA:**
+- Savings Rate: ${sR.toFixed(2)}%
+- Debt-to-Income Ratio (approximated): ${financialSummary.monthlyIncome > 0 ? ((parseFloat(financialSummary.debt || 0) / (parseFloat(financialSummary.monthlyIncome) * 12)) * 100).toFixed(2) : 0}%
+- Term Life Insurance: ${financialSummary.termInsurance}
+- Health Insurance: ${financialSummary.healthInsurance}
+- Has Financial Goals: ${financialSummary.customGoals?.some(g => g.name) ? 'Yes' : 'No'}
+**SCORING LOGIC (out of 100):**
+- **Savings Rate (40 points):** A rate >= 30% gets 40 pts. A rate of 20% gets 30 pts. A rate of 10% gets 20 pts. A rate of 0% gets 10 pts. A negative rate gets 0 pts.
+- **Debt Level (20 points):** DTI < 30% = 20 pts. DTI 30-50% = 10 pts. DTI > 50% = 0 pts.
+- **Life Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
+- **Health Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
+- **Goal Setting (10 points):** 'yes' = 10 pts. 'no' = 0 pts.
+**YOUR TASK:**
+1. Calculate the final score based on the logic.
+2. Generate a brief report explaining the score.
+3. Respond ONLY in this JSON format: {"score": <calculated_score>, "report": "<markdown_report>"}
+The report must have these sections:
+## Your Score Explained
+Briefly explain what their score means (e.g., "A great start!", "Needs attention").
+## Strengths
+Mention 1-2 areas where they are doing well.
+## Areas for Improvement
+Mention 1-2 areas that need attention.`;
+      try {
+          const result = await callGeminiAPIWithRetry(prompt);
+          const parsedResult = JSON.parse(result);
+          setHealthScore(parsedResult.score);
+          setHealthReport(parsedResult.report);
+      } catch (e) {
+          setHealthReport("My apologies, Zenvana AI could not calculate the score right now. Please try again.");
+      } finally {
+          setIsCalculatingHealth(false);
+      }
+    };
+    handleCalculateHealthScore();
+  }, [financialSummary, callGeminiAPIWithRetry, sR]);
+
+  const handleGenerateImprovementPlan = async () => {
+    setIsGeneratingImprovement(true);
+    setImprovementPlan('');
+    const prompt = `
+You are ZENVANA, an AI financial advisor. The user has a financial health score of ${healthScore}/100 and wants to improve it.
+**USER PROFILE:**
+- Savings Rate: ${sR.toFixed(2)}%
+- Debt: ₹${parseFloat(financialSummary.debt || 0).toLocaleString('en-IN')}
+- Insurance: Term Life: ${formatOptionText(financialSummary.termInsurance)}, Health: ${formatOptionText(financialSummary.healthInsurance)}
+- Top Financial Worry: "${formatOptionText(financialSummary.financialWorry)}"
+**YOUR TASK:**
+Provide a detailed, medium-length explanation in Markdown on how to improve their financial health score. Focus on the 2-3 most impactful areas. Structure your response with clear headings and actionable steps.
+## Your Path to a Better Score
+Start with an encouraging sentence.
+## Priority 1: [Identify the biggest weakness, e.g., Boost Your Savings Rate]
+Explain *why* this is important. Provide 2-3 practical, actionable tips. For example, if savings are low, suggest the "pay yourself first" method or trimming a specific high-expense category.
+## Priority 2: [Identify the second biggest weakness, e.g., Strengthen Your Safety Net]
+Explain the importance of this area (e.g., insurance or debt reduction). Provide clear next steps, like "Research term insurance plans online this weekend" or "Consider the 'snowball' method to start paying down your smallest debt."
+## Your Next Step
+End with a single, simple call to action for the user to take today.`;
+    try {
+        const result = await callGeminiAPIWithRetry(prompt);
+        setImprovementPlan(result);
+    } catch (e) {
+        setImprovementPlan("My apologies, Zenvana AI could not create a plan right now. Please try again.");
+    } finally {
+        setIsGeneratingImprovement(false);
+    }
   };
 
   const handleAnalyzeBudget = async () => {
@@ -306,7 +380,7 @@ You are ZENVANA, an elite AI financial advisor for India. Your tone is empatheti
 **USER PROFILE SUMMARY**
 - Name: ${financialSummary.name || 'User'}, Age: ${userAge}
 - Income Source: ${formatOptionText(financialSummary.incomeSource)}
-- Monthly Income: ₹${parseFloat(financialSummary.monthlyIncome || 0).toLocaleString('en-IN')} (Savings Rate: ${sR}%)
+- Monthly Income: ₹${parseFloat(financialSummary.monthlyIncome || 0).toLocaleString('en-IN')} (Savings Rate: ${sR.toFixed(2)}%)
 - Top Financial Worry: "${formatOptionText(financialSummary.financialWorry)}"
 - Insurance: Term Life: ${formatOptionText(financialSummary.termInsurance)}, Health: ${formatOptionText(financialSummary.healthInsurance)}
 **YOUR TASK: Generate a comprehensive financial health analysis in Markdown.**
@@ -328,45 +402,6 @@ End with an empowering statement.`;
     finally { setIsAnalyzingBudget(false); }
   };
   
-  const handleCalculateHealthScore = async () => {
-    setIsCalculatingHealth(true); setHealthReport(''); setHealthScore(null);
-    const prompt = `
-You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial Health Score (out of 100) and provide a report based on the user's data.
-**USER DATA:**
-- Savings Rate: ${sR}%
-- Debt-to-Income Ratio (approximated): ${financialSummary.monthlyIncome > 0 ? ((parseFloat(financialSummary.debt || 0) / (parseFloat(financialSummary.monthlyIncome) * 12)) * 100).toFixed(2) : 0}%
-- Term Life Insurance: ${financialSummary.termInsurance}
-- Health Insurance: ${financialSummary.healthInsurance}
-- Has Financial Goals: ${financialSummary.customGoals?.some(g => g.name) ? 'Yes' : 'No'}
-**SCORING LOGIC (out of 100):**
-- **Savings Rate (40 points):** 0% savings = 0 pts. 10% = 20 pts. 20% = 30 pts. >30% = 40 pts.
-- **Debt Level (20 points):** DTI > 50% = 0 pts. DTI 30-50% = 10 pts. DTI < 30% = 20 pts.
-- **Life Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
-- **Health Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
-- **Goal Setting (10 points):** 'yes' = 10 pts. 'no' = 0 pts.
-**YOUR TASK:**
-1. Calculate the final score based on the logic.
-2. Generate a brief report explaining the score.
-3. Respond ONLY in this JSON format: {"score": <calculated_score>, "report": "<markdown_report>"}
-The report must have these sections:
-## Your Score Explained
-Briefly explain what their score means.
-## Strengths
-Mention 1-2 areas where they are doing well (e.g., "Excellent savings rate!").
-## Areas for Improvement
-Mention 1-2 areas that need attention and suggest one actionable step for each.`;
-    try {
-        const result = await callGeminiAPIWithRetry(prompt);
-        const parsedResult = JSON.parse(result);
-        setHealthScore(parsedResult.score);
-        setHealthReport(parsedResult.report);
-    } catch (e) {
-        setHealthReport("My apologies, Zenvana AI could not calculate the score right now. Please try again.");
-    } finally {
-        setIsCalculatingHealth(false);
-    }
-  };
-
   const handleGenerateEmergencyPlan = async () => {
     setIsPlanningEmergency(true); setEmergencyFundPlan('');
     const targetFund = tME * 6;
@@ -431,28 +466,17 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
 
   const formatDate = (dateString) => { if (!dateString) return 'N/A'; const options = { year: 'numeric', month: 'short', day: 'numeric' }; return new Date(dateString).toLocaleDateString('en-IN', options); };
 
+  const getScoreColor = (score) => {
+    if (score === null) return 'text-gray-400';
+    if (score >= 75) return 'text-green-400';
+    if (score >= 50) return 'text-yellow-400';
+    return 'text-red-500';
+  };
+
   return (
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80 space-y-8">
       <h2 className="text-4xl font-bold text-green-400">Welcome, <span className="text-yellow-400">{financialSummary.name || 'User'}!</span></h2>
       
-      <div>
-        <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Financial Health Score</h3>
-        <div className="bg-gray-800 p-5 rounded-xl">
-          {healthScore === null && (
-            <button onClick={handleCalculateHealthScore} className="w-full bg-green-600 font-bold py-3 rounded-xl" disabled={isCalculatingHealth}>
-              {isCalculatingHealth ? 'Calculating...' : 'Calculate My Health Score'}
-            </button>
-          )}
-          {healthScore !== null && (
-            <div className="text-center">
-                <p className="text-gray-400">Your Score</p>
-                <p className="text-6xl font-extrabold text-green-400 my-2">{healthScore}<span className="text-3xl">/100</span></p>
-            </div>
-          )}
-          {healthReport && <div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={healthReport} /></div>}
-        </div>
-      </div>
-
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Financial Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -460,8 +484,34 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Income</span><span className="font-bold text-3xl text-green-400 mt-1">₹{parseFloat(financialSummary.monthlyIncome || 0).toLocaleString('en-IN')}</span></div>
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Expenses</span><span className="font-bold text-3xl text-yellow-400 mt-1">₹{tME.toLocaleString('en-IN')}</span></div>
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Savings</span><span className="font-bold text-3xl text-green-400 mt-1">₹{mS.toLocaleString('en-IN')}</span></div>
-          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className="font-bold text-3xl text-green-400 mt-1">{sR}%</span></div>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className={`font-bold text-3xl mt-1 ${sR < 0 ? 'text-red-500' : 'text-green-400'}`}>{sR.toFixed(2)}%</span></div>
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Financial Health Score</h3>
+        <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center">
+          {isCalculatingHealth ? (
+            <div className="text-gray-400">Calculating your score...</div>
+          ) : (
+            <>
+              <div className={`relative w-48 h-48 flex items-center justify-center`}>
+                  <svg className="absolute w-full h-full" viewBox="0 0 36 36">
+                      <path className="text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeWidth="3"></path>
+                      <path className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeWidth="3" strokeLinecap="round"></path>
+                  </svg>
+                  <div className={`text-5xl font-extrabold ${getScoreColor(healthScore)}`}>
+                      {healthScore !== null ? healthScore : '--'}
+                  </div>
+              </div>
+              <p className="text-gray-400 mt-4 mb-4">This score reflects your current financial health.</p>
+              <button onClick={handleGenerateImprovementPlan} className="w-full max-w-sm bg-green-600 font-bold py-3 rounded-xl" disabled={isGeneratingImprovement}>
+                {isGeneratingImprovement ? 'Generating Plan...' : 'Get AI Plan to Improve'}
+              </button>
+            </>
+          )}
+          {improvementPlan && <div className="mt-4 p-3 bg-gray-900 rounded-xl w-full"><MarkdownRenderer text={improvementPlan} /></div>}
         </div>
       </div>
 
