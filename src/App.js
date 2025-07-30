@@ -73,7 +73,7 @@ const WelcomePage = ({ onGetStarted }) => (
   </div>
 );
 
-// --- Onboarding Components ---
+// --- Onboarding Components (No changes) ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -147,7 +147,7 @@ const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isLoa
     </div>
   </div>
 );
-const OnboardingFlow = ({ onSubmit, initialData, setCurrentPage }) => {
+const OnboardingFlow = ({ onSubmit, initialData, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || { name: '', dateOfBirth: '', monthlyIncome: '', netWorth: '', expenses: {}, customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }], riskTolerance: '', currentInvestments: '', dependents: '', debt: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -159,7 +159,7 @@ const OnboardingFlow = ({ onSubmit, initialData, setCurrentPage }) => {
       const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0);
       const result = await onSubmit({ ...formData, monthlyExpenses: tME });
       if (result.success) {
-          setCurrentPage('dashboard');
+          onComplete();
       } else {
           alert(`Save Failed: ${result.error}`);
           setIsLoading(false);
@@ -351,10 +351,10 @@ function App() {
                 setFinancialSummary(null);
                 setCurrentPage('welcome');
             }
+            setIsAuthReady(true);
         } else {
             signInAnonymously(firebaseAuth).catch(err => console.error("Anonymous sign-in failed:", err));
         }
-        setIsAuthReady(true);
     });
 
     return () => unsubscribe();
@@ -393,7 +393,8 @@ function App() {
       setFinancialSummary(null);
       setChatHistory([]);
       setUserId(null);
-      setCurrentPage('welcome');
+      setIsAuthReady(false);
+      setCurrentPage('loading');
     } catch (error) { 
         console.error("Logout error:", error);
         alert("Error logging out. Please try again.");
@@ -422,16 +423,12 @@ function App() {
     } finally { setIsGeneratingResponse(false); }
   };
 
-  if (!isAuthReady) { 
-      return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Initializing your secure session...</div>);
-  }
-
   const renderCurrentPage = () => {
       switch(currentPage) {
           case 'welcome':
               return <WelcomePage onGetStarted={handleGetStarted} />;
           case 'onboarding':
-              return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} setCurrentPage={setCurrentPage} />;
+              return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} onComplete={() => setCurrentPage('dashboard')} />;
           case 'dashboard':
           case 'taxSaver':
           case 'aiChat':
@@ -443,7 +440,7 @@ function App() {
                   </Layout>
               );
           default:
-              return <div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>;
+              return <div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Initializing your secure session...</div>;
       }
   }
 
