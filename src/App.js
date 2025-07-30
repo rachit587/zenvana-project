@@ -275,36 +275,34 @@ const ExpensePieChart = ({ expenses }) => {
 
 // --- Dashboard Component ---
 const Dashboard = ({ financialSummary, callGeminiAPIWithRetry }) => {
+  // --- All Hooks must be at the top level ---
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
   const [healthScore, setHealthScore] = useState(null);
-  const [healthReport, setHealthReport] = useState('');
-  const [isCalculatingHealth, setIsCalculatingHealth] = useState(true); // Start in loading state
+  const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
   const [improvementPlan, setImprovementPlan] = useState('');
   const [isGeneratingImprovement, setIsGeneratingImprovement] = useState(false);
   const [emergencyFundPlan, setEmergencyFundPlan] = useState('');
   const [isPlanningEmergency, setIsPlanningEmergency] = useState(false);
 
-  if (!financialSummary) { return ( <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80"><h2 className="text-4xl font-bold text-green-400 mb-6">Welcome!</h2><div className="flex items-center justify-center h-64"><p className="text-gray-400 text-lg">Loading your financial dashboard...</p></div></section> ); }
-
+  // --- Calculations ---
   const tME = Object.values(financialSummary.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
   const mS = (financialSummary.monthlyIncome || 0) - tME;
-  const sR = financialSummary.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0; // Allow negative
-  const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
+  const sR = financialSummary.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
 
-  const formatOptionText = (option) => {
-    if (!option) return 'Not Specified';
-    const map = { 'salaried': 'Salaried', 'self_employed': 'Self-Employed / Business', 'freelancer': 'Freelancer', 'other': 'Other', 'low': 'Low (Prioritizes safety)', 'medium': 'Medium (Balanced approach)', 'high': 'High (Seeks higher returns)', 'retirement': 'Saving enough for retirement', 'debt': 'Getting out of debt', 'taxes': 'High taxes', 'investing': 'Not knowing where to invest', 'expenses': 'Managing daily expenses', 'yes': 'Yes', 'no': 'No', 'not_sure': 'Not Sure' };
-    return map[option] || option.charAt(0).toUpperCase() + option.slice(1);
-  };
-
+  // --- useEffect for Health Score Calculation ---
   useEffect(() => {
+    // Guard clause: Don't run if financialSummary isn't loaded yet.
+    if (!financialSummary) {
+        return;
+    }
+    
     const handleCalculateHealthScore = async () => {
       setIsCalculatingHealth(true);
       const prompt = `
-You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial Health Score (out of 100) and provide a report based on the user's data.
+You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial Health Score (out of 100).
 **USER DATA:**
 - Savings Rate: ${sR.toFixed(2)}%
 - Debt-to-Income Ratio (approximated): ${financialSummary.monthlyIncome > 0 ? ((parseFloat(financialSummary.debt || 0) / (parseFloat(financialSummary.monthlyIncome) * 12)) * 100).toFixed(2) : 0}%
@@ -312,29 +310,21 @@ You are ZENVANA, an AI financial analyst. Your task is to calculate a Financial 
 - Health Insurance: ${financialSummary.healthInsurance}
 - Has Financial Goals: ${financialSummary.customGoals?.some(g => g.name) ? 'Yes' : 'No'}
 **SCORING LOGIC (out of 100):**
-- **Savings Rate (40 points):** A rate >= 30% gets 40 pts. A rate of 20% gets 30 pts. A rate of 10% gets 20 pts. A rate of 0% gets 10 pts. A negative rate gets 0 pts.
+- **Savings Rate (40 points):** A rate >= 30% gets 40 pts. 20%-29% gets 30 pts. 10%-19% gets 20 pts. 0%-9% gets 10 pts. A negative rate gets 0 pts.
 - **Debt Level (20 points):** DTI < 30% = 20 pts. DTI 30-50% = 10 pts. DTI > 50% = 0 pts.
 - **Life Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
 - **Health Insurance (15 points):** 'yes' = 15 pts. 'not_sure' = 5 pts. 'no' = 0 pts.
 - **Goal Setting (10 points):** 'yes' = 10 pts. 'no' = 0 pts.
 **YOUR TASK:**
-1. Calculate the final score based on the logic.
-2. Generate a brief report explaining the score.
-3. Respond ONLY in this JSON format: {"score": <calculated_score>, "report": "<markdown_report>"}
-The report must have these sections:
-## Your Score Explained
-Briefly explain what their score means (e.g., "A great start!", "Needs attention").
-## Strengths
-Mention 1-2 areas where they are doing well.
-## Areas for Improvement
-Mention 1-2 areas that need attention.`;
+1. Calculate the final score.
+2. Respond ONLY in this JSON format: {"score": <calculated_score>}`;
       try {
           const result = await callGeminiAPIWithRetry(prompt);
           const parsedResult = JSON.parse(result);
           setHealthScore(parsedResult.score);
-          setHealthReport(parsedResult.report);
       } catch (e) {
-          setHealthReport("My apologies, Zenvana AI could not calculate the score right now. Please try again.");
+          console.error("Failed to calculate health score:", e);
+          setHealthScore(0); // Set a default score on error
       } finally {
           setIsCalculatingHealth(false);
       }
@@ -342,6 +332,33 @@ Mention 1-2 areas that need attention.`;
     handleCalculateHealthScore();
   }, [financialSummary, callGeminiAPIWithRetry, sR]);
 
+  // --- Conditional Return for Loading State ---
+  if (!financialSummary) { 
+    return ( 
+      <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
+        <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome!</h2>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-400 text-lg">Loading your financial dashboard...</p>
+        </div>
+      </section> 
+    ); 
+  }
+
+  // --- Helper Functions ---
+  const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
+  const formatOptionText = (option) => {
+    if (!option) return 'Not Specified';
+    const map = { 'salaried': 'Salaried', 'self_employed': 'Self-Employed / Business', 'freelancer': 'Freelancer', 'other': 'Other', 'low': 'Low (Prioritizes safety)', 'medium': 'Medium (Balanced approach)', 'high': 'High (Seeks higher returns)', 'retirement': 'Saving enough for retirement', 'debt': 'Getting out of debt', 'taxes': 'High taxes', 'investing': 'Not knowing where to invest', 'expenses': 'Managing daily expenses', 'yes': 'Yes', 'no': 'No', 'not_sure': 'Not Sure' };
+    return map[option] || option.charAt(0).toUpperCase() + option.slice(1);
+  };
+  const getScoreColor = (score) => {
+    if (score === null) return 'text-gray-400';
+    if (score >= 75) return 'text-green-400';
+    if (score >= 50) return 'text-yellow-400';
+    return 'text-red-500';
+  };
+
+  // --- AI API Call Handlers ---
   const handleGenerateImprovementPlan = async () => {
     setIsGeneratingImprovement(true);
     setImprovementPlan('');
@@ -371,7 +388,6 @@ End with a single, simple call to action for the user to take today.`;
         setIsGeneratingImprovement(false);
     }
   };
-
   const handleAnalyzeBudget = async () => {
     setIsAnalyzingBudget(true); setBudgetAnalysisResult('');
     const userAge = financialSummary.dateOfBirth ? (new Date().getFullYear() - new Date(financialSummary.dateOfBirth).getFullYear()) : 'N/A';
@@ -401,7 +417,6 @@ End with an empowering statement.`;
     catch (e) { setBudgetAnalysisResult("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments."); } 
     finally { setIsAnalyzingBudget(false); }
   };
-  
   const handleGenerateEmergencyPlan = async () => {
     setIsPlanningEmergency(true); setEmergencyFundPlan('');
     const targetFund = tME * 6;
@@ -429,7 +444,6 @@ Briefly explain that an emergency fund is the #1 defense against financial shock
         setIsPlanningEmergency(false);
     }
   };
-  
   const handleGenerateGoalPlan = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
     const prompt = `
@@ -463,16 +477,9 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
         setIsGeneratingGoalPlan(p => ({ ...p, [i]: false }));
     }
   };
-
   const formatDate = (dateString) => { if (!dateString) return 'N/A'; const options = { year: 'numeric', month: 'short', day: 'numeric' }; return new Date(dateString).toLocaleDateString('en-IN', options); };
 
-  const getScoreColor = (score) => {
-    if (score === null) return 'text-gray-400';
-    if (score >= 75) return 'text-green-400';
-    if (score >= 50) return 'text-yellow-400';
-    return 'text-red-500';
-  };
-
+  // --- JSX Render ---
   return (
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80 space-y-8">
       <h2 className="text-4xl font-bold text-green-400">Welcome, <span className="text-yellow-400">{financialSummary.name || 'User'}!</span></h2>
@@ -497,9 +504,9 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
           ) : (
             <>
               <div className={`relative w-48 h-48 flex items-center justify-center`}>
-                  <svg className="absolute w-full h-full" viewBox="0 0 36 36">
-                      <path className="text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeWidth="3"></path>
-                      <path className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeWidth="3" strokeLinecap="round"></path>
+                  <svg className="absolute w-full h-full" viewBox="0 0 36 36" transform="rotate(-90 18 18)">
+                      <circle className="text-gray-700" cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3"></circle>
+                      <circle className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3" strokeLinecap="round"></circle>
                   </svg>
                   <div className={`text-5xl font-extrabold ${getScoreColor(healthScore)}`}>
                       {healthScore !== null ? healthScore : '--'}
