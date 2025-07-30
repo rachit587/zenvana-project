@@ -754,7 +754,7 @@ function App() {
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
           {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGeminiAPIWithRetry={callGroqAPIWithRetry} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver financialSummary={financialSummary} callGeminiAPIWithRetry={callGeminiAPIWithRetry} />)}
+          {currentPage === 'taxSaver' && (<TaxSaver financialSummary={financialSummary} callGeminiAPIWithRetry={callGroqAPIWithRetry} />)}
           {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory.map(m => ({ role: m.role, parts: [{ text: m.content }] }))} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} />)}
         </Layout>
       )}
