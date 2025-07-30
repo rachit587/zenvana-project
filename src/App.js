@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import AOS from 'aos';
@@ -97,7 +97,7 @@ const WelcomePage = ({ onGetStarted }) => {
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
-      <div>
+      <div data-aos="fade-in">
         <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">Welcome to ZENVANA!</h3>
         <p className="text-lg text-gray-400 mb-8 text-center">Let's start by getting to know you.</p>
         <div className="space-y-6">
@@ -109,7 +109,7 @@ const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     );
 };
 const OnboardingStep2 = ({ formData, handleChange, nextStep, prevStep }) => (
-  <div>
+  <div data-aos="fade-in">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">Your Financial Foundation</h3>
     <p className="text-lg text-gray-400 mb-8 text-center">Now, let's look at your financial overview.</p>
     <div className="space-y-6">
@@ -123,7 +123,7 @@ const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
   const expenseCategories = [{ name: 'housing', label: 'Housing (Rent/EMI)' }, { name: 'food', label: 'Food' }, { name: 'transportation', label: 'Transportation' }, { name: 'utilities', label: 'Utilities' }, { name: 'entertainment', label: 'Entertainment' }, { name: 'healthcare', label: 'Healthcare' }, { name: 'personalCare', label: 'Personal Care' }, { name: 'education', label: 'Education' }, { name: 'debtPayments', label: 'Debt Payments' }, { name: 'miscellaneous', label: 'Miscellaneous' }];
   const handleExpenseChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, expenses: { ...prev.expenses, [name]: value.replace(/[^0-9]/g, '') } })); };
   return (
-    <div>
+    <div data-aos="fade-in">
       <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">Your Monthly Expenses</h3>
       <div className="space-y-4">{expenseCategories.map(c => (<div key={c.name}><label htmlFor={c.name} className="block text-gray-300 font-semibold mb-1">{c.label} (₹)</label><input type="text" inputMode="numeric" id={c.name} name={c.name} value={formData.expenses?.[c.name] || ''} onChange={handleExpenseChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white" placeholder="0" /></div>))}</div>
       <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={nextStep} className="bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-xl">Next</button></div>
@@ -136,7 +136,7 @@ const OnboardingStep4 = ({ formData, setFormData, nextStep, prevStep }) => {
   const addGoal = () => setFormData(p => ({ ...p, customGoals: [...p.customGoals, { name: '', targetAmount: '', amountSaved: '', targetDate: '' }] }));
   const removeGoal = (index) => setFormData(p => ({ ...p, customGoals: p.customGoals.filter((_, i) => i !== index) }));
   return (
-    <div>
+    <div data-aos="fade-in">
       <h3 className="text-3xl font-bold text-yellow-400 mb-6 text-center">Your Financial Goals</h3>
       <div className="space-y-6">{formData.customGoals.map((goal, index) => (<div key={index} className="bg-gray-700 p-4 rounded-xl border border-gray-600">
           <div className="flex justify-between items-center mb-3"><label className="font-semibold">Goal {index + 1}</label>{formData.customGoals.length > 1 && (<button type="button" onClick={() => removeGoal(index)} className="text-red-400 text-sm">Remove</button>)}</div>
@@ -151,7 +151,7 @@ const OnboardingStep4 = ({ formData, setFormData, nextStep, prevStep }) => {
   );
 };
 const OnboardingStep5 = ({ formData, handleChange, prevStep, handleSubmit, isSubmitting }) => (
-  <div>
+  <div data-aos="fade-in">
     <h3 className="text-3xl font-bold text-green-400 mb-6 text-center">A Little More About You</h3>
     <div className="space-y-6">
       <div><label className="block text-lg font-semibold mb-2">Risk Tolerance</label><select name="riskTolerance" value={formData.riskTolerance} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="low">Low (Prefer safety over high returns)</option><option value="medium">Medium (Balanced approach)</option><option value="high">High (Comfortable with risk for higher returns)</option></select></div>
@@ -180,6 +180,13 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
       const tME = Object.values(formData.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
       onSubmit({ ...formData, monthlyExpenses: tME });
   };
+  
+  useEffect(() => {
+    AOS.init({
+        duration: 600,
+        once: true,
+    });
+  }, [currentStep]);
 
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />)} </div> </div> );
 };
@@ -582,14 +589,14 @@ function App() {
               }
               setIsAuthReady(true);
           } else {
-              signInAnonymously(firebaseAuth);
+              signInAnonymously(firebaseAuth).catch(err => console.error("Anonymous sign in failed:", err));
           }
       });
 
       return () => unsubscribe();
     } catch (error) {
       console.error("Error initializing Firebase:", error);
-      setIsAuthReady(true); // Allow rendering an error state if needed
+      setIsAuthReady(true);
     }
   }, []); 
 
@@ -607,14 +614,20 @@ function App() {
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
-      setCurrentPage('dashboard'); // Navigate AFTER successful save
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
+      setIsSubmitting(false); // Ensure button is re-enabled on error
       throw error;
-    } finally {
-      setIsSubmitting(false); // ALWAYS reset the state
-    }
+    } 
   };
+
+  useEffect(() => {
+    if (financialSummary && currentPage === 'onboarding') {
+      setCurrentPage('dashboard');
+      setIsSubmitting(false);
+    }
+  }, [financialSummary, currentPage]);
+
 
   const callGeminiAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
