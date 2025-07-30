@@ -348,13 +348,13 @@ const ExpensePieChart = ({ expenses }) => {
   );
 };
 
-
 // --- Dashboard Component ---
 const Dashboard = ({ financialSummary, apiKey, callGeminiAPIWithRetry }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
+
   if (!financialSummary) {
     return (
       <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
@@ -371,61 +371,94 @@ const Dashboard = ({ financialSummary, apiKey, callGeminiAPIWithRetry }) => {
   const sR = financialSummary.monthlyIncome ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100).toFixed(2) : 0;
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
 
+  // This is the upgraded AI prompt function
   const handleAnalyzeBudget = async () => {
-    setIsAnalyzingBudget(true); 
+    setIsAnalyzingBudget(true);
     setBudgetAnalysisResult('');
     const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Helper function to make outputs more readable
+    const formatOptionText = (option) => {
+        if (!option) return 'Not Specified';
+        const map = {
+            'salaried': 'Salaried',
+            'self_employed': 'Self-Employed / Business',
+            'freelancer': 'Freelancer',
+            'other': 'Other',
+            'low': 'Low (Prioritizes safety)',
+            'medium': 'Medium (Balanced approach)',
+            'high': 'High (Seeks higher returns)',
+            'retirement': 'Saving enough for retirement',
+            'debt': 'Getting out of debt',
+            'taxes': 'High taxes',
+            'investing': 'Not knowing where to invest',
+            'expenses': 'Managing daily expenses',
+            'yes': 'Yes',
+            'no': 'No',
+            'not_sure': 'Not Sure'
+        };
+        return map[option] || option.charAt(0).toUpperCase() + option.slice(1);
+    };
+
+    const userAge = financialSummary.dateOfBirth ? (new Date().getFullYear() - new Date(financialSummary.dateOfBirth).getFullYear()) : 'N/A';
+    
+    // --- NEW & IMPROVED PROMPT ---
     const prompt = `
-You are ZENVANA, an expert AI financial advisor. Your tone is encouraging, insightful, and highly personalized.
-The current date is ${currentDate}.
+You are ZENVANA, an elite AI financial advisor for India. Your tone is empathetic, professional, and deeply insightful. You provide advice like a world-class human advisor would.
 
-**User's Profile:**
-- Name: ${financialSummary.name || 'User'}
-- Age: ${financialSummary.dateOfBirth ? (new Date().getFullYear() - new Date(financialSummary.dateOfBirth).getFullYear()) : 'N/A'}
-- Monthly Income: ₹${financialSummary.monthlyIncome || 0}
-- Total Monthly Expenses: ₹${tME}
-- Monthly Savings: ₹${mS}
-- Savings Rate: ${sR}%
-- Risk Tolerance: ${financialSummary.riskTolerance || 'not specified'}
-- Current Investments: ${financialSummary.currentInvestments || 'Not specified'}
-- Dependents: ${financialSummary.dependents || 'Not specified'}
-- Debt: ₹${financialSummary.debt || 0}
-- Expense Breakdown: ${JSON.stringify(financialSummary.expenses, null, 2)}
+**Analysis Date:** ${currentDate}
 
-**Your Task:**
-Generate a well-structured and high-quality budget analysis in Markdown format.
+---
+**USER PROFILE SUMMARY**
+- **Name:** ${financialSummary.name || 'User'}
+- **Age:** ${userAge}
+- **Primary Income Source:** ${formatOptionText(financialSummary.incomeSource)}
+- **Monthly Take-Home Income:** ₹${parseFloat(financialSummary.monthlyIncome || 0).toLocaleString('en-IN')}
+- **Monthly Savings:** ₹${mS.toLocaleString('en-IN')} (Savings Rate: ${sR}%)
+- **Stated Risk Tolerance:** ${formatOptionText(financialSummary.riskTolerance)}
+- **Primary Financial Worry:** "${formatOptionText(financialSummary.financialWorry)}"
+- **Risk Management Status:**
+  - Term Life Insurance: ${formatOptionText(financialSummary.termInsurance)}
+  - Health Insurance: ${formatOptionText(financialSummary.healthInsurance)}
+---
 
-## Hello ${financialSummary.name || 'User'}, Here is Your Budget Analysis!
-Start with a warm, personalized greeting.
-Briefly summarize their financial health, highlighting their savings rate as a key metric.
-## Key Observation
-Identify the single most important insight from their budget (e.g., a very high savings rate, a specific expense category being disproportionately high, or a low debt-to-income ratio).
-Explain *why* this is significant in a detailed, insightful paragraph.
-## Expense Deep Dive
-- Analyze their top 2-3 spending categories in detail.
-- Compare their spending to common financial rules of thumb (like the 50/30/20 rule) but emphasize that these are just guidelines and personalization is key.
-- Mention if the spending seems reasonable for their income or if there are clear areas for optimization.
-## Actionable & Personalized Recommendations
-Provide 2-3 clear, specific, and actionable tips for improvement, directly tied to their personal data and risk tolerance.
-For example:
-- **If savings are high and risk is high:** "With your strong savings rate of ${sR}% and high-risk tolerance, you're in a great position to accelerate wealth creation. Consider allocating an additional ₹[suggested amount] from your monthly surplus towards a diversified equity mutual fund SIP."
-- **If a specific expense is high:** "Your 'Entertainment' spending is about [X]% of your take-home pay. While enjoying life is important, trimming this by just 10% could free up ₹[amount] monthly to fast-track your '[Goal Name]' goal."
-- **If debt exists:** "Tackling your debt of ₹${financialSummary.debt || 0} should be a priority. Consider using the 'snowball' or 'avalanche' method to pay it down faster."
-## Your Path Forward
-End with an empowering and positive statement.
-Reassure them that they are in control of their financial journey and that Zenvana is here to support them every step of the way.
+**YOUR TASK: Generate a comprehensive, premium-quality financial health analysis in Markdown.**
+
+**STRUCTURE:**
+
+## Namaste ${financialSummary.name}, Here Is Your Financial Health Analysis!
+Start with a warm, personalized greeting. Summarize their financial situation in one encouraging sentence, highlighting their excellent savings rate of ${sR}%.
+
+## 💡 Key Observation & Insight
+Identify the SINGLE most important insight from their financial profile (e.g., strong savings despite variable income, high debt payments impacting goals). Explain in a detailed paragraph *why* this is the most critical factor in their financial life right now.
+
+## 🎯 Addressing Your Top Worry: "${formatOptionText(financialSummary.financialWorry)}"
+Directly address the user's biggest concern. Provide one clear, actionable first step they can take *this week* to start tackling this problem. Make it feel achievable and empowering.
+
+## 🛡️ Risk Management Check
+Based on their insurance status, provide CRITICAL advice.
+- If Term Insurance is 'No' or 'Not Sure', and they have dependents, emphasize the importance of protecting their family's future. Gently urge them to research and get a quote for a pure term plan.
+- If Health Insurance is 'No' or 'Not Sure', explain that a single medical emergency can derail all financial goals. Strongly recommend they secure a personal health cover, even if they have one from an employer.
+- If both are 'Yes', praise them for their financial responsibility.
+
+## 📊 Expense Deep Dive & Optimization
+- Analyze their top 2 spending categories from their expense data: ${JSON.stringify(financialSummary.expenses)}.
+- Provide ONE specific, actionable optimization tip. For example, "Your 'Entertainment' spending is 15% of your income. Trimming this by just 10% could free up ₹X monthly to fast-track one of your goals." Avoid generic advice.
+
+## 🚀 Your Path Forward
+End with an empowering statement. Reassure them that by taking these small, consistent steps, they are building a strong financial future, and Zenvana is here to guide them.
 `;
 
     try {
         const result = await callGeminiAPIWithRetry(prompt);
         setBudgetAnalysisResult(result);
-    } catch (e) { 
+    } catch (e) {
         setBudgetAnalysisResult("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
-    } finally { 
-        setIsAnalyzingBudget(false); 
+    } finally {
+        setIsAnalyzingBudget(false);
     }
   };
-  
+
   const hGGP = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
     const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -459,16 +492,16 @@ Based on the user's **${financialSummary.riskTolerance || 'not specified'} risk 
 - **Crucially, do not recommend specific stocks or fund names.** Stick to categories.
 ## Next Steps
 Provide a clear, 2-step action plan. For example:
-1.  **Research:** "Explore platforms like [Platform Example like Zerodha Coin or Groww] to find a suitable [Recommended Fund Category] with a good track record."
+1.  **Research:** "Explore platforms like Zerodha Coin or Groww to find a suitable [Recommended Fund Category] with a good track record."
 2.  **Automate:** "Set up an automatic monthly SIP for the calculated amount to ensure consistency and discipline."
 End with a motivational sentence.
 `;
     try {
         const result = await callGeminiAPIWithRetry(prompt);
         setGoalPlanResults(p => ({ ...p, [i]: result }));
-    } catch (e) { 
+    } catch (e) {
         setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.` }));
-    } finally { 
+    } finally {
         setIsGeneratingGoalPlan(p => ({ ...p, [i]: false }));
     }
   };
@@ -478,7 +511,7 @@ End with a motivational sentence.
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
-  
+
   return (
     <section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80">
       <h2 className="text-4xl font-bold text-green-400 mb-6">Welcome, <span className="text-yellow-400">{financialSummary.name || 'User'}!</span></h2>
