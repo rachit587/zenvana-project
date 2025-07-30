@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-// --- DEFINITIVE FIX: Firebase Configuration ---
-// The Firebase configuration is now hardcoded here to ensure a reliable connection.
+// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
@@ -569,7 +568,8 @@ function App() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const apiKey = ""; // Your Gemini API Key
+  // DEFINITIVE FIX: The Gemini API key is now correctly placed here.
+  const apiKey = "AIzaSyCI2bvLtdFURRGEio7u_6GXFqgoOcGkLnc";
 
   useEffect(() => {
     try {
@@ -582,7 +582,8 @@ function App() {
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
           if (user) {
               setUserId(user.uid);
-              const docRef = doc(firestore, `users/${user.uid}/financial_data`, 'summary');
+              // Using a simple path for Firestore rules
+              const docRef = doc(firestore, `users/${user.uid}/financial_data/summary`);
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
                   setFinancialSummary(docSnap.data());
@@ -608,7 +609,7 @@ function App() {
     
     setIsSubmitting(true);
     try {
-      const docRef = doc(db, `users/${userId}/financial_data`, 'summary');
+      const docRef = doc(db, `users/${userId}/financial_data/summary`);
       const expensesParsed = {};
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
@@ -616,7 +617,7 @@ function App() {
       setFinancialSummary(dataToSave);
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
-      setIsSubmitting(false); // Ensure button is re-enabled on error
+      setIsSubmitting(false);
       throw error;
     } 
   };
@@ -667,7 +668,7 @@ ${JSON.stringify(financialSummary, null, 2)}
   const handleLogout = async () => {
     if (!auth || !db || !userId) return;
     try {
-      await deleteDoc(doc(db, `users/${userId}/financial_data`, 'summary'));
+      await deleteDoc(doc(db, `users/${userId}/financial_data/summary`));
       await signOut(auth);
       setFinancialSummary(null); 
       setChatHistory([]); 
