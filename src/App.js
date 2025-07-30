@@ -200,7 +200,7 @@ const [chatInput, setChatInput] = useState('');
 };
 
 // --- Tax Saver Component ---
-const TaxSaver = ({ apiKey, financialSummary }) => {
+const TaxSaver = ({ apiKey, financialSummary, callGeminiAPIWithRetry }) => {
     const [taxData, setTaxData] = useState({});
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
@@ -273,15 +273,13 @@ End with an empowering and positive statement, reinforcing that Zenvana is here 
 `;
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
-            });
-            if (!response.ok) throw new Error('API call failed');
-            const result = await response.json();
-            setAiAnalysis(result.candidates[0].content.parts[0].text);
-        } catch (e) { setAiAnalysis("Could not fetch AI analysis. Please try again."); } finally { setIsCalculating(false); }
+            const result = await callGeminiAPIWithRetry(prompt);
+            setAiAnalysis(result);
+        } catch (e) { 
+            setAiAnalysis("Could not fetch AI analysis. Please try again later."); 
+        } finally { 
+            setIsCalculating(false); 
+        }
     };
     return ( <section className="p-6 rounded-2xl bg-gray-900"><h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2><div className="grid md:grid-cols-2 gap-6"><div className="space-y-4">{Object.keys(fieldLabels).map((k) => (<div key={k}><label className="block mb-1">{fieldLabels[k]} (₹)</label><input type="text" inputMode="numeric" name={k} value={taxData[k] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800" /></div>))}</div><div><button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl">{isCalculating ? 'Calculating...' : 'Calculate & Analyze'}</button>{taxResult && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3><div className="text-center mb-4 p-3 rounded-lg bg-green-900"><p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p><p className="text-2xl font-extrabold text-green-400">You save ₹{taxResult.s.toLocaleString()}!</p></div><div className="grid grid-cols-2 gap-4 text-center"><div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">₹{taxResult.oR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.oRSlab}</p></div><div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">₹{taxResult.nR.toLocaleString()}</p><p className="text-sm text-gray-400">Tax Slab: {taxResult.nRSlab}</p></div></div></div>)}{aiAnalysis && (<div className="mt-4 bg-gray-800 p-4 rounded-xl"><h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3><MarkdownRenderer text={aiAnalysis} /></div>)}</div></div></section> );
 };
@@ -339,7 +337,7 @@ const ExpensePieChart = ({ expenses }) => {
 
 
 // --- Dashboard Component ---
-const Dashboard = ({ financialSummary, apiKey }) => {
+const Dashboard = ({ financialSummary, apiKey, callGeminiAPIWithRetry }) => {
   const [budgetAnalysisResult, setBudgetAnalysisResult] = useState('');
   const [isAnalyzingBudget, setIsAnalyzingBudget] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
@@ -409,18 +407,12 @@ End with an empowering and positive statement. Reassure them that they are in co
 `;
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
-      });
-      if (!response.ok) throw new Error('API call failed');
-      const result = await response.json();
-      setBudgetAnalysisResult(result.candidates[0].content.parts[0].text);
+        const result = await callGeminiAPIWithRetry(prompt);
+        setBudgetAnalysisResult(result);
     } catch (e) { 
-      setBudgetAnalysisResult(`Sorry, there was an error generating the analysis. Please try again.`);
+        setBudgetAnalysisResult(`Sorry, there was an error generating the analysis. Please try again later.`);
     } finally { 
-      setIsAnalyzingBudget(false); 
+        setIsAnalyzingBudget(false); 
     }
   };
 
@@ -466,15 +458,13 @@ Provide a clear, 2-step action plan. For example:
 End with a motivational sentence.
 `;
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
-      });
-      if (!response.ok) throw new Error('Goal plan generation failed');
-      const result = await response.json();
-      setGoalPlanResults(p => ({ ...p, [i]: result.candidates[0].content.parts[0].text }));
-    } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `Error: Goal plan generation failed` })); } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
+        const result = await callGeminiAPIWithRetry(prompt);
+        setGoalPlanResults(p => ({ ...p, [i]: result }));
+    } catch (e) { 
+        setGoalPlanResults(p => ({ ...p, [i]: `Error: Could not generate a plan. Please try again later.` })); 
+    } finally { 
+        setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); 
+    }
   };
 
   const formatDate = (dateString) => {
@@ -568,6 +558,7 @@ function App() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // DEFINITIVE FIX: Using the new, unrestricted API key.
   const apiKey = "AIzaSyCWwbMe2l8YRhYUPFWofqfNWhsvrTLMVVc";
 
   useEffect(() => {
@@ -628,8 +619,37 @@ function App() {
     }
   }, [financialSummary, currentPage]);
 
+  // DEFINITIVE FIX: New function to handle API calls with automatic retries for server errors.
+  const callGeminiAPIWithRetry = async (prompt, retries = 3, delay = 1000) => {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
 
-  const callGeminiAPI = async (userMessage) => {
+      if (response.status >= 500 && retries > 0) {
+        console.warn(`Server error (${response.status}). Retrying in ${delay / 1000}s...`);
+        await new Promise(res => setTimeout(res, delay));
+        return callGeminiAPIWithRetry(prompt, retries - 1, delay * 2); // Exponential backoff
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.json();
+        console.error("API Error Response:", errorBody);
+        throw new Error(`API call failed with status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.candidates[0].content.parts[0].text;
+
+    } catch (error) {
+      console.error("Full error object:", error);
+      throw error;
+    }
+  };
+
+  const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
     const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -653,18 +673,8 @@ ${JSON.stringify(financialSummary, null, 2)}
     ];
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: apiPayloadContents }) 
-      });
-      if (!response.ok) {
-        const errorBody = await response.json();
-        console.error("API Error Response:", errorBody);
-        throw new Error(`API call failed with status: ${response.status}`);
-      }
-      const result = await response.json();
-      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result.candidates[0].content.parts[0].text }] }]);
+      const result = await callGeminiAPIWithRetry(JSON.stringify(apiPayloadContents));
+      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result }] }]);
     } catch (error) { 
       console.error("Full error object:", error);
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, I encountered an error. Please try again. Error: ${error.message}` }] }]); 
@@ -704,9 +714,9 @@ ${JSON.stringify(financialSummary, null, 2)}
       {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
       {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} financialSummary={financialSummary} />)}
-          {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callGeminiAPI} />)}
+          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} apiKey={apiKey} callGeminiAPIWithRetry={callGeminiAPIWithRetry} />)}
+          {currentPage === 'taxSaver' && (<TaxSaver apiKey={apiKey} financialSummary={financialSummary} callGeminiAPIWithRetry={callGeminiAPIWithRetry} />)}
+          {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} isGeneratingResponse={isGeneratingResponse} callGeminiAPI={callChatAPI} />)}
         </Layout>
       )}
     </div>
