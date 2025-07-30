@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // 'useCallback' was removed here
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
@@ -393,8 +393,8 @@ function App() {
 
   const handleLogout = async () => {
     if (!auth || !db || !userId || !appId) return;
-    const user = auth.currentUser;
     try {
+      // The unused 'user' variable was removed from here
       // Delete user data first
       await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
       // Then sign out
