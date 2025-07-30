@@ -157,11 +157,11 @@ const OnboardingFlow = ({ onSubmit, initialData, setCurrentPage }) => {
   const handleSubmit = async () => {
       setIsLoading(true);
       const tME = Object.values(formData.expenses).reduce((s, v) => s + parseFloat(v || 0), 0);
-      const success = await onSubmit({ ...formData, monthlyExpenses: tME });
-      if (success) {
+      const result = await onSubmit({ ...formData, monthlyExpenses: tME });
+      if (result.success) {
           setCurrentPage('dashboard');
       } else {
-          alert("There was an error saving your data. Please check your connection and try again.");
+          alert(`Save Failed: ${result.error}`);
           setIsLoading(false);
       }
   };
@@ -318,7 +318,6 @@ const Dashboard = ({ financialSummary, apiKey }) => {
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
-  const [appId, setAppId] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentPage, setCurrentPage] = useState('welcome');
@@ -334,8 +333,6 @@ function App() {
     }
     
     const config = JSON.parse(window.__firebase_config);
-    const currentAppId = config.appId;
-    setAppId(currentAppId); 
 
     const app = initializeApp(config);
     const firestore = getFirestore(app);
@@ -346,7 +343,7 @@ function App() {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
         if (user) {
             setUserId(user.uid);
-            const docRef = doc(firestore, `artifacts/${currentAppId}/users/${user.uid}/financial_data`, 'summary');
+            const docRef = doc(firestore, `users/${user.uid}`);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 setFinancialSummary(docSnap.data());
@@ -370,21 +367,19 @@ function App() {
   }, []);
 
   const saveFinancialData = async (data) => {
-    if (!db || !userId || !appId) {
-        console.error("Save aborted: Missing db, userId, or appId");
-        return false;
+    if (!db || !userId) {
+        return { success: false, error: "Authentication error: User ID not found. Please try logging out and back in." };
     }
     try {
-      const docRef = doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary');
+      const docRef = doc(db, "users", userId);
       const expensesParsed = {};
       for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
-      return true;
+      return { success: true, error: null };
     } catch (error) { 
-        console.error("Error saving data:", error);
-        return false;
+        return { success: false, error: error.message };
     }
   };
 
@@ -411,9 +406,9 @@ function App() {
   };
 
   const handleLogout = async () => {
-    if (!auth || !db || !userId || !appId) return;
+    if (!auth || !db || !userId) return;
     try {
-      await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/financial_data`, 'summary'));
+      await deleteDoc(doc(db, "users", userId));
       await signOut(auth);
       setFinancialSummary(null);
       setChatHistory([]);
