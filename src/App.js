@@ -276,7 +276,7 @@ End with an empowering and positive statement, reinforcing that Zenvana is here 
             const result = await callGeminiAPIWithRetry(prompt);
             setAiAnalysis(result);
         } catch (e) { 
-            setAiAnalysis("Could not fetch AI analysis. Please try again later."); 
+            setAiAnalysis("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments."); 
         } finally { 
             setIsCalculating(false); 
         }
@@ -410,7 +410,7 @@ End with an empowering and positive statement. Reassure them that they are in co
         const result = await callGeminiAPIWithRetry(prompt);
         setBudgetAnalysisResult(result);
     } catch (e) { 
-        setBudgetAnalysisResult(`Sorry, there was an error generating the analysis. Please try again later.`);
+        setBudgetAnalysisResult("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
     } finally { 
         setIsAnalyzingBudget(false); 
     }
@@ -461,7 +461,7 @@ End with a motivational sentence.
         const result = await callGeminiAPIWithRetry(prompt);
         setGoalPlanResults(p => ({ ...p, [i]: result }));
     } catch (e) { 
-        setGoalPlanResults(p => ({ ...p, [i]: `Error: Could not generate a plan. Please try again later.` })); 
+        setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.` })); 
     } finally { 
         setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); 
     }
@@ -558,7 +558,6 @@ function App() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // DEFINITIVE FIX: Using the new, unrestricted API key.
   const apiKey = "AIzaSyCWwbMe2l8YRhYUPFWofqfNWhsvrTLMVVc";
 
   useEffect(() => {
@@ -572,7 +571,6 @@ function App() {
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
           if (user) {
               setUserId(user.uid);
-              // Using a simple path for Firestore rules
               const docRef = doc(firestore, `users/${user.uid}/financial_data/summary`);
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) {
@@ -607,7 +605,7 @@ function App() {
       setFinancialSummary(dataToSave);
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
-      setIsSubmitting(false); // Ensure button is re-enabled on error
+      setIsSubmitting(false);
       throw error;
     } 
   };
@@ -619,8 +617,7 @@ function App() {
     }
   }, [financialSummary, currentPage]);
 
-  // DEFINITIVE FIX: New function to handle API calls with automatic retries for server errors.
-  const callGeminiAPIWithRetry = async (prompt, retries = 3, delay = 1000) => {
+  const callGeminiAPIWithRetry = async (prompt, isSecondAttempt = false) => {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -628,21 +625,25 @@ function App() {
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       });
 
-      // Handle both 503 (Server Unavailable) and 429 (Too Many Requests) errors
-      if ((response.status === 503 || response.status === 429) && retries > 0) {
-        console.warn(`API Error (${response.status}). Retrying in ${delay / 1000}s...`);
-        await new Promise(res => setTimeout(res, delay));
-        return callGeminiAPIWithRetry(prompt, retries - 1, delay * 2); // Exponential backoff
+      if (response.status === 503 && !isSecondAttempt) {
+        console.warn(`Server error (503). Retrying in 3s...`);
+        await new Promise(res => setTimeout(res, 3000));
+        return callGeminiAPIWithRetry(prompt, true);
       }
 
       if (!response.ok) {
-        const errorBody = await response.json();
+        const errorBody = await response.json().catch(() => ({}));
         console.error("API Error Response:", errorBody);
         throw new Error(`API call failed with status: ${response.status}`);
       }
 
       const result = await response.json();
-      return result.candidates[0].content.parts[0].text;
+      if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+        return result.candidates[0].content.parts[0].text;
+      } else {
+        console.error("Invalid response structure from API:", result);
+        throw new Error("Received an invalid response from the AI.");
+      }
 
     } catch (error) {
       console.error("Full error object:", error);
@@ -675,7 +676,11 @@ ${JSON.stringify(financialSummary, null, 2)}
       setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result }] }]);
     } catch (error) { 
       console.error("Full error object:", error);
-      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, I encountered an error. Please try again. Error: ${error.message}` }] }]); 
+      let displayMessage = "Sorry, I encountered an error. Please try again.";
+      if (error.message.includes("429") || error.message.includes("503")) {
+          displayMessage = "My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.";
+      }
+      setChatHistory(prev => [...prev, { role: "model", parts: [{ text: displayMessage }] }]); 
     } finally { 
       setIsGeneratingResponse(false); 
     }
