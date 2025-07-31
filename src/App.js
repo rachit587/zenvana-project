@@ -396,6 +396,7 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
             const emergencyFundTarget = totalMonthlyExpenses * 6;
 
+            // THIS IS THE FIX: The 'emergencyFundTarget' variable is now used in the prompt.
             const prompt = `
 You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
 Your task is to analyze the following user profile and generate the top 3 most critical financial insights.
@@ -405,6 +406,7 @@ Your task is to analyze the following user profile and generate the top 3 most c
 - Monthly Income: ${formatIndianCurrency(monthlyIncome)}
 - Total Monthly Expenses: ${formatIndianCurrency(totalMonthlyExpenses)}
 - Monthly Savings: ${formatIndianCurrency(monthlySavings)} (Savings Rate: ${savingsRate.toFixed(1)}%)
+- Ideal Emergency Fund (6x Expenses): ${formatIndianCurrency(emergencyFundTarget)}
 - Total Debt: ${formatIndianCurrency(debt || 0)}
 - Term Life Insurance: ${termInsurance}
 - Health Insurance: ${healthInsurance}
