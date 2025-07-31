@@ -19,11 +19,6 @@ const firebaseConfig = {
 
 // --- Helper Functions & Components ---
 
-/**
- * Formats a number into the Indian numbering system (lakhs, crores).
- * @param {number} num - The number to format.
- * @returns {string} - The formatted number as a string (e.g., "₹1,50,000").
- */
 const formatIndianCurrency = (num) => {
     if (typeof num !== 'number') {
         num = parseFloat(num || 0);
@@ -37,8 +32,6 @@ const formatIndianCurrency = (num) => {
     return formatter.format(num);
 };
 
-
-// --- Markdown Renderer Component ---
 const MarkdownRenderer = ({ text }) => {
   if (!text) return null;
   const renderInlineFormatting = (line) => {
@@ -251,14 +244,120 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />)} </div> </div> );
 };
 
-// --- AI Chat Component ---
-const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI }) => {
+// --- [NEW] Upgraded AI Chat Component ---
+const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSummary, setChatHistory }) => {
   const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
-  useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [chatHistory]);
-  const handleSendMessage = (e) => { e.preventDefault(); if (chatInput.trim() === '') return; callChatAPI(chatInput); setChatInput(''); };
-  return ( <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]"> <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2> <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">{chatHistory.map((msg, i) => (<div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}><p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>{msg.role === 'user' ? <p>{msg.parts[0].text}</p> : <MarkdownRenderer text={msg.parts[0].text} />}</div>))} {isGeneratingResponse && (<div className="p-3 rounded-xl bg-gray-800 animate-pulse"><p>Thinking...</p></div>)}</div> <form onSubmit={handleSendMessage} className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your finances..." className="flex-grow p-3 rounded-xl bg-gray-800" disabled={isGeneratingResponse} /><button type="submit" className="bg-green-600 font-bold py-3 px-6 rounded-xl" disabled={!chatInput.trim() || isGeneratingResponse}>Send</button></form> <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style> </section> );
+
+  // Scroll to bottom of chat on new message
+  useEffect(() => {
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
+
+  // Set initial welcome message
+  useEffect(() => {
+    if (chatHistory.length === 0) {
+        setChatHistory([{
+            role: 'model',
+            parts: [{ text: `Namaste, ${financialSummary?.name || 'User'}! I'm your AI financial companion. Ask me anything about your finances, or select one of the suggestions below to get started.` }]
+        }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (chatInput.trim() === '') return;
+    callChatAPI(chatInput);
+    setChatInput('');
+  };
+
+  const handlePromptClick = (prompt) => {
+    callChatAPI(prompt);
+  };
+
+  const generateChatPrompts = () => {
+    if (!financialSummary) return [];
+    const prompts = [];
+    const { healthInsurance, termInsurance, customGoals, debt } = financialSummary;
+
+    if (healthInsurance === 'no') {
+        prompts.push("Why is health insurance important in India?");
+    }
+    if (termInsurance === 'no') {
+        prompts.push("Explain term insurance in simple terms.");
+    }
+    if (customGoals && customGoals.length > 0 && customGoals[0].name) {
+        prompts.push(`How can I best invest for my "${customGoals[0].name}" goal?`);
+    }
+    if (parseFloat(debt || 0) > 0) {
+        prompts.push("What's a good strategy to pay off my debt faster?");
+    }
+    
+    // Add a default prompt if no specific conditions are met
+    if (prompts.length === 0) {
+        prompts.push("How can I increase my savings rate?");
+        prompts.push("What are some good investment options for beginners in India?");
+    }
+
+    return prompts.slice(0, 3); // Return a max of 3 prompts
+  };
+
+  const suggestionPrompts = generateChatPrompts();
+
+  return (
+    <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]">
+      <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2>
+      <div ref={chatHistoryRef} className="flex-grow overflow-y-auto pr-2 mb-4 custom-scrollbar">
+        {chatHistory.map((msg, i) => (
+          <div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}>
+            <p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>
+            <MarkdownRenderer text={msg.parts[0].text} />
+          </div>
+        ))}
+        {isGeneratingResponse && (
+          <div className="p-3 rounded-xl bg-gray-800 animate-pulse">
+            <p>Thinking...</p>
+          </div>
+        )}
+      </div>
+
+      {/* Suggestion Prompts */}
+      {!isGeneratingResponse && chatHistory.length <= 2 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+              {suggestionPrompts.map((prompt, i) => (
+                  <button key={i} onClick={() => handlePromptClick(prompt)} className="bg-gray-700 hover:bg-gray-600 text-sm text-gray-200 py-2 px-3 rounded-full transition-colors">
+                      {prompt}
+                  </button>
+              ))}
+          </div>
+      )}
+
+      <form onSubmit={handleSendMessage} className="flex gap-2">
+        <input
+          type="text"
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          placeholder="Ask about your finances..."
+          className="flex-grow p-3 rounded-xl bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
+          disabled={isGeneratingResponse}
+        />
+        <button
+          type="submit"
+          className="bg-green-600 font-bold py-3 px-6 rounded-xl transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!chatInput.trim() || isGeneratingResponse}
+        >
+          Send
+        </button>
+      </form>
+      <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style>
+    </section>
+  );
 };
+
 
 // --- Tax Saver Component ---
 const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
@@ -276,7 +375,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
 
-    // [NEW] Effect to pre-fill salary income from the main financial summary
     useEffect(() => {
         if (financialSummary?.monthlyIncome) {
             const annualIncome = parseFloat(financialSummary.monthlyIncome) * 12;
@@ -316,11 +414,11 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         setAiAnalysis('');
         const gI = parseFloat(taxData.salaryIncome || 0) + parseFloat(taxData.otherIncome || 0);
         
-        const tI_new = Math.max(0, gI - 50000); // Standard deduction for new regime
+        const tI_new = Math.max(0, gI - 50000);
         const { tax: nRT, slab: nRSlab } = calculateTax(tI_new, 'new');
 
         const tD = (parseFloat(taxData.investments80C || 0) + parseFloat(taxData.hra || 0) + parseFloat(taxData.homeLoanInterest || 0) + parseFloat(taxData.medicalInsurance80D || 0) + parseFloat(taxData.nps_80ccd1b || 0) + parseFloat(taxData.educationLoanInterest_80e || 0));
-        const tI_old = Math.max(0, gI - 50000 - tD); // Standard deduction for old regime
+        const tI_old = Math.max(0, gI - 50000 - tD);
         const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, 'old');
 
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
@@ -329,7 +427,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         const currentYear = currentDate.getFullYear();
         const financialYear = currentDate.getMonth() >= 3 ? `${currentYear}-${(currentYear + 1).toString().slice(-2)}` : `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
         
-        // [NEW] Upgraded prompt for smarter AI analysis
         const prompt = `
 You are ZENVANA, an expert AI Tax Advisor for India. Your tone is professional, clear, and actionable. You are providing a tax analysis for the Financial Year ${financialYear}.
 
@@ -360,11 +457,6 @@ This is the most important section. Analyze the "User's Deduction Inputs" provid
 
 ## Personalized Tax-Saving Strategies for Next Year
 Based on the user's **income source** and **risk tolerance**, provide 2-3 specific, actionable suggestions to optimize their taxes for the *next* financial year.
-- **If Salaried:** Suggest maximizing HRA, LTA, and standard deduction. Mention NPS for additional 80CCD(1B) benefits.
-- **If Self-Employed/Freelancer:** Suggest claiming all eligible business expenses (e.g., rent, internet, travel). Mention the presumptive taxation scheme (Section 44ADA) if applicable.
-- **Based on Risk Tolerance:**
-  - **Low Risk:** Suggest PPF or Tax-saving FDs for 80C.
-  - **High Risk:** Suggest ELSS mutual funds for 80C, highlighting the potential for higher returns and the 3-year lock-in.
 
 ## Your Path Forward
 End with an empowering statement about taking control of tax planning.`;
@@ -781,6 +873,9 @@ function App() {
               if (docSnap.exists()) { 
                   setFinancialSummary(docSnap.data());
                   setCurrentPage('dashboard');
+              } else {
+                  // If no data, but user is logged in, maybe they are new
+                  setCurrentPage('onboarding');
               }
               setIsAuthReady(true);
           } else {
@@ -807,19 +902,15 @@ function App() {
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
+      setCurrentPage('dashboard'); // Navigate to dashboard after saving
     } catch (error) {
       console.error("!!! Critical Error saving data:", error);
       setIsSubmitting(false);
       throw error;
-    } 
-  };
-
-  useEffect(() => {
-    if (financialSummary && currentPage === 'onboarding') {
-      setCurrentPage('dashboard');
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
-  }, [financialSummary, currentPage]);
+  };
   
   const callGroqAPIWithRetry = useCallback(async (prompt, retries = 1, delay = 3000) => {
     try {
@@ -842,12 +933,13 @@ function App() {
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
     const systemInstruction = `You are ZENVANA, an expert AI financial advisor for India. Your primary goal is to provide helpful, safe, and accurate financial advice. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As ZENVANA, your AI financial companion, my expertise is focused on helping you with your financial questions. How can I assist you with your finances today?" Do not answer the off-topic question. Here is the user's financial profile for context, use it to personalize your answers: ${JSON.stringify(financialSummary, null, 2)}`;
-    const currentChatHistory = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
-    setChatHistory(currentChatHistory);
+    
+    const newHistory = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
+    setChatHistory(newHistory);
 
     const messagesForAPI = [
         { role: "system", content: systemInstruction },
-        ...currentChatHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text }))
+        ...newHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text }))
     ];
     
     try {
@@ -880,17 +972,30 @@ function App() {
   if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
   const navToOnboard = () => { setCurrentPage(financialSummary ? 'dashboard' : 'onboarding'); };
   
+  const renderPage = () => {
+    switch(currentPage) {
+        case 'welcome':
+            return <WelcomePage onGetStarted={navToOnboard} />;
+        case 'onboarding':
+            return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />;
+        case 'dashboard':
+        case 'taxSaver':
+        case 'aiChat':
+            return (
+                <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
+                  {currentPage === 'dashboard' && financialSummary && (<Dashboard financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
+                  {currentPage === 'taxSaver' && financialSummary && (<TaxSaver financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
+                  {currentPage === 'aiChat' && financialSummary && (<AIChat chatHistory={chatHistory} setChatHistory={setChatHistory} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} financialSummary={financialSummary} />)}
+                </Layout>
+            );
+        default:
+            return <WelcomePage onGetStarted={navToOnboard} />;
+    }
+  }
+
   return (
     <div>
-      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
-      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
-      {currentPage !== 'welcome' && currentPage !== 'onboarding' && (
-        <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-          {currentPage === 'dashboard' && (<Dashboard financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
-          {currentPage === 'taxSaver' && (<TaxSaver financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
-          {currentPage === 'aiChat' && (<AIChat chatHistory={chatHistory} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} />)}
-        </Layout>
-      )}
+      {renderPage()}
     </div>
   );
 }
