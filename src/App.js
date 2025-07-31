@@ -262,10 +262,27 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI }) => {
 
 // --- Tax Saver Component ---
 const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
-    const [taxData, setTaxData] = useState({});
+    const [taxData, setTaxData] = useState({
+        salaryIncome: '',
+        otherIncome: '',
+        investments80C: '',
+        hra: '',
+        homeLoanInterest: '',
+        medicalInsurance80D: '',
+        nps_80ccd1b: '',
+        educationLoanInterest_80e: ''
+    });
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
+
+    // [NEW] Effect to pre-fill salary income from the main financial summary
+    useEffect(() => {
+        if (financialSummary?.monthlyIncome) {
+            const annualIncome = parseFloat(financialSummary.monthlyIncome) * 12;
+            setTaxData(prev => ({ ...prev, salaryIncome: annualIncome.toString() }));
+        }
+    }, [financialSummary]);
     
     if (!financialSummary) { return <div className="text-center p-10">Loading financial data...</div>; }
 
@@ -311,26 +328,35 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();
         const financialYear = currentDate.getMonth() >= 3 ? `${currentYear}-${(currentYear + 1).toString().slice(-2)}` : `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+        
+        // [NEW] Upgraded prompt for smarter AI analysis
         const prompt = `
-You are ZENVANA, an expert AI Tax Advisor for India. Your tone is professional, clear, and actionable.
-Analysis for Financial Year ${financialYear}.
+You are ZENVANA, an expert AI Tax Advisor for India. Your tone is professional, clear, and actionable. You are providing a tax analysis for the Financial Year ${financialYear}.
 
-**User & Tax Context:**
+**USER & TAX CONTEXT:**
 - Name: ${financialSummary.name || 'User'}
 - Income Source: ${financialSummary.incomeSource || 'Not specified'}
 - Risk Tolerance: ${financialSummary.riskTolerance || 'Not specified'}
 - Gross Income Entered: ${formatIndianCurrency(gI)}
-- Total Deductions Entered: ${formatIndianCurrency(tD)}
+- Total Deductions Claimed: ${formatIndianCurrency(tD)}
 - Recommended Regime (based on calculation): **${nRT < oRT ? 'New' : 'Old'} Regime**
 - Potential Annual Savings: **${formatIndianCurrency(Math.abs(nRT - oRT))}**
+- User's Deduction Inputs: ${JSON.stringify(taxData)}
 
-**Your Task:** Generate a high-quality, personalized tax optimization report in Markdown.
+**YOUR TASK:**
+Generate a high-quality, personalized tax optimization report in Markdown.
 
 ## Namaste ${financialSummary.name}, Here's Your Tax Analysis
 Start with a friendly greeting. State the recommended tax regime and the potential savings clearly upfront.
 
 ## Detailed Comparison
 Provide a clear, side-by-side comparison of the Old vs. New tax regimes using the data provided. Explain *why* one is better in this specific case.
+
+## 💡 Smart Deduction Analysis & Missed Opportunities
+This is the most important section. Analyze the "User's Deduction Inputs" provided above.
+- For any key deduction field where the user entered 0 or it's empty (e.g., "medicalInsurance80D": "0"), you MUST highlight this as a potential missed opportunity.
+- Explain the benefit of that specific deduction. For example, "I noticed you haven't claimed a deduction under Section 80D for medical insurance. You can claim up to ₹25,000 for premiums, which could further reduce your tax."
+- If the user has claimed deductions, praise them for it. "Great job utilizing your 80C limit!"
 
 ## Personalized Tax-Saving Strategies for Next Year
 Based on the user's **income source** and **risk tolerance**, provide 2-3 specific, actionable suggestions to optimize their taxes for the *next* financial year.
@@ -374,7 +400,7 @@ const ExpensePieChart = ({ expenses }) => {
   );
 };
 
-// --- [NEW] Zenvana Insights Component ---
+// --- Zenvana Insights Component ---
 const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [insights, setInsights] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -396,7 +422,6 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
             const emergencyFundTarget = totalMonthlyExpenses * 6;
 
-            // THIS IS THE FIX: The 'emergencyFundTarget' variable is now used in the prompt.
             const prompt = `
 You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
 Your task is to analyze the following user profile and generate the top 3 most critical financial insights.
@@ -423,10 +448,6 @@ Your task is to analyze the following user profile and generate the top 3 most c
 **YOUR TASK:**
 Respond with a JSON array containing exactly 3 insight objects. Do not add any text outside the JSON.
 Each object must have three properties: "type" ("alert", "opportunity", or "kudos"), "title" (a short, catchy headline), and "description" (a 1-2 sentence explanation in simple, encouraging language).
-
-- "alert": For critical issues (e.g., no insurance). Use an urgent but supportive tone.
-- "opportunity": For areas of improvement (e.g., increasing savings, optimizing expenses).
-- "kudos": For things the user is doing well (e.g., high savings rate, having insurance).
 
 Example JSON structure:
 [
@@ -654,7 +675,6 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
 
   return (
     <section className="space-y-8">
-      {/* --- [NEW] Zenvana Insights Section --- */}
       <ZenvanaInsights financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
