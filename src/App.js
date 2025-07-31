@@ -869,10 +869,9 @@ function App() {
               if (docSnap.exists()) { 
                   setFinancialSummary(docSnap.data());
                   setCurrentPage('dashboard');
-              } else {
-                  // If no data, but user is logged in, maybe they are new
-                  setCurrentPage('onboarding');
               }
+              // If doc doesn't exist, we do nothing here.
+              // The page will remain 'welcome' and the user will click 'Get Started'.
               setIsAuthReady(true);
           } else {
              signInAnonymously(firebaseAuth).catch(err => console.error("Anonymous sign in failed:", err));
@@ -966,32 +965,20 @@ function App() {
   };
   
   if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
+  
   const navToOnboard = () => { setCurrentPage(financialSummary ? 'dashboard' : 'onboarding'); };
   
-  const renderPage = () => {
-    switch(currentPage) {
-        case 'welcome':
-            return <WelcomePage onGetStarted={navToOnboard} />;
-        case 'onboarding':
-            return <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />;
-        case 'dashboard':
-        case 'taxSaver':
-        case 'aiChat':
-            return (
-                <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
-                  {currentPage === 'dashboard' && financialSummary && (<Dashboard financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
-                  {currentPage === 'taxSaver' && financialSummary && (<TaxSaver financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />)}
-                  {currentPage === 'aiChat' && financialSummary && (<AIChat chatHistory={chatHistory} setChatHistory={setChatHistory} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} financialSummary={financialSummary} />)}
-                </Layout>
-            );
-        default:
-            return <WelcomePage onGetStarted={navToOnboard} />;
-    }
-  }
-
   return (
     <div>
-      {renderPage()}
+      {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
+      {currentPage === 'onboarding' && <OnboardingFlow onSubmit={saveFinancialData} initialData={financialSummary} isSubmitting={isSubmitting} />}
+      {['dashboard', 'taxSaver', 'aiChat'].includes(currentPage) && financialSummary && (
+        <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
+          {currentPage === 'dashboard' && <Dashboard financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />}
+          {currentPage === 'taxSaver' && <TaxSaver financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />}
+          {currentPage === 'aiChat' && <AIChat chatHistory={chatHistory} setChatHistory={setChatHistory} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} financialSummary={financialSummary} />}
+        </Layout>
+      )}
     </div>
   );
 }
