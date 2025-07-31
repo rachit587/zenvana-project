@@ -244,19 +244,17 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
   return ( <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 to-gray-900 text-gray-100"> <div className="bg-gray-900 bg-opacity-80 p-8 rounded-3xl shadow-2xl border-gray-800 max-w-3xl w-full"> {currentStep === 1 && (<OnboardingStep1 formData={formData} handleChange={handleChange} nextStep={nextStep} />)} {currentStep === 2 && (<OnboardingStep2 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 4 && (<OnboardingStep4 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)} {currentStep === 5 && (<OnboardingStep5 formData={formData} handleChange={handleChange} prevStep={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />)} </div> </div> );
 };
 
-// --- [NEW] Upgraded AI Chat Component ---
+// --- Upgraded AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSummary, setChatHistory }) => {
   const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
 
-  // Scroll to bottom of chat on new message
   useEffect(() => {
     if (chatHistoryRef.current) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
   }, [chatHistory]);
 
-  // Set initial welcome message
   useEffect(() => {
     if (chatHistory.length === 0) {
         setChatHistory([{
@@ -297,13 +295,12 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
         prompts.push("What's a good strategy to pay off my debt faster?");
     }
     
-    // Add a default prompt if no specific conditions are met
     if (prompts.length === 0) {
         prompts.push("How can I increase my savings rate?");
         prompts.push("What are some good investment options for beginners in India?");
     }
 
-    return prompts.slice(0, 3); // Return a max of 3 prompts
+    return prompts.slice(0, 3);
   };
 
   const suggestionPrompts = generateChatPrompts();
@@ -325,7 +322,6 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
         )}
       </div>
 
-      {/* Suggestion Prompts */}
       {!isGeneratingResponse && chatHistory.length <= 2 && (
           <div className="mb-4 flex flex-wrap gap-2">
               {suggestionPrompts.map((prompt, i) => (
@@ -628,7 +624,7 @@ Example JSON structure:
 };
 
 
-// --- [NEW] Simplified Dashboard Component ---
+// --- Simplified Dashboard Component ---
 const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -767,78 +763,77 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
 
   return (
     <section className="space-y-8">
+      {/* --- Row 1: Overview --- */}
+      <div>
+        <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Financial Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Net Worth</span><span className="font-bold text-3xl text-white mt-1">{formatIndianCurrency(financialSummary.netWorth)}</span></div>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Income</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(financialSummary.monthlyIncome)}</span></div>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Expenses</span><span className="font-bold text-3xl text-yellow-400 mt-1">{formatIndianCurrency(tME)}</span></div>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Savings</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(mS)}</span></div>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className={`font-bold text-3xl mt-1 ${sR < 0 ? 'text-red-500' : 'text-green-400'}`}>{sR.toFixed(2)}%</span></div>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
+        </div>
+      </div>
+
+      {/* --- Row 2: AI Snapshot --- */}
       <ZenvanaInsights financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />
 
+      {/* --- Row 3: Health Score & Expenses --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* --- Main Content Column --- */}
-        <div className="lg:col-span-2 space-y-8">
-          <div>
-            <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Financial Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Net Worth</span><span className="font-bold text-3xl text-white mt-1">{formatIndianCurrency(financialSummary.netWorth)}</span></div>
-              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Income</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(financialSummary.monthlyIncome)}</span></div>
-              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Expenses</span><span className="font-bold text-3xl text-yellow-400 mt-1">{formatIndianCurrency(tME)}</span></div>
-              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Savings</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(mS)}</span></div>
-              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className={`font-bold text-3xl mt-1 ${sR < 0 ? 'text-red-500' : 'text-green-400'}`}>{sR.toFixed(2)}%</span></div>
-              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
-            {financialSummary.customGoals?.some(g => g.name) ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {financialSummary.customGoals.map((g, i) => {
-                  const pr = cGP(g);
-                  return pr ? (
-                    <div key={i} className="bg-gray-800 p-5 rounded-xl">
-                      <div className="flex justify-between items-start mb-3"><h4 className="font-semibold text-xl text-white">{g.name}</h4><div className="text-right"><p className="text-sm text-gray-400">Target</p><p className="font-bold text-lg text-white">{formatIndianCurrency(g.targetAmount)}</p></div></div>
-                      <div className="flex justify-between items-center text-sm text-gray-400 mb-2"><span>Progress</span><div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>By {formatDate(g.targetDate)}</span></div></div>
-                      <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
-                      <p className="text-sm text-right text-gray-300">Saved: {formatIndianCurrency(g.amountSaved || 0)} <span className="text-green-400">({pr.s})</span></p>
-                      <button onClick={() => handleGenerateGoalPlan(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors" disabled={isGeneratingGoalPlan[i]}>
-                          {isGeneratingGoalPlan[i] ? 'Generating Plan...' : 'Generate AI Plan'}
-                      </button>
-                      {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
+        <div className="lg:col-span-2">
+          <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
+          <ExpensePieChart expenses={financialSummary.expenses} />
+        </div>
+        <div>
+          <h3 className="text-2xl font-bold text-yellow-400 mb-4">Financial Health Score</h3>
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center h-full">
+            {isCalculatingHealth ? (
+              <div className="text-gray-400 m-auto">Calculating...</div>
+            ) : (
+              <>
+                <div className={`relative w-40 h-40 flex items-center justify-center`}>
+                    <svg className="absolute w-full h-full" viewBox="0 0 36 36" transform="rotate(-90 18 18)">
+                        <circle className="text-gray-700" cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3"></circle>
+                        <circle className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3" strokeLinecap="round"></circle>
+                    </svg>
+                    <div className={`text-5xl font-extrabold ${getScoreColor(healthScore)}`}>
+                        {healthScore !== null ? healthScore : '--'}
                     </div>
-                  ) : null;
-                })}
-              </div>
-            ) : (<div className="bg-gray-800 p-5 rounded-xl text-center text-gray-400">You haven't set any financial goals yet.</div>)}
+                </div>
+                <p className="text-gray-400 mt-4 mb-4 text-center">This score reflects your current financial standing.</p>
+                <button onClick={handleGenerateImprovementPlan} className="w-full max-w-sm bg-green-600 font-bold py-3 rounded-xl" disabled={isGeneratingImprovement}>
+                  {isGeneratingImprovement ? 'Generating Plan...' : 'Get AI Plan to Improve'}
+                </button>
+                {improvementPlan && <div className="mt-4 p-3 bg-gray-900 rounded-xl w-full"><MarkdownRenderer text={improvementPlan} /></div>}
+              </>
+            )}
           </div>
         </div>
-
-        {/* --- Side Column --- */}
-        <div className="space-y-8">
-            <div>
-                <h3 className="text-2xl font-bold text-yellow-400 mb-4">Financial Health Score</h3>
-                <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center">
-                  {isCalculatingHealth ? (
-                    <div className="text-gray-400">Calculating...</div>
-                  ) : (
-                    <>
-                      <div className={`relative w-40 h-40 flex items-center justify-center`}>
-                          <svg className="absolute w-full h-full" viewBox="0 0 36 36" transform="rotate(-90 18 18)">
-                              <circle className="text-gray-700" cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3"></circle>
-                              <circle className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3" strokeLinecap="round"></circle>
-                          </svg>
-                          <div className={`text-5xl font-extrabold ${getScoreColor(healthScore)}`}>
-                              {healthScore !== null ? healthScore : '--'}
-                          </div>
-                      </div>
-                      <p className="text-gray-400 mt-4 mb-4 text-center">This score reflects your current financial standing.</p>
-                      <button onClick={handleGenerateImprovementPlan} className="w-full max-w-sm bg-green-600 font-bold py-3 rounded-xl" disabled={isGeneratingImprovement}>
-                        {isGeneratingImprovement ? 'Generating Plan...' : 'Get AI Plan to Improve'}
-                      </button>
-                    </>
-                  )}
-                  {improvementPlan && <div className="mt-4 p-3 bg-gray-900 rounded-xl w-full"><MarkdownRenderer text={improvementPlan} /></div>}
+      </div>
+      
+      {/* --- Row 4: Goals --- */}
+      <div>
+        <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
+        {financialSummary.customGoals?.some(g => g.name) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {financialSummary.customGoals.map((g, i) => {
+              const pr = cGP(g);
+              return pr ? (
+                <div key={i} className="bg-gray-800 p-5 rounded-xl">
+                  <div className="flex justify-between items-start mb-3"><h4 className="font-semibold text-xl text-white">{g.name}</h4><div className="text-right"><p className="text-sm text-gray-400">Target</p><p className="font-bold text-lg text-white">{formatIndianCurrency(g.targetAmount)}</p></div></div>
+                  <div className="flex justify-between items-center text-sm text-gray-400 mb-2"><span>Progress</span><div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>By {formatDate(g.targetDate)}</span></div></div>
+                  <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
+                  <p className="text-sm text-right text-gray-300">Saved: {formatIndianCurrency(g.amountSaved || 0)} <span className="text-green-400">({pr.s})</span></p>
+                  <button onClick={() => handleGenerateGoalPlan(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors" disabled={isGeneratingGoalPlan[i]}>
+                      {isGeneratingGoalPlan[i] ? 'Generating Plan...' : 'Generate AI Plan'}
+                  </button>
+                  {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
                 </div>
-            </div>
-             <div>
-                <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
-                <ExpensePieChart expenses={financialSummary.expenses} />
-            </div>
-        </div>
+              ) : null;
+            })}
+          </div>
+        ) : (<div className="bg-gray-800 p-5 rounded-xl text-center text-gray-400">You haven't set any financial goals yet.</div>)}
       </div>
     </section>
   );
