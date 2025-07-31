@@ -628,7 +628,7 @@ Example JSON structure:
 };
 
 
-// --- Dashboard Component ---
+// --- [NEW] Simplified Dashboard Component ---
 const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -770,27 +770,47 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
       <ZenvanaInsights financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* --- Main Content Column --- */}
         <div className="lg:col-span-2 space-y-8">
-             <div>
-                <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Financial Overview</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Net Worth</span><span className="font-bold text-3xl text-white mt-1">{formatIndianCurrency(financialSummary.netWorth)}</span></div>
-                  <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Income</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(financialSummary.monthlyIncome)}</span></div>
-                  <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Expenses</span><span className="font-bold text-3xl text-yellow-400 mt-1">{formatIndianCurrency(tME)}</span></div>
-                  <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Savings</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(mS)}</span></div>
-                  <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className={`font-bold text-3xl mt-1 ${sR < 0 ? 'text-red-500' : 'text-green-400'}`}>{sR.toFixed(2)}%</span></div>
-                  <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
-                </div>
-              </div>
-            <div>
-                <h3 className="text-2xl font-bold text-yellow-400 mb-3">Expense Breakdown</h3>
-                <ExpensePieChart expenses={financialSummary.expenses} />
+          <div>
+            <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Financial Overview</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Net Worth</span><span className="font-bold text-3xl text-white mt-1">{formatIndianCurrency(financialSummary.netWorth)}</span></div>
+              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Income</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(financialSummary.monthlyIncome)}</span></div>
+              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Expenses</span><span className="font-bold text-3xl text-yellow-400 mt-1">{formatIndianCurrency(tME)}</span></div>
+              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Monthly Savings</span><span className="font-bold text-3xl text-green-400 mt-1">{formatIndianCurrency(mS)}</span></div>
+              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className={`font-bold text-3xl mt-1 ${sR < 0 ? 'text-red-500' : 'text-green-400'}`}>{sR.toFixed(2)}%</span></div>
+              <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
             </div>
+          </div>
+          <div>
+            <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
+            {financialSummary.customGoals?.some(g => g.name) ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {financialSummary.customGoals.map((g, i) => {
+                  const pr = cGP(g);
+                  return pr ? (
+                    <div key={i} className="bg-gray-800 p-5 rounded-xl">
+                      <div className="flex justify-between items-start mb-3"><h4 className="font-semibold text-xl text-white">{g.name}</h4><div className="text-right"><p className="text-sm text-gray-400">Target</p><p className="font-bold text-lg text-white">{formatIndianCurrency(g.targetAmount)}</p></div></div>
+                      <div className="flex justify-between items-center text-sm text-gray-400 mb-2"><span>Progress</span><div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>By {formatDate(g.targetDate)}</span></div></div>
+                      <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
+                      <p className="text-sm text-right text-gray-300">Saved: {formatIndianCurrency(g.amountSaved || 0)} <span className="text-green-400">({pr.s})</span></p>
+                      <button onClick={() => handleGenerateGoalPlan(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors" disabled={isGeneratingGoalPlan[i]}>
+                          {isGeneratingGoalPlan[i] ? 'Generating Plan...' : 'Generate AI Plan'}
+                      </button>
+                      {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            ) : (<div className="bg-gray-800 p-5 rounded-xl text-center text-gray-400">You haven't set any financial goals yet.</div>)}
+          </div>
         </div>
 
+        {/* --- Side Column --- */}
         <div className="space-y-8">
             <div>
-                <h3 className="text-2xl font-bold text-yellow-400 mb-3">Financial Health Score</h3>
+                <h3 className="text-2xl font-bold text-yellow-400 mb-4">Financial Health Score</h3>
                 <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center">
                   {isCalculatingHealth ? (
                     <div className="text-gray-400">Calculating...</div>
@@ -814,30 +834,11 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
                   {improvementPlan && <div className="mt-4 p-3 bg-gray-900 rounded-xl w-full"><MarkdownRenderer text={improvementPlan} /></div>}
                 </div>
             </div>
+             <div>
+                <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
+                <ExpensePieChart expenses={financialSummary.expenses} />
+            </div>
         </div>
-      </div>
-      
-      <div>
-        <h3 className="text-2xl font-bold text-yellow-400 mb-3">Your Goals</h3>
-        {financialSummary.customGoals?.some(g => g.name) ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {financialSummary.customGoals.map((g, i) => {
-              const pr = cGP(g);
-              return pr ? (
-                <div key={i} className="bg-gray-800 p-5 rounded-xl">
-                  <div className="flex justify-between items-start mb-3"><h4 className="font-semibold text-xl text-white">{g.name}</h4><div className="text-right"><p className="text-sm text-gray-400">Target</p><p className="font-bold text-lg text-white">{formatIndianCurrency(g.targetAmount)}</p></div></div>
-                  <div className="flex justify-between items-center text-sm text-gray-400 mb-2"><span>Progress</span><div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>By {formatDate(g.targetDate)}</span></div></div>
-                  <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
-                  <p className="text-sm text-right text-gray-300">Saved: {formatIndianCurrency(g.amountSaved || 0)} <span className="text-green-400">({pr.s})</span></p>
-                  <button onClick={() => handleGenerateGoalPlan(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors" disabled={isGeneratingGoalPlan[i]}>
-                      {isGeneratingGoalPlan[i] ? 'Generating Plan...' : 'Generate AI Plan'}
-                  </button>
-                  {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
-                </div>
-              ) : null;
-            })}
-          </div>
-        ) : (<p className="text-center text-gray-400 p-4">You haven't set any financial goals yet.</p>)}
       </div>
     </section>
   );
