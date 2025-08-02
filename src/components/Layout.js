@@ -1,7 +1,7 @@
 // src/components/Layout.js
 
 import React from 'react';
-import Header from './Header'; // We are adding this import
+// import Header from './Header'; // REMOVED: Unused import
 
 const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 to-gray-900 font-sans text-gray-100">
@@ -34,9 +34,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
         </div>
       </nav>
 
-      {/* This structure is changed to include a Header */}
       <div className="flex-1 flex flex-col">
-        {/* <Header />  We are disabling the header for now to match the original design */}
         <main className="flex-grow p-8 overflow-auto">{children}</main>
       </div>
     </div>
