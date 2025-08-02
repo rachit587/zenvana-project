@@ -25,7 +25,6 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             const monthlySavings = parseFloat(monthlyIncome || 0) - totalMonthlyExpenses;
             const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
 
-            // --- IMPROVED AND MORE DETAILED PROMPT ---
             const prompt = `
 You are ZENVANA, an expert AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
 Your task is to analyze the following user profile and generate the top 3 most critical and relevant financial insights.
@@ -79,9 +78,7 @@ You MUST respond ONLY with a valid JSON array containing exactly 3 insight objec
         generateInsights();
     }, [financialSummary, callGroqAPIWithRetry]);
 
-    const InsightCard = ({ insight }) => { /* ... (This sub-component remains the same) ... */ };
-
-    // ... (The rest of the component's return logic remains the same) ...
+    // The single, correct definition of InsightCard
     const InsightCard = ({ insight }) => {
         const config = {
             alert: {
