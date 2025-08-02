@@ -1,9 +1,11 @@
 // src/components/Layout.js
 
 import React from 'react';
+import Header from './Header'; // We are adding this import
 
 const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 to-gray-900 font-sans text-gray-100">
+      {/* Sidebar Navigation */}
       <nav className="w-64 bg-gray-900 shadow-lg p-6 flex flex-col rounded-r-3xl transition-all duration-300 ease-in-out transform hover:shadow-2xl">
         <div className="mb-10 text-center">
             <h2 className="text-4xl font-extrabold text-green-400 drop-shadow-md">ZENVANA</h2>
@@ -31,7 +33,12 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
             <button onClick={handleLogout} className="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:-translate-y-1 shadow-lg">Logout & Start Over</button>
         </div>
       </nav>
-      <main className="flex-grow p-8 overflow-auto">{children}</main>
+
+      {/* This structure is changed to include a Header */}
+      <div className="flex-1 flex flex-col">
+        {/* <Header />  We are disabling the header for now to match the original design */}
+        <main className="flex-grow p-8 overflow-auto">{children}</main>
+      </div>
     </div>
 );
 
