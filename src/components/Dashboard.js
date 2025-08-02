@@ -61,7 +61,37 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
     }
   }, [financialSummary]);
   
-  const handleGenerateImprovementPlan = async () => { /* ... (This function remains the same) ... */ };
+  // FIXED: The logic for this function is now complete.
+  const handleGenerateImprovementPlan = async () => {
+    setIsGeneratingImprovement(true);
+    setImprovementPlan('');
+    const prompt = `
+You are ZENVANA, an AI financial advisor for an Indian user.
+The user has a financial health score of ${healthScore}/100. They want a clear, actionable plan to improve it.
+**USER PROFILE:**
+- Savings Rate: ${savingsRate.toFixed(2)}%
+- Debt: ${formatIndianCurrency(financialSummary.debt || 0)}
+- Insurance: Term Life: ${financialSummary.termInsurance}, Health: ${financialSummary.healthInsurance}
+- Top Financial Worry: "${financialSummary.financialWorry}"
+**YOUR TASK:**
+Provide a detailed, medium-length explanation in Markdown on how to improve their financial health score. Focus on the 2-3 most impactful areas based on their profile. Structure your response with clear headings and actionable steps.
+## Your Path to a Better Score
+Start with an encouraging sentence.
+## Priority 1: [Identify the biggest weakness, e.g., Boost Your Savings Rate]
+Explain *why* this is important. Provide 2-3 practical, actionable tips.
+## Priority 2: [Identify the second biggest weakness, e.g., Strengthen Your Safety Net]
+Explain the importance of this area (e.g., insurance or debt reduction). Provide clear next steps.
+## Your Next Step
+End with a single, simple call to action for the user to take today.`;
+    try {
+        const result = await callGroqAPIWithRetry(prompt);
+        setImprovementPlan(result);
+    } catch (e) {
+        setImprovementPlan("My apologies, Zenvana AI could not create a plan right now. Please try again.");
+    } finally {
+        setIsGeneratingImprovement(false);
+    }
+  };
   
   const handleGenerateGoalPlan = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
@@ -80,13 +110,11 @@ Create a personalized, actionable, and structured investment plan in Markdown.
 ## Investment Plan for: ${g.name}
 Start with an encouraging sentence.
 ## Current Status & Required Investment
-- Calculate the remaining amount needed.
-- Calculate the number of months until the target date.
-- Calculate the required monthly investment (SIP) to reach the goal. State this clearly.
+- Calculate the remaining amount needed, number of months left, and required monthly investment (SIP). State this clearly.
 ## Recommended Investment Strategy
-Based on the user's risk tolerance and the goal's timeline, recommend 1-2 specific types of investments (e.g., RD, Debt Fund, Hybrid Fund, Equity Fund). Explain *why* for each. Do not recommend specific stocks or fund names.
+Based on risk tolerance and timeline, recommend 1-2 types of investments (e.g., RD, Debt Fund, Equity Fund). Explain why.
 ## Next Steps
-Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with SIP).`;
+Provide a clear, 2-step action plan.`;
     try {
         const result = await callGroqAPIWithRetry(prompt);
         setGoalPlanResults(p => ({ ...p, [i]: result }));
@@ -116,7 +144,7 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
 
   return (
     <section className="space-y-8">
-      {/* --- Row 1: Overview (RESTORED) --- */}
+      {/* --- Row 1: Overview --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Financial Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -159,7 +187,7 @@ Provide a clear, 2-step action plan (e.g., Research on a platform, Automate with
         </div>
       </div>
       
-      {/* --- Row 4: Goals (RESTORED) --- */}
+      {/* --- Row 4: Goals --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
         {financialSummary.customGoals?.some(g => g.name) ? (
