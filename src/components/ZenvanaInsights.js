@@ -1,7 +1,7 @@
 // src/components/ZenvanaInsights.js
 
 import React, { useState, useEffect } from 'react';
-import MarkdownRenderer from './MarkdownRenderer';
+// REMOVED: Unused import of MarkdownRenderer
 
 const formatIndianCurrency = (num) => {
     if (typeof num !== 'number') num = parseFloat(num || 0);
@@ -20,12 +20,13 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             setIsLoading(true);
             setError(null);
 
-            const { name, monthlyIncome, expenses, debt, termInsurance, healthInsurance, customGoals, riskTolerance, financialWorry } = financialSummary;
+            // REMOVED: Unused variables customGoals, riskTolerance from the line below
+            const { name, monthlyIncome, expenses, debt, termInsurance, healthInsurance, financialWorry } = financialSummary;
 
             const totalMonthlyExpenses = Object.values(expenses || {}).reduce((sum, value) => sum + parseFloat(value || 0), 0);
             const monthlySavings = parseFloat(monthlyIncome || 0) - totalMonthlyExpenses;
             const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
-            const emergencyFundTarget = totalMonthlyExpenses * 6;
+            // REMOVED: Unused emergencyFundTarget calculation
 
             const prompt = `
 You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
