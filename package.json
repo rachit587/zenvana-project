@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@apollo/client": "^3.10.0",
     "aos": "^2.3.4",
     "firebase": "^10.12.2",
     "node-sass": "^8.0.0",
