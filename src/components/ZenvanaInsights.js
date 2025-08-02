@@ -1,7 +1,6 @@
 // src/components/ZenvanaInsights.js
 
 import React, { useState, useEffect } from 'react';
-// REMOVED: Unused import of MarkdownRenderer
 
 const formatIndianCurrency = (num) => {
     if (typeof num !== 'number') num = parseFloat(num || 0);
@@ -20,39 +19,45 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             setIsLoading(true);
             setError(null);
 
-            // REMOVED: Unused variables customGoals, riskTolerance from the line below
-            const { name, monthlyIncome, expenses, debt, termInsurance, healthInsurance, financialWorry } = financialSummary;
+            const { name, monthlyIncome, expenses, debt, termInsurance, healthInsurance, customGoals, financialWorry } = financialSummary;
 
             const totalMonthlyExpenses = Object.values(expenses || {}).reduce((sum, value) => sum + parseFloat(value || 0), 0);
             const monthlySavings = parseFloat(monthlyIncome || 0) - totalMonthlyExpenses;
             const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : 0;
-            // REMOVED: Unused emergencyFundTarget calculation
 
+            // --- IMPROVED AND MORE DETAILED PROMPT ---
             const prompt = `
-You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
-Your task is to analyze the following user profile and generate the top 3 most critical financial insights.
-**USER PROFILE:**
+You are ZENVANA, an expert AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
+Your task is to analyze the following user profile and generate the top 3 most critical and relevant financial insights.
+
+**USER PROFILE FOR ANALYSIS:**
 - Name: ${name}
+- Monthly Income: ${formatIndianCurrency(monthlyIncome)}
+- Total Monthly Expenses: ${formatIndianCurrency(totalMonthlyExpenses)}
 - Monthly Savings Rate: ${savingsRate.toFixed(1)}%
 - Total Debt: ${formatIndianCurrency(debt || 0)}
-- Term Life Insurance: ${termInsurance}
-- Health Insurance: ${healthInsurance}
-- Biggest Worry: "${financialWorry}"
+- Has Term Life Insurance: ${termInsurance}
+- Has Health Insurance: ${healthInsurance}
+- Has Financial Goals: ${customGoals?.length > 0 && customGoals[0].name ? 'Yes' : 'No'}
+- Biggest Financial Worry: "${financialWorry}"
 
-**ANALYSIS HIERARCHY (Address in this order of priority):**
-1.  **Safety Net (Critical):** Check for missing Health or Term Insurance. This is the #1 priority.
-2.  **Debt Management:** High debt is the next priority.
-3.  **Savings & Investments:** A low savings rate (< 15%) is a major concern.
-4.  **Opportunities & Kudos:** Acknowledge good habits like having set goals.
+**YOUR INSTRUCTIONS:**
+You must identify the top 3 most important insights from the user's profile based on this priority:
+1.  **Critical Safety Net:** A lack of Health or Term Insurance ('no') is the highest priority 'alert'.
+2.  **Debt Issues:** High debt is the second priority 'alert'.
+3.  **Savings Issues:** A savings rate below 15% is a high priority 'opportunity'.
+4.  **Positive Actions:** Acknowledge good habits (like having insurance or goals) with a 'kudos' insight if there are no urgent alerts or opportunities.
 
-**YOUR TASK:**
-Respond ONLY with a JSON array of exactly 3 insight objects. Do not add any text outside the JSON. Each object must have "type" ("alert", "opportunity", or "kudos"), "title" (a short headline), and "description" (a 1-2 sentence explanation).
-Example:
+**YOUR RESPONSE FORMAT:**
+You MUST respond ONLY with a valid JSON array containing exactly 3 insight objects. Do not write any introductory text, explanations, or comments outside of the JSON structure.
+
+**Example of a valid JSON response:**
 [
   {"type": "alert", "title": "Critical: No Health Insurance", "description": "A medical emergency is a huge financial risk. Securing a health plan for yourself and your family should be your #1 priority."},
   {"type": "opportunity", "title": "Boost Your Savings", "description": "Your savings rate is a bit low. Let's explore ways to trim expenses so you can invest more towards your goals."},
   {"type": "kudos", "title": "Great Goal Setting!", "description": "It's fantastic that you've set clear financial goals. This is the first step towards achieving them."}
-]`;
+]
+`;
             try {
                 const result = await callGroqAPIWithRetry(prompt);
                 const jsonMatch = result.match(/\[[\s\S]*\]/);
@@ -60,10 +65,11 @@ Example:
                     const parsedInsights = JSON.parse(jsonMatch[0]);
                     setInsights(parsedInsights);
                 } else {
+                    console.error("AI Response was not valid JSON:", result);
                     throw new Error("AI did not return valid JSON.");
                 }
             } catch (err) {
-                console.error("Error generating insights:", err);
+                console.error("Error generating or parsing insights:", err);
                 setError("Could not generate AI insights at this time. Please try again later.");
             } finally {
                 setIsLoading(false);
@@ -73,6 +79,9 @@ Example:
         generateInsights();
     }, [financialSummary, callGroqAPIWithRetry]);
 
+    const InsightCard = ({ insight }) => { /* ... (This sub-component remains the same) ... */ };
+
+    // ... (The rest of the component's return logic remains the same) ...
     const InsightCard = ({ insight }) => {
         const config = {
             alert: {
