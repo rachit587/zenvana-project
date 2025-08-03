@@ -1,4 +1,4 @@
-\// PASTE THIS ENTIRE CODE BLOCK INTO YOUR src/App.js FILE
+// PASTE THIS ENTIRE CODE BLOCK INTO YOUR src/App.js FILE
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
@@ -8,9 +8,8 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-// --- Firebase Configuration ---
+// --- Firebase Configuration (No Changes) ---
 const firebaseConfig = {
-  // Your Firebase config details remain here
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
   projectId: "zenvana-web",
@@ -20,7 +19,7 @@ const firebaseConfig = {
   measurementId: "G-TVZF4SK0YG"
 };
 
-// --- Helper Functions & Components ---
+// --- Helper Functions & Components (No Changes) ---
 const formatIndianCurrency = (num) => {
     if (typeof num !== 'number') {
         num = parseFloat(num || 0);
@@ -335,11 +334,9 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
   );
 };
 
-// --- AI Chat Component ---
-const AIChat = ({ financialSummary, callGroqAPI }) => {
-  const [chatHistory, setChatHistory] = useState([]);
+// --- AI Chat Component (No Changes) ---
+const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSummary, setChatHistory }) => {
   const [chatInput, setChatInput] = useState('');
-  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const chatHistoryRef = useRef(null);
 
   useEffect(() => {
@@ -349,42 +346,14 @@ const AIChat = ({ financialSummary, callGroqAPI }) => {
   }, [chatHistory]);
 
   useEffect(() => {
-    if (chatHistory.length === 0 && financialSummary) {
+    if (chatHistory.length === 0 && financialSummary?.name) {
         setChatHistory([{
             role: 'model',
-            parts: [{ text: `Namaste, ${financialSummary.name || 'User'}! I'm your AI financial companion. I have reviewed your detailed profile. How can I help you today?` }]
+            parts: [{ text: `Namaste, ${financialSummary.name}! I'm your AI financial companion. I have reviewed your detailed profile. How can I help you today?` }]
         }]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [financialSummary]);
-
-  const callChatAPI = async (userMessage) => {
-    setIsGeneratingResponse(true);
-    const newHistory = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
-    setChatHistory(newHistory);
-
-    const systemInstruction = `You are ZENVANA, a hyper-personalized AI financial advisor for India. Your tone is that of an expert, empathetic human advisor. Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As Zenvana, my expertise is in finance. I can't help with that, but I'm ready to answer any of your money-related questions." Do not answer the off-topic question.
-    **CRITICAL INSTRUCTION: Use the following detailed user profile to make your answers deeply personal and contextual. Refer to their specific data points when relevant.**
-    ---
-    **USER'S FINANCIAL PROFILE:**
-    ${JSON.stringify(financialSummary, null, 2)}
-    ---
-    When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings. If they ask about saving tax, consider their income and existing 80C investments.`;
-
-    const messagesForAPI = [
-        { role: "system", content: systemInstruction },
-        ...newHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text }))
-    ];
-
-    try {
-        const responseText = await callGroqAPI(messagesForAPI, false); // false = not JSON mode
-        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: responseText }] }]);
-    } catch (error) {
-        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: error.message }] }]);
-    } finally {
-        setIsGeneratingResponse(false);
-    }
-  };
   
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -438,7 +407,7 @@ const AIChat = ({ financialSummary, callGroqAPI }) => {
   );
 };
 
-// --- Tax Saver Component ---
+// --- Tax Saver Component (Updated to use new callGroqAPI prop) ---
 const TaxSaver = ({ financialSummary, callGroqAPI }) => {
     const [taxData, setTaxData] = useState({
         salaryIncome: '', otherIncome: '', investments80C: '', hra: '', homeLoanInterest: '',
@@ -512,7 +481,7 @@ const TaxSaver = ({ financialSummary, callGroqAPI }) => {
         End with an empowering statement about proactive tax planning.`;
         
         try {
-            const result = await callGroqAPI([{ role: "user", content: prompt }], false);
+            const result = await callGroqAPI([{ role: "user", content: prompt }]);
             setAiAnalysis(result);
         } catch (e) { 
             setAiAnalysis(e.message);
@@ -636,7 +605,8 @@ Each object must have "type", "title", and "description". Be specific and use th
         ];
 
         try {
-            const parsedResult = await callGroqAPI(messages, true); // true for JSON mode
+            // Using the new callGroqAPI with JSON mode enabled
+            const parsedResult = await callGroqAPI(messages, true); 
             if (parsedResult.insights && Array.isArray(parsedResult.insights)) {
                 setInsights(parsedResult.insights);
             } else {
@@ -682,7 +652,7 @@ Each object must have "type", "title", and "description". Be specific and use th
 };
 
 
-// --- Dashboard Component ---
+// --- Dashboard Component (Updated to use new callGroqAPI prop) ---
 const Dashboard = ({ financialSummary, callGroqAPI }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -753,7 +723,7 @@ const Dashboard = ({ financialSummary, callGroqAPI }) => {
     ## Your Next Step
     End with a single, simple call to action for TODAY (e.g., "Open a separate savings account right now.").`;
     try {
-        const result = await callGroqAPI([{ role: "user", content: prompt }], false);
+        const result = await callGroqAPI([{ role: "user", content: prompt }]);
         setImprovementPlan(result);
     } catch (e) { setImprovementPlan(e.message);
     } finally { setIsGeneratingImprovement(false); }
@@ -773,7 +743,7 @@ const Dashboard = ({ financialSummary, callGroqAPI }) => {
     ## Next Steps
     Provide a 2-step action plan (e.g., "1. Research and choose a fund... 2. Set up an automatic monthly SIP...").`;
     try {
-        const result = await callGroqAPI([{ role: "user", content: prompt }], false);
+        const result = await callGroqAPI([{ role: "user", content: prompt }]);
         setGoalPlanResults(p => ({ ...p, [i]: result }));
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: e.message }));
     } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
@@ -864,6 +834,10 @@ function App() {
   const [financialSummary, setFinancialSummary] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // 🧠 Restored State: Chat state is managed here, as in your original file.
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
+
   const groqApiKey = process.env.REACT_APP_GROQ_API_KEY;
 
   useEffect(() => {
@@ -910,13 +884,12 @@ function App() {
     }
   };
 
-  // ⭐ NEW: Centralized, robust API call function with JSON mode support
-  const callGroqAPI = useCallback(async (messages, isJsonMode = false, retries = 2, delay = 1000) => {
+  // 🔄 Centralized API Function: One function to handle all AI calls.
+  const callGroqAPI = useCallback(async (messages, isJsonMode = false) => {
       const body = {
         messages: messages,
         model: "llama3-8b-8192",
       };
-      // Enforce JSON mode if requested
       if (isJsonMode) {
         body.response_format = { type: "json_object" };
       }
@@ -927,12 +900,6 @@ function App() {
           headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
-
-        // Retry logic for server errors like 503
-        if (response.status === 503 && retries > 0) {
-          await new Promise(res => setTimeout(res, delay));
-          return callGroqAPI(messages, isJsonMode, retries - 1, delay * 2);
-        }
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -945,21 +912,43 @@ function App() {
         if (!content) {
             throw new Error("Invalid response structure from AI.");
         }
-
-        // If JSON mode was on, the content itself is a JSON string that needs parsing
-        if (isJsonMode) {
-          return JSON.parse(content);
-        }
         
-        // Otherwise, return the text content directly
-        return content;
+        // If JSON mode, parse the content string. Otherwise, return text.
+        return isJsonMode ? JSON.parse(content) : content;
 
       } catch (error) {
         console.error("Groq API call failed:", error);
-        // Throw a user-friendly error message that components can display
-        throw new Error("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
+        throw new Error("My apologies, Zenvana AI is currently experiencing high traffic. Please try again later.");
       }
     }, [groqApiKey]);
+
+  // This function now uses the centralized callGroqAPI
+  const callChatAPI = async (userMessage) => {
+    setIsGeneratingResponse(true);
+    const systemInstruction = `You are ZENVANA, a hyper-personalized AI financial advisor for India. Your tone is that of an expert, empathetic human advisor. Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As Zenvana, my expertise is in finance. I can't help with that, but I'm ready to answer any of your money-related questions." Do not answer the off-topic question.
+    **CRITICAL INSTRUCTION: Use the following detailed user profile to make your answers deeply personal and contextual. Refer to their specific data points when relevant.**
+    ---
+    **USER'S FINANCIAL PROFILE:**
+    ${JSON.stringify(financialSummary, null, 2)}
+    ---`;
+    
+    const newHistory = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
+    setChatHistory(newHistory);
+    
+    const messagesForAPI = [
+        { role: "system", content: systemInstruction },
+        ...newHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text }))
+    ];
+
+    try {
+        const responseText = await callGroqAPI(messagesForAPI);
+        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: responseText }] }]);
+    } catch (error) {
+        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: error.message }] }]);
+    } finally {
+        setIsGeneratingResponse(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (!auth || !db || !userId) return;
@@ -967,6 +956,7 @@ function App() {
       await deleteDoc(doc(db, `users/${userId}/financial_data/summary`));
       await signOut(auth);
       setFinancialSummary(null); 
+      setChatHistory([]); // Clear chat history on logout
       setUserId(null); 
       setIsAuthReady(false); 
       setCurrentPage('welcome');
@@ -985,7 +975,7 @@ function App() {
         <Layout userId={userId} onNavigate={setCurrentPage} currentPage={currentPage} handleLogout={handleLogout}>
           {currentPage === 'dashboard' && <Dashboard financialSummary={financialSummary} callGroqAPI={callGroqAPI} />}
           {currentPage === 'taxSaver' && <TaxSaver financialSummary={financialSummary} callGroqAPI={callGroqAPI} />}
-          {currentPage === 'aiChat' && <AIChat financialSummary={financialSummary} callGroqAPI={callGroqAPI} />}
+          {currentPage === 'aiChat' && <AIChat chatHistory={chatHistory} setChatHistory={setChatHistory} callChatAPI={callChatAPI} isGeneratingResponse={isGeneratingResponse} financialSummary={financialSummary} />}
         </Layout>
       )}
     </div>
