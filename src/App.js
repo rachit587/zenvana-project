@@ -509,7 +509,8 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry, updateCachedD
                 return;
             }
 
-            const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance, financialWorry, customGoals } = financialSummary;
+            // --- ⭐ FIX: Removed unused 'financialWorry' and 'customGoals' variables ---
+            const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance } = financialSummary;
             const annualIncome = parseFloat(monthlyIncome || 0) * 12;
             const idealTermCover = annualIncome * 15;
             const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
