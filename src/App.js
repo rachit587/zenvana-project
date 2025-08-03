@@ -536,7 +536,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, 'old');
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
         
-        // --- ⭐ NEW: Upgraded Tax Saver Prompt ---
         const prompt = `
 You are ZENVANA, an expert AI Tax Advisor for India, providing analysis for the current financial year.
 **DEEP USER CONTEXT:**
@@ -664,7 +663,6 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             const idealTermCover = annualIncome * 15;
             const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
             
-            // --- ⭐ NEW: Upgraded Insights Prompt ---
             const prompt = `
 You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable, like a real human advisor reviewing a new client's file.
 Your task is to analyze the following **detailed user profile** and generate the top 3 most critical financial insights.
@@ -764,7 +762,8 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         if (!financialSummary) return;
         setIsCalculatingHealth(true);
 
-        const { dateOfBirth, dependents, monthlyIncome, monthlyExpenses, netWorth, debt, termInsurance, healthInsurance, investments, liabilities, emergencyFund } = financialSummary;
+        // --- ⭐ FIX: Removed 'netWorth' and 'debt' as they are unused here ---
+        const { dateOfBirth, dependents, monthlyIncome, monthlyExpenses, termInsurance, healthInsurance, investments, liabilities, emergencyFund } = financialSummary;
         
         const age = getAge(dateOfBirth);
         const getPersona = (age, deps) => {
@@ -792,8 +791,8 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         const highInterestDebt = parseFloat(liabilities?.highInterest || 0);
         if (highInterestDebt === 0) rawScores.debt = 1; else if (highInterestDebt / (monthlyIncome * 12) < 0.1) rawScores.debt = 0.5; else rawScores.debt = 0.1;
 
-        const healthScore = healthInsurance === 'yes' ? 1 : 0; const lifeScore = termInsurance === 'yes' ? 1 : 0;
-        rawScores.insurance = (healthScore * 0.5) + (lifeScore * 0.5);
+        const healthScoreValue = healthInsurance === 'yes' ? 1 : 0; const lifeScore = termInsurance === 'yes' ? 1 : 0;
+        rawScores.insurance = (healthScoreValue * 0.5) + (lifeScore * 0.5);
 
         const totalInvestments = Object.values(investments || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
         if (totalInvestments / (monthlyIncome * 12) > 1) rawScores.investment = 1; else if (totalInvestments > 0) rawScores.investment = 0.5;
@@ -819,7 +818,6 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   
   const handleGenerateImprovementPlan = async () => {
     setIsGeneratingImprovement(true); setImprovementPlan('');
-    // --- ⭐ NEW: Upgraded Improvement Plan Prompt ---
     const prompt = `
 You are ZENVANA, an AI financial advisor for an Indian user.
 The user has a financial health score of ${healthScore}/100 and wants a concrete plan to improve it.
@@ -858,7 +856,6 @@ End with a single, simple, and encouraging call to action for the user to take T
   
   const handleGenerateGoalPlan = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
-    // --- ⭐ NEW: Upgraded Goal Plan Prompt ---
     const prompt = `
 You are ZENVANA, an expert AI financial advisor for an Indian user. Your tone is strategic and encouraging.
 
@@ -1043,7 +1040,6 @@ function App() {
   
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
-    // --- ⭐ NEW: Upgraded Chat Prompt ---
     const systemInstruction = `You are ZENVANA, a hyper-personalized AI financial advisor for India. Your tone is that of an expert, empathetic human advisor.
 Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile.
 You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context.
