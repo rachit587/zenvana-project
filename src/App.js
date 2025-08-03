@@ -509,7 +509,6 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry, updateCachedD
                 return;
             }
 
-            // --- ⭐ FIX: Removed unused 'financialWorry' and 'customGoals' variables ---
             const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance } = financialSummary;
             const annualIncome = parseFloat(monthlyIncome || 0) * 12;
             const idealTermCover = annualIncome * 15;
@@ -581,9 +580,25 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry, updateCachedData })
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
   const [improvementPlan, setImprovementPlan] = useState(() => financialSummary.cachedData?.improvementPlan?.data || '');
-  const [isGeneratingImprovement, setIsGeneratingImprovement] = useState(false);
-  const [goalPlanResults, setGoalPlanResults] = useState(() => financialSummary.cachedData?.goalPlans?.data || {});
+  
+  // --- ⭐ GOAL CACHING FIX: Initialize state correctly ---
+  const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
+
+  useEffect(() => {
+    // --- ⭐ GOAL CACHING FIX: Populate initial state from cache ---
+    const initialGoalPlans = {};
+    if (financialSummary.customGoals && financialSummary.cachedData?.goalPlans?.data) {
+        financialSummary.customGoals.forEach(g => {
+            const goalCacheKey = `goal_${g.name.replace(/\s+/g, '_')}`;
+            const cachedPlan = financialSummary.cachedData.goalPlans.data[goalCacheKey];
+            if (cachedPlan && new Date(financialSummary.lastUpdated) < new Date(cachedPlan.generatedAt)) {
+                initialGoalPlans[goalCacheKey] = cachedPlan.data;
+            }
+        });
+    }
+    setGoalPlanResults(initialGoalPlans);
+  }, [financialSummary]);
 
   useEffect(() => {
     const calculateAdvancedHealthScore = () => {
@@ -648,13 +663,14 @@ You are ZENVANA, an AI financial advisor for an Indian user. The user has a fina
     } finally { setIsGeneratingImprovement(false); }
   };
   
-  const handleGenerateGoalPlan = async (g, i) => {
-    setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
+  const handleGenerateGoalPlan = async (g) => {
     const goalCacheKey = `goal_${g.name.replace(/\s+/g, '_')}`;
+    setIsGeneratingGoalPlan(p => ({ ...p, [goalCacheKey]: true }));
+
     const cachedGoalData = financialSummary.cachedData?.goalPlans?.data?.[goalCacheKey];
      if (cachedGoalData && new Date(financialSummary.lastUpdated) < new Date(cachedGoalData.generatedAt)) {
-        setGoalPlanResults(p => ({ ...p, [i]: cachedGoalData.data }));
-        setIsGeneratingGoalPlan(p => ({ ...p, [i]: false }));
+        setGoalPlanResults(p => ({ ...p, [goalCacheKey]: cachedGoalData.data }));
+        setIsGeneratingGoalPlan(p => ({ ...p, [goalCacheKey]: false }));
         return;
     }
     const prompt = `
@@ -663,15 +679,15 @@ You are ZENVANA, an expert AI financial advisor for an Indian user. Your tone is
 **YOUR TASK:** Create a personalized, actionable, and structured investment plan in Markdown.`;
     try {
         const result = await callGroqAPIWithRetry(prompt);
-        setGoalPlanResults(p => ({ ...p, [i]: result }));
+        setGoalPlanResults(p => ({ ...p, [goalCacheKey]: result }));
         const currentCache = financialSummary.cachedData?.goalPlans?.data || {};
         const newGoalCacheObject = {
             ...currentCache,
             [goalCacheKey]: { data: result, generatedAt: new Date().toISOString() }
         };
         await updateCachedData('goalPlans', newGoalCacheObject);
-    } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
-    } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
+    } catch (e) { setGoalPlanResults(p => ({ ...p, [goalCacheKey]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
+    } finally { setIsGeneratingGoalPlan(p => ({ ...p, [goalCacheKey]: false })); }
   };
 
   return (
@@ -724,16 +740,19 @@ You are ZENVANA, an expert AI financial advisor for an Indian user. Your tone is
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {financialSummary.customGoals.map((g, i) => {
               const pr = cGP(g);
+              // --- ⭐ GOAL CACHING FIX: Use a consistent key for state and cache ---
+              const goalCacheKey = `goal_${g.name.replace(/\s+/g, '_')}`;
               return pr ? (
                 <div key={i} className="bg-gray-800 p-5 rounded-xl">
                   <div className="flex justify-between items-start mb-3"><h4 className="font-semibold text-xl text-white">{g.name}</h4><div className="text-right"><p className="text-sm text-gray-400">Target</p><p className="font-bold text-lg text-white">{formatIndianCurrency(g.targetAmount)}</p></div></div>
                   <div className="flex justify-between items-center text-sm text-gray-400 mb-2"><span>Progress</span><div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span>By {formatDate(g.targetDate)}</span></div></div>
                   <div className="w-full bg-gray-700 rounded-full h-4 mb-2"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${pr.p}%` }}></div></div>
                   <p className="text-sm text-right text-gray-300">Saved: {formatIndianCurrency(g.amountSaved || 0)} <span className="text-green-400">({pr.s})</span></p>
-                  <button onClick={() => handleGenerateGoalPlan(g, i)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors disabled:opacity-50" disabled={isGeneratingGoalPlan[i]}>
-                      {isGeneratingGoalPlan[i] ? 'Generating Plan...' : 'Generate AI Plan'}
+                  <button onClick={() => handleGenerateGoalPlan(g)} className="mt-4 w-full bg-yellow-600 hover:bg-yellow-500 text-gray-900 font-bold py-2 rounded-xl transition-colors disabled:opacity-50" disabled={isGeneratingGoalPlan[goalCacheKey]}>
+                      {isGeneratingGoalPlan[goalCacheKey] ? 'Generating Plan...' : 'Generate AI Plan'}
                   </button>
-                  {goalPlanResults[i] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[i]} /></div>)}
+                  {/* --- ⭐ GOAL CACHING FIX: Use the correct key to display the result --- */}
+                  {goalPlanResults[goalCacheKey] && (<div className="mt-4 p-3 bg-gray-900 rounded-xl"><MarkdownRenderer text={goalPlanResults[goalCacheKey]} /></div>)}
                 </div>
               ) : null;
             })}
@@ -745,7 +764,7 @@ You are ZENVANA, an expert AI financial advisor for an Indian user. Your tone is
 };
 
 
-// --- Main App Component (WITH CACHING LOGIC) ---
+// --- Main App Component (No Changes) ---
 function App() {
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
