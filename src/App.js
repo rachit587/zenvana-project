@@ -374,7 +374,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
 
     if (!financialSummary) { return <div className="text-center p-10">Loading financial data...</div>; }
 
-    // --- MODIFICATION START: Improved Tax Field Descriptions ---
     const taxFields = [
         { name: 'salaryIncome', label: 'Annual Salary Income (from Form 16)', helper: 'Your total gross salary before any deductions, as mentioned in your Form 16.' },
         { name: 'otherIncome', label: 'Annual Income from Other Sources', helper: 'e.g., Interest from savings accounts or FDs, rental income, capital gains.' },
@@ -385,7 +384,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         { name: 'nps_80ccd1b', label: 'NPS Contribution (Section 80CCD(1B))', helper: 'Additional contribution to National Pension System. (Max deduction: ₹50,000)' },
         { name: 'educationLoanInterest_80e', label: 'Interest on Education Loan (Section 80E)', helper: 'Total interest paid on a loan for higher education. (No upper limit on deduction)' }
     ];
-    // --- MODIFICATION END ---
     
     const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
     
@@ -471,7 +469,6 @@ End with an empowering statement about taking control of tax planning.`;
         <section className="p-6 rounded-2xl bg-gray-900">
             <h2 className="text-3xl font-bold text-green-400 mb-6">Interactive Tax Saver</h2>
             <div className="grid md:grid-cols-2 gap-8">
-                {/* --- MODIFICATION START: Updated Tax Form Rendering --- */}
                 <div className="space-y-5">
                     {taxFields.map((field) => (
                         <div key={field.name}>
@@ -488,7 +485,6 @@ End with an empowering statement about taking control of tax planning.`;
                         </div>
                     ))}
                 </div>
-                {/* --- MODIFICATION END --- */}
                 
                 <div>
                     <button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl mb-4 transition transform hover:scale-105 disabled:opacity-50">
@@ -681,68 +677,114 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
 
-  const tME = Object.values(financialSummary?.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
-  const mS = (financialSummary?.monthlyIncome || 0) - tME;
-  const sR = financialSummary?.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
-
   // --- MODIFICATION START: Health Score Calculation moved from AI to local function ---
   useEffect(() => {
-    const calculateHealthScore = () => {
+    // 1. Helper function to get user's age from date of birth
+    const getAge = (dateString) => {
+        if (!dateString) return 30; // Default age if not provided
+        const today = new Date();
+        const birthDate = new Date(dateString);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
+
+    // 2. Helper function to determine user's financial persona
+    const getPersona = (age, dependents) => {
+        if (parseInt(dependents, 10) > 0) {
+            return 'Family Builder';
+        }
+        if (age < 30) {
+            return 'Young Accumulator';
+        }
+        if (age >= 40) {
+            return 'Established Protector';
+        }
+        // Default persona for age 30-39 with no dependents
+        return 'Established Protector';
+    };
+
+    // 3. Main function to calculate the advanced, persona-based score
+    const calculateAdvancedHealthScore = () => {
         if (!financialSummary) return;
         setIsCalculatingHealth(true);
 
-        let score = 0;
+        const {
+            dateOfBirth, dependents, monthlyIncome, expenses, netWorth, debt,
+            termInsurance, healthInsurance, currentInvestments
+        } = financialSummary;
 
-        // 1. Savings Rate (40 points)
-        if (sR >= 30) {
-            score += 40;
-        } else if (sR >= 20) {
-            score += 30;
-        } else if (sR >= 10) {
-            score += 20;
-        } else if (sR >= 0) {
-            score += 10;
+        // Basic calculations
+        const age = getAge(dateOfBirth);
+        const persona = getPersona(age, dependents || 0);
+        const totalMonthlyExpenses = Object.values(expenses || {}).reduce((sum, value) => sum + parseFloat(value || 0), 0);
+        const monthlySavings = parseFloat(monthlyIncome || 0) - totalMonthlyExpenses;
+        const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : -1;
+
+        // Persona-based weights
+        const weights = {
+            'Young Accumulator':     { savings: 35, emergency: 20, debt: 15, insurance: 10, investment: 20 },
+            'Family Builder':        { savings: 25, emergency: 35, debt: 15, insurance: 20, investment: 5 },
+            'Established Protector': { savings: 30, emergency: 30, debt: 20, insurance: 15, investment: 5 }
+        };
+        const personaWeights = weights[persona];
+
+        // Calculate score for each factor (from 0 to 1)
+        let rawScores = {
+            savings: 0, emergency: 0, debt: 0, insurance: 0, investment: 0
+        };
+
+        // Savings Rate Score
+        if (savingsRate >= 30) rawScores.savings = 1;
+        else if (savingsRate >= 20) rawScores.savings = 0.71; // ~25/35
+        else if (savingsRate >= 10) rawScores.savings = 0.42; // ~15/35
+        else if (savingsRate >= 0) rawScores.savings = 0.14; // ~5/35
+        
+        // Emergency Fund Score
+        const emergencyMonths = totalMonthlyExpenses > 0 ? parseFloat(netWorth || 0) / totalMonthlyExpenses : 12;
+        if (emergencyMonths >= 6) rawScores.emergency = 1;
+        else if (emergencyMonths >= 4) rawScores.emergency = 0.75;
+        else if (emergencyMonths >= 2) rawScores.emergency = 0.5;
+        
+        // Debt Level Score
+        const annualIncome = parseFloat(monthlyIncome || 0) * 12;
+        const dti = annualIncome > 0 ? (parseFloat(debt || 0) / annualIncome) * 100 : 100;
+        if (dti === 0) rawScores.debt = 1;
+        else if (dti <= 20) rawScores.debt = 0.75;
+        else if (dti <= 36) rawScores.debt = 0.5;
+        else if (dti <= 50) rawScores.debt = 0.25;
+
+        // Insurance Score
+        const healthScore = healthInsurance === 'yes' ? 1 : 0;
+        const lifeScore = termInsurance === 'yes' ? 1 : 0;
+        rawScores.insurance = (healthScore + lifeScore) / 2;
+
+        // Investment Activity Score
+        if (currentInvestments && currentInvestments.trim() !== '') {
+            rawScores.investment = 1;
         }
 
-        // 2. Debt Level (20 points)
-        const annualIncome = parseFloat(financialSummary.monthlyIncome || 0) * 12;
-        const totalDebt = parseFloat(financialSummary.debt || 0);
-        if (annualIncome > 0 && totalDebt > 0) {
-            const dti = (totalDebt / annualIncome) * 100;
-            if (dti < 30) {
-                score += 20;
-            } else if (dti <= 50) {
-                score += 10;
-            }
-        } else if (totalDebt === 0) {
-            score += 20; // No debt is good
+        // Calculate final weighted score
+        let finalScore = 0;
+        for (const factor in rawScores) {
+            finalScore += rawScores[factor] * personaWeights[factor];
         }
 
-        // 3. Life Insurance (15 points)
-        if (financialSummary.termInsurance === 'yes') {
-            score += 15;
-        } else if (financialSummary.termInsurance === 'not_sure') {
-            score += 5;
-        }
-
-        // 4. Health Insurance (15 points)
-        if (financialSummary.healthInsurance === 'yes') {
-            score += 15;
-        } else if (financialSummary.healthInsurance === 'not_sure') {
-            score += 5;
-        }
-
-        // 5. Goal Setting (10 points)
-        if (financialSummary.customGoals?.some(g => g.name)) {
-            score += 10;
+        // Apply penalty for negative savings
+        if (savingsRate < 0) {
+            finalScore -= 10;
         }
         
-        setHealthScore(score);
+        // Final score should be between 0 and 100
+        setHealthScore(Math.max(0, Math.min(100, Math.round(finalScore))));
         setIsCalculatingHealth(false);
     };
 
-    calculateHealthScore();
-  }, [financialSummary, sR]);
+    calculateAdvancedHealthScore();
+  }, [financialSummary]);
   // --- MODIFICATION END ---
 
 
@@ -756,6 +798,10 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
       </section> 
     );
   }
+  
+  const tME = Object.values(financialSummary?.expenses || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
+  const mS = (financialSummary?.monthlyIncome || 0) - tME;
+  const sR = financialSummary?.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
 
   const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
   const getScoreColor = (score) => {
@@ -922,7 +968,7 @@ function App() {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const groqApiKey = process.env.REACT_APP_GROQ_API_KEY;
+  const groqApiKey = process.env.REACT_APP_GROQ_API_KEY ;
 
   useEffect(() => {
     try {
