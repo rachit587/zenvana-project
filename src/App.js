@@ -634,90 +634,72 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [insights, setInsights] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-
     useEffect(() => {
         const generateInsights = async () => {
             if (!financialSummary) return;
-            setIsLoading(true); 
-            setError(null);
-            
-            let rawResponse = ''; // To store the raw response for debugging
+            setIsLoading(true); setError(null);
 
-            try {
-                const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, riskTolerance } = financialSummary;
-                const annualIncome = parseFloat(monthlyIncome || 0) * 12;
-                const idealTermCover = annualIncome * 15;
-                const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
-            
-                const prompt = `
-You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp and actionable.
+            const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance, financialWorry, customGoals } = financialSummary;
 
-**DEEP USER CONTEXT:**
+            const annualIncome = parseFloat(monthlyIncome || 0) * 12;
+             const idealTermCover = annualIncome * 15;
+            const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
+            
+            const prompt = `
+You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable, like a real human advisor reviewing a new client's file.
+Your task is to analyze the following **detailed user profile** and generate the top 3 most critical financial insights.
+
+**HYPER-PERSONALIZED USER PROFILE:**
 - Name: ${name} (Age: ${getAge(dateOfBirth)})
 - Dependents: ${dependents || 0}
 - Monthly Income: ${formatIndianCurrency(monthlyIncome)}
 - Monthly Expenses: ${formatIndianCurrency(monthlyExpenses)}
-- High-Interest Debt: ${formatIndianCurrency(liabilities?.highInterest)}
-- Emergency Fund: ${formatIndianCurrency(emergencyFund)} (${emergencyFundMonths.toFixed(1)} months of expenses)
-- Health Insurance: ${healthInsurance} (Coverage: ${formatIndianCurrency(healthInsuranceCoverage || 0)})
-- Term Life Insurance: ${termInsurance} (Coverage: ${formatIndianCurrency(termInsuranceCoverage || 0)})
+- **High-Interest Debt (Credit Cards, etc.): ${formatIndianCurrency(liabilities?.highInterest)}**
+- **Low-Interest Debt (Home Loan, etc.): ${formatIndianCurrency(liabilities?.lowInterest)}**
+- **Emergency Fund:** ${formatIndianCurrency(emergencyFund)} (${emergencyFundMonths.toFixed(1)} months of expenses)
+- **Health Insurance:** ${healthInsurance} (Coverage: ${formatIndianCurrency(healthInsuranceCoverage || 0)})
+- **Term Life Insurance:** ${termInsurance} (Coverage: ${formatIndianCurrency(termInsuranceCoverage || 0)})
 - Recommended Term Life Cover: ${formatIndianCurrency(idealTermCover)}
+- Investment Portfolio: ${JSON.stringify(investments)}
 - Risk Tolerance: ${riskTolerance}
+- Biggest Worry: "${financialWorry}"
+- Goals: ${customGoals?.length > 0 ? customGoals.map(g => g.name).join(', ') : 'None Set'}
 
-**YOUR CRITICAL TASK:**
-Analyze the user profile and respond with ONLY a valid JSON array of exactly 3 insight objects.
-- Each object MUST have the keys: "type", "title", and "description".
-- The "type" key MUST be one of "alert", "opportunity", or "kudos".
-- Do NOT include any introductory text, explanations, or markdown formatting like \`\`\`json. Your entire response must be the raw JSON array.
-
-**EXAMPLE OF THE EXACT OUTPUT FORMAT REQUIRED:**
-[
-  {"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ₹50,000 in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus."},
-  {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ₹50,00,000 is below the recommended ₹1,50,00,000. Let's explore affordable ways to increase this vital protection."},
-  {"type": "kudos", "title": "Great Emergency Fund!", "description": "Well done on building an emergency fund that covers over 6 months of your expenses. This is a strong foundation for your financial security."}
-]
+**ANALYSIS HIERARCHY (Address in this order of priority):**
+1.  **Critical Risks (Generate 'alert' type):**
+    - Is there any **High-Interest Debt**? This is the #1 financial fire to put out.
+    - Is the **Emergency Fund** less than 3 months of expenses?
+    - Is **Health Insurance** 'no'?
+    - Is **Term Insurance** 'no', OR is the coverage less than 50% of the recommended amount?
+2.  **Major Opportunities (Generate 'opportunity' type):**
+    - Is the Term Insurance coverage inadequate (e.g., > 50% but < 100% of recommended)?
+    - Is there a major mismatch between **Risk Tolerance** and **Investment Portfolio**? (e.g., 'high' tolerance but mostly 'debt' investments).
+    - Is the savings rate low (<15%)?
+3.  **Positive Reinforcement (Generate 'kudos' type):**
+    - Is the Emergency Fund adequate (>= 6 months)?
+    - Is there zero high-interest debt?
+    - Have they set clear goals?
+**YOUR TASK:**
+Respond with a JSON array of exactly 3 insight objects. Do not add any text outside the JSON.
+Each object must have "type", "title", and "description". Be specific in the description.
+**Example of a hyper-personalized insight:**
+{"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus to improve your finances."}
+{"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."}
 `;
-                rawResponse = await callGroqAPIWithRetry(prompt);
-
-                let jsonString = rawResponse;
-                const markdownMatch = rawResponse.match(/```(json)?\s*([\s\S]*?)\s*```/);
-                if (markdownMatch && markdownMatch[2]) {
-                    jsonString = markdownMatch[2];
-                }
-
-                const startIndex = jsonString.indexOf('[');
-                const endIndex = jsonString.lastIndexOf(']');
-
-                if (startIndex === -1 || endIndex === -1) {
-                    throw new Error("Could not find a JSON array in the AI response.");
-                }
-
-                jsonString = jsonString.substring(startIndex, endIndex + 1);
-                
-                const parsedData = JSON.parse(jsonString);
-
-                if (!Array.isArray(parsedData) || parsedData.length === 0) {
-                    throw new Error("Parsed data is not a valid array of insights.");
-                }
-                
-                parsedData.forEach((item, index) => {
-                    if (!item.type || !item.title || !item.description) {
-                        throw new Error(`Insight object at index ${index} is missing required keys.`);
-                    }
-                });
-
-                setInsights(parsedData);
+            try {
+                const result = await callGroqAPIWithRetry(prompt);
+                const jsonMatch = result.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    const parsedInsights = JSON.parse(jsonMatch[0]);
+                    setInsights(parsedInsights);
+                } else { throw new Error("AI did not return valid JSON."); }
             } catch (err) {
-                console.error("Final error in generating insights:", err);
-                console.error("Problematic AI response was:", rawResponse); 
+                console.error("Error generating insights:", err);
                 setError("Could not generate AI insights at this time. Please try again later.");
-            } finally { 
-                setIsLoading(false); 
-            }
+            } finally { setIsLoading(false); }
         };
         generateInsights();
     }, [financialSummary, callGroqAPIWithRetry]);
-
     const InsightCard = ({ insight }) => {
         const config = {
             alert: { icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>, borderColor: 'border-red-500', shadowColor: 'hover:shadow-red-glow' },
@@ -748,7 +730,7 @@ Analyze the user profile and respond with ONLY a valid JSON array of exactly 3 i
 };
 
 
-// --- Dashboard Component ---
+// --- Dashboard Component (MODIFIED) ---
 const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -906,8 +888,8 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
       {/* --- Row 2: AI Snapshot --- */}
       <ZenvanaInsights financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />
 
-      {/* --- Row 3: Expense Breakdown & Health Score --- */}
-      <div className="space-y-8">
+      {/* --- Row 3: Expense Breakdown & Health Score (MODIFIED LAYOUT) --- */}
+      <div className="space-y-8"> {/* Changed to a vertical stacking container */}
         <div>
           <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
           <ExpensePieChart expenses={financialSummary.expenses} />
@@ -935,11 +917,11 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
         </div>
       </div>
       
-      {/* --- Row 4: Goals --- */}
+      {/* --- Row 4: Goals (MODIFIED LAYOUT) --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
         {financialSummary.customGoals?.some(g => g.name) ? (
-          <div className="space-y-6">
+          <div className="space-y-6"> {/* Changed grid to space-y for vertical stacking */}
             {financialSummary.customGoals.map((g, i) => {
               const pr = cGP(g);
               return pr ? (
@@ -1012,44 +994,23 @@ function App() {
     } finally { setIsSubmitting(false); }
   };
 
-  const callGroqAPIWithRetry = useCallback(async (prompt, retries = 3) => {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-70b-8192" }) // MODIFIED MODEL
-            });
-
-            if (!response.ok) {
-                if (response.status >= 400 && response.status < 500) {
-                     console.error(`Client-side API Error: ${response.status}. Not retrying.`);
-                     throw new Error(`API Error: ${response.status}`);
-                }
-                throw new Error(`Server-side API Error: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.choices?.[0]?.message?.content) {
-                return result.choices[0].message.content; 
-            } else {
-                throw new Error("Invalid response structure from AI.");
-            }
-
-        } catch (error) {
-            console.error(`Attempt ${i + 1} of ${retries} failed:`, error.message);
-            if (i === retries - 1) { 
-                console.error("All retry attempts failed.");
-                throw error; 
-            }
-            const delay = Math.pow(2, i) * 1000; 
-            console.log(`Retrying in ${delay / 1000}s...`);
-            await new Promise(res => setTimeout(res, delay));
-        }
-    }
-    throw new Error("API call failed after all retries.");
-  }, [groqApiKey]);
+  const callGroqAPIWithRetry = useCallback(async (prompt, retries = 1, delay = 3000) => {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-8b-8192" })
+      });
+      if (response.status === 503 && retries > 0) {
+        await new Promise(res => setTimeout(res, delay));
+        return callGroqAPIWithRetry(prompt, retries - 1, delay);
+      }
+      if (!response.ok) { throw new Error(`API call failed with status: ${response.status}`); }
+      const result = await response.json();
+      if (result.choices?.[0]?.message?.content) { return result.choices[0].message.content; } 
+      else { throw new Error("Invalid response from AI."); }
+    } catch (error) { console.error("Full error object:", error); throw error; }
+   }, [groqApiKey]);
   
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
@@ -1071,7 +1032,7 @@ When answering, use this context. For example, if they ask "Should I invest?", y
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: messagesForAPI, model: "llama3-70b-8192" }) // MODIFIED MODEL
+            body: JSON.stringify({ messages: messagesForAPI, model: "llama3-8b-8192" })
         });
         if (!response.ok) { throw new Error(`API call failed with status: ${response.status}`); }
         const result = await response.json();
