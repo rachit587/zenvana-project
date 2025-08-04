@@ -628,6 +628,8 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             if (!financialSummary) return;
             setIsLoading(true);
             setError(null);
+            
+            let resultText = ''; // Define here to be accessible in the catch block
 
             const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance, financialWorry, customGoals } = financialSummary;
 
@@ -674,20 +676,23 @@ You MUST respond with a perfectly formatted, valid JSON array of exactly 3 insig
 ]
 `;
             try {
-                const resultText = await callGroqAPIWithRetry(prompt);
+                resultText = await callGroqAPIWithRetry(prompt);
                 
-                // Directly attempt to parse the result, assuming the AI follows instructions.
-                const parsedInsights = JSON.parse(resultText);
+                // **THE NEW FIX IS HERE: AUTO-REPAIR THE JSON STRING**
+                // This finds "} {" and replaces it with "}, {" to fix missing commas.
+                const repairedText = resultText.replace(/}\s*{/g, '}, {');
+
+                const parsedInsights = JSON.parse(repairedText);
                 
                 if (Array.isArray(parsedInsights)) {
                     setInsights(parsedInsights);
                 } else {
-                    // This case is unlikely if JSON.parse succeeds, but good for safety.
                     throw new Error("AI response was valid JSON but not an array.");
                 }
 
             } catch (err) {
                 console.error("Error generating or parsing insights:", err);
+                console.error("Original AI Response was:", resultText); // Log the original response for debugging
                 setError("Could not generate AI insights at this time. Please try again later.");
             } finally {
                 setIsLoading(false);
@@ -1051,7 +1056,7 @@ When answering, use this context. For example, if they ask "Should I invest?", y
     } catch (error) { console.error("Logout error:", error); }
   };
   
-  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
+  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-white">Loading...</div>); }
   
   const navToOnboard = () => { setCurrentPage(financialSummary ? 'dashboard' : 'onboarding'); };
 
