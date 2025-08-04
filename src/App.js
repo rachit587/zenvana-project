@@ -796,12 +796,8 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
         </div>
       </div>
 
-      {/* --- Row 2: Expense Breakdown & Health Score --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
-          <ExpensePieChart expenses={financialSummary.expenses} />
-        </div>
+      {/* --- Row 2: Health Score & Expense Breakdown --- */}
+      <div className="space-y-8">
         <div>
           <h3 className="text-2xl font-bold text-yellow-400 mb-4">Financial Health Score</h3>
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center justify-center">
@@ -823,10 +819,14 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
             )}
           </div>
         </div>
+        <div>
+          <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
+          <ExpensePieChart expenses={financialSummary.expenses} />
+        </div>
       </div>
       
       {/* --- Row 3: Goals --- */}
-      <div>
+      <div className="mt-8">
         <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
         {financialSummary.customGoals?.some(g => g.name) ? (
           <div className="space-y-6">
