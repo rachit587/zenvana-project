@@ -671,35 +671,35 @@ Your task is to analyze the following detailed user profile and generate the top
 3.  Positive Reinforcement (Generate 'kudos' type): Adequate emergency fund, zero high-interest debt, clear goals.
 
 **YOUR TASK:**
-Respond with ONLY a valid JSON array of exactly 3 insight objects. Do not add any text or markdown formatting outside the JSON array.
-Example:
+Respond with a valid JSON array of exactly 3 insight objects.
+**IMPORTANT: Your entire response must be ONLY the JSON array, starting with [ and ending with ]. Do not include any other text, explanations, or markdown code fences like \`\`\`json. Your response must be parsable by JSON.parse().**
+Example of a perfect response:
 [
   {"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus to improve your finances."},
-  {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."}
+  {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."},
+  {"type": "kudos", "title": "Great Emergency Fund!", "description": "Well done on building a solid emergency fund. This is a huge step towards financial security."}
 ]`;
         try {
             const rawResult = await callGroqAPIWithRetry(prompt);
             
-            // MODIFICATION START: Robust JSON cleaning and parsing
-            // 1. Find the start and end of the JSON array.
-            const startIndex = rawResult.indexOf('[');
-            const endIndex = rawResult.lastIndexOf(']');
-            
-            if (startIndex === -1 || endIndex === -1) {
+            const match = rawResult.match(/\[[\s\S]*?\]/);
+
+            if (!match) {
+                console.error("AI response did not contain a valid JSON array. Response:", rawResult);
                 throw new Error("AI response did not contain a valid JSON array.");
             }
 
-            // 2. Extract the potential JSON string.
-            let jsonString = rawResult.substring(startIndex, endIndex + 1);
+            let jsonString = match[0];
 
-            // 3. Clean the string: remove trailing commas before closing brackets/braces.
-            // This is a common cause of JSON parsing errors from LLMs.
             jsonString = jsonString.replace(/,\s*([}\]])/g, '$1');
 
-            // 4. Parse the cleaned string.
             const parsedInsights = JSON.parse(jsonString);
-            setInsights(parsedInsights);
-            // MODIFICATION END
+
+            if (Array.isArray(parsedInsights) && parsedInsights.length > 0) {
+                setInsights(parsedInsights);
+            } else {
+                throw new Error("Parsed JSON is not a valid insights array.");
+            }
 
         } catch (err) {
             console.error("Error generating or parsing insights:", err);
