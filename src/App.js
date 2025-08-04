@@ -636,19 +636,17 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
             const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
             
             const prompt = `
-You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable, like a real human advisor reviewing a new client's file.
-Your task is to analyze the following **detailed user profile** and generate the top 3 most critical financial insights.
+You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable.
 
 **HYPER-PERSONALIZED USER PROFILE:**
 - Name: ${name} (Age: ${getAge(dateOfBirth)})
 - Dependents: ${dependents || 0}
 - Monthly Income: ${formatIndianCurrency(monthlyIncome)}
 - Monthly Expenses: ${formatIndianCurrency(monthlyExpenses)}
-- **High-Interest Debt (Credit Cards, etc.): ${formatIndianCurrency(liabilities?.highInterest)}**
-- **Low-Interest Debt (Home Loan, etc.): ${formatIndianCurrency(liabilities?.lowInterest)}**
-- **Emergency Fund:** ${formatIndianCurrency(emergencyFund)} (${emergencyFundMonths.toFixed(1)} months of expenses)
-- **Health Insurance:** ${healthInsurance} (Coverage: ${formatIndianCurrency(healthInsuranceCoverage || 0)})
-- **Term Life Insurance:** ${termInsurance} (Coverage: ${formatIndianCurrency(termInsuranceCoverage || 0)})
+- High-Interest Debt: ${formatIndianCurrency(liabilities?.highInterest)}
+- Emergency Fund: ${formatIndianCurrency(emergencyFund)} (${emergencyFundMonths.toFixed(1)} months of expenses)
+- Health Insurance: ${healthInsurance} (Coverage: ${formatIndianCurrency(healthInsuranceCoverage || 0)})
+- Term Life Insurance: ${termInsurance} (Coverage: ${formatIndianCurrency(termInsuranceCoverage || 0)})
 - Recommended Term Life Cover: ${formatIndianCurrency(idealTermCover)}
 - Investment Portfolio: ${JSON.stringify(investments)}
 - Risk Tolerance: ${riskTolerance}
@@ -656,44 +654,36 @@ Your task is to analyze the following **detailed user profile** and generate the
 - Goals: ${customGoals?.length > 0 ? customGoals.map(g => g.name).join(', ') : 'None Set'}
 
 **ANALYSIS HIERARCHY (Address in this order of priority):**
-1.  **Critical Risks (Generate 'alert' type):**
-    - Is there any **High-Interest Debt**? This is the #1 financial fire to put out.
-    - Is the **Emergency Fund** less than 3 months of expenses?
-    - Is **Health Insurance** 'no'?
-    - Is **Term Insurance** 'no', OR is the coverage less than 50% of the recommended amount?
-2.  **Major Opportunities (Generate 'opportunity' type):**
-    - Is the Term Insurance coverage inadequate (e.g., > 50% but < 100% of recommended)?
-    - Is there a major mismatch between **Risk Tolerance** and **Investment Portfolio**? (e.g., 'high' tolerance but mostly 'debt' investments).
-    - Is the savings rate low (<15%)?
-3.  **Positive Reinforcement (Generate 'kudos' type):**
-    - Is the Emergency Fund adequate (>= 6 months)?
-    - Is there zero high-interest debt?
-    - Have they set clear goals?
+1.  **Critical Risks (Generate 'alert' type):** High-Interest Debt, Emergency Fund < 3 months, No Health/Term Insurance.
+2.  **Major Opportunities (Generate 'opportunity' type):** Inadequate insurance, mismatch between risk and investments, low savings rate.
+3.  **Positive Reinforcement (Generate 'kudos' type):** Adequate emergency fund, zero high-interest debt, clear goals set.
 
 **YOUR TASK:**
-Respond with a JSON array of exactly 3 insight objects. Do not add any text outside the JSON.
-**Example of a hyper-personalized insight:**
-{"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus to improve your finances."}
-{"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."}
+You MUST respond with a perfectly formatted, valid JSON array of exactly 3 insight objects.
+
+**CRITICAL SYNTAX RULES:**
+1.  Your entire response MUST be ONLY the JSON array. It must start with '[' and end with ']'.
+2.  Do NOT include any text, explanations, or markdown formatting like \`\`\`json.
+3.  Ensure every object in the array is separated by a comma (,), except for the very last one.
+
+**EXAMPLE OF A PERFECTLY FORMATTED RESPONSE:**
+[
+  {"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus."},
+  {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."},
+  {"type": "kudos", "title": "Great Emergency Fund!", "description": "Excellent work building an emergency fund that covers over 6 months of your expenses. This is a strong financial foundation."}
+]
 `;
             try {
                 const resultText = await callGroqAPIWithRetry(prompt);
-                let jsonString = resultText;
-
-                // The AI might wrap the JSON in a markdown code block. Let's extract it.
-                const match = resultText.match(/```json\s*([\s\S]*?)\s*```/);
-                if (match && match[1]) {
-                    jsonString = match[1];
-                }
-
-                // Now, parse the extracted or raw string.
-                const parsedInsights = JSON.parse(jsonString);
+                
+                // Directly attempt to parse the result, assuming the AI follows instructions.
+                const parsedInsights = JSON.parse(resultText);
                 
                 if (Array.isArray(parsedInsights)) {
                     setInsights(parsedInsights);
                 } else {
-                    // The parsed JSON is not in the expected array format.
-                    throw new Error("AI response was not a valid JSON array.");
+                    // This case is unlikely if JSON.parse succeeds, but good for safety.
+                    throw new Error("AI response was valid JSON but not an array.");
                 }
 
             } catch (err) {
