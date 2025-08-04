@@ -6,6 +6,10 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+// MODIFICATION: A simple helper function to wait for a specific duration.
+// This resolves the `no-loop-func` ESLint error during the Netlify build process.
+const wait = (ms) => new Promise(res => setTimeout(res, ms));
+
 // --- Firebase Configuration ---
 const firebaseConfig = {
   // Your Firebase config details remain here
@@ -629,14 +633,12 @@ const ExpensePieChart = ({ expenses }) => {
   );
 };
 
-// --- Zenvana Insights Component (MODIFIED) ---
+// --- Zenvana Insights Component (No Changes to Logic) ---
 const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [insights, setInsights] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // MODIFICATION: We use useCallback to ensure this function reference is stable
-    // and doesn't cause unnecessary re-renders or effect re-runs.
     const generateInsights = useCallback(async () => {
         if (!financialSummary) return;
         setIsLoading(true); 
@@ -673,7 +675,6 @@ Your task is to analyze the following detailed user profile and generate the top
 
 **YOUR TASK:**
 Respond with ONLY a valid JSON array of exactly 3 insight objects. Do not add any text or markdown formatting outside the JSON array.
-Each object must have "type" ("alert", "opportunity", or "kudos"), "title", and "description".
 Example:
 [
   {"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus to improve your finances."},
@@ -681,14 +682,11 @@ Example:
 ]`;
         try {
             const result = await callGroqAPIWithRetry(prompt);
-            // MODIFICATION: More robust JSON parsing to handle cases where the AI might
-            // wrap the JSON in markdown code blocks.
             const jsonMatch = result.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
                 const parsedInsights = JSON.parse(jsonMatch[0]);
                 setInsights(parsedInsights);
             } else { 
-                // As a fallback, try to parse the entire result.
                 const parsedInsights = JSON.parse(result);
                 setInsights(parsedInsights);
             }
@@ -698,15 +696,13 @@ Example:
         } finally { 
             setIsLoading(false); 
         }
-    }, [financialSummary, callGroqAPIWithRetry]); // Dependencies for useCallback
+    }, [financialSummary, callGroqAPIWithRetry]);
 
     useEffect(() => {
-        // MODIFICATION: Only fetch insights if they haven't been loaded for the current user yet.
-        // This prevents re-fetching every time the dashboard is viewed in the same session.
         if (insights.length === 0) {
             generateInsights();
         } else {
-            setIsLoading(false); // We already have insights, no need to show loading.
+            setIsLoading(false);
         }
     }, [generateInsights, insights.length]);
 
@@ -1004,8 +1000,6 @@ function App() {
     } finally { setIsSubmitting(false); }
   };
 
-  // MODIFICATION START: Upgraded API call function with exponential backoff retry logic.
-  // This makes the app more resilient to temporary API rate limits or server errors.
   const callGroqAPIWithRetry = useCallback(async (prompt, retries = 3, delay = 1000) => {
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1014,11 +1008,9 @@ function App() {
             body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-8b-8192" })
         });
 
-        // Check for rate limiting (429) or server errors (5xx) to trigger a retry
         if ((response.status === 429 || response.status >= 500) && retries > 0) {
             console.warn(`API call failed with status ${response.status}. Retrying in ${delay / 1000}s...`);
-            await new Promise(res => setTimeout(res, delay));
-            // Double the delay for the next attempt (exponential backoff)
+            await wait(delay); // MODIFICATION: Use the helper 'wait' function
             return callGroqAPIWithRetry(prompt, retries - 1, delay * 2);
         }
 
@@ -1036,20 +1028,15 @@ function App() {
     } catch (error) {
         console.error("Error in callGroqAPIWithRetry:", error.message);
         if (retries > 0) {
-            // Retry for other potential network errors
             console.warn(`Retrying due to error. Retries left: ${retries - 1}`);
-            await new Promise(res => setTimeout(res, delay));
+            await wait(delay); // MODIFICATION: Use the helper 'wait' function
             return callGroqAPIWithRetry(prompt, retries - 1, delay * 2);
         } else {
-            // If all retries fail, throw the last error to be caught by the calling function
             throw error;
         }
     }
   }, [groqApiKey]);
-  // MODIFICATION END
-
-  // MODIFICATION START: Added a dedicated retry loop for the chat functionality
-  // to handle potential API errors gracefully without freezing the chat.
+  
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
     const systemInstruction = `You are ZENVANA, a hyper-personalized AI financial advisor for India. Your tone is that of an expert, empathetic human advisor. Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As Zenvana, my expertise is in finance. I can't help with that, but I'm ready to answer any of your money-related questions." Do not answer the off-topic question.
@@ -1080,7 +1067,7 @@ When answering, use this context. For example, if they ask "Should I invest?", y
             });
 
             if (response.status === 429 || response.status >= 500) {
-                throw new Error(`API Error with status ${response.status}`); // Trigger retry
+                throw new Error(`API Error with status ${response.status}`);
             }
 
             if (!response.ok) {
@@ -1092,7 +1079,7 @@ When answering, use this context. For example, if they ask "Should I invest?", y
             if (result.choices?.[0]?.message?.content) {
                 setChatHistory(prev => [...prev, { role: "model", parts: [{ text: result.choices[0].message.content }] }]);
                 setIsGeneratingResponse(false);
-                return; // Success, exit the function
+                return;
             } else {
                 throw new Error("Invalid response from AI.");
             }
@@ -1104,12 +1091,11 @@ When answering, use this context. For example, if they ask "Should I invest?", y
                 setIsGeneratingResponse(false);
                 return;
             }
-            await new Promise(res => setTimeout(res, delay));
-            delay *= 2; // Exponential backoff
+            await wait(delay); // MODIFICATION: Use the helper 'wait' function
+            delay *= 2;
         }
     }
   };
-  // MODIFICATION END
 
   const handleLogout = async () => {
     if (!auth || !db || !userId) return;
