@@ -634,77 +634,87 @@ const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [insights, setInsights] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
     useEffect(() => {
         const generateInsights = async () => {
             if (!financialSummary) return;
-            setIsLoading(true); setError(null);
-
-            const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance, financialWorry, customGoals } = financialSummary;
-
-            const annualIncome = parseFloat(monthlyIncome || 0) * 12;
-             const idealTermCover = annualIncome * 15;
-            const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
+            setIsLoading(true); 
+            setError(null);
             
-            const prompt = `
-You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp, empathetic, and actionable, like a real human advisor reviewing a new client's file.
-Your task is to analyze the following **detailed user profile** and generate the top 3 most critical financial insights.
+            let rawResponse = ''; // To store the raw response for debugging
 
-**HYPER-PERSONALIZED USER PROFILE:**
+            try {
+                const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance, financialWorry, customGoals } = financialSummary;
+                const annualIncome = parseFloat(monthlyIncome || 0) * 12;
+                const idealTermCover = annualIncome * 15;
+                const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
+            
+                const prompt = `
+You are ZENVANA, a top-tier AI financial advisor for India. Your analysis must be sharp and actionable.
+
+**DEEP USER CONTEXT:**
 - Name: ${name} (Age: ${getAge(dateOfBirth)})
 - Dependents: ${dependents || 0}
 - Monthly Income: ${formatIndianCurrency(monthlyIncome)}
 - Monthly Expenses: ${formatIndianCurrency(monthlyExpenses)}
-- **High-Interest Debt (Credit Cards, etc.): ${formatIndianCurrency(liabilities?.highInterest)}**
-- **Low-Interest Debt (Home Loan, etc.): ${formatIndianCurrency(liabilities?.lowInterest)}**
-- **Emergency Fund:** ${formatIndianCurrency(emergencyFund)} (${emergencyFundMonths.toFixed(1)} months of expenses)
-- **Health Insurance:** ${healthInsurance} (Coverage: ${formatIndianCurrency(healthInsuranceCoverage || 0)})
-- **Term Life Insurance:** ${termInsurance} (Coverage: ${formatIndianCurrency(termInsuranceCoverage || 0)})
+- High-Interest Debt: ${formatIndianCurrency(liabilities?.highInterest)}
+- Emergency Fund: ${formatIndianCurrency(emergencyFund)} (${emergencyFundMonths.toFixed(1)} months of expenses)
+- Health Insurance: ${healthInsurance} (Coverage: ${formatIndianCurrency(healthInsuranceCoverage || 0)})
+- Term Life Insurance: ${termInsurance} (Coverage: ${formatIndianCurrency(termInsuranceCoverage || 0)})
 - Recommended Term Life Cover: ${formatIndianCurrency(idealTermCover)}
-- Investment Portfolio: ${JSON.stringify(investments)}
 - Risk Tolerance: ${riskTolerance}
-- Biggest Worry: "${financialWorry}"
-- Goals: ${customGoals?.length > 0 ? customGoals.map(g => g.name).join(', ') : 'None Set'}
 
-**ANALYSIS HIERARCHY (Address in this order of priority):**
-1.  **Critical Risks (Generate 'alert' type):**
-    - Is there any **High-Interest Debt**? This is the #1 financial fire to put out.
-    - Is the **Emergency Fund** less than 3 months of expenses?
-    - Is **Health Insurance** 'no'?
-    - Is **Term Insurance** 'no', OR is the coverage less than 50% of the recommended amount?
-2.  **Major Opportunities (Generate 'opportunity' type):**
-    - Is the Term Insurance coverage inadequate (e.g., > 50% but < 100% of recommended)?
-    - Is there a major mismatch between **Risk Tolerance** and **Investment Portfolio**? (e.g., 'high' tolerance but mostly 'debt' investments).
-    - Is the savings rate low (<15%)?
-3.  **Positive Reinforcement (Generate 'kudos' type):**
-    - Is the Emergency Fund adequate (>= 6 months)?
-    - Is there zero high-interest debt?
-    - Have they set clear goals?
-**YOUR TASK:**
-Respond with a JSON array of exactly 3 insight objects. Do not add any text outside the JSON.
-Each object must have "type", "title", and "description". Be specific in the description.
-**Example of a hyper-personalized insight:**
-{"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus to improve your finances."}
-{"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."}
+**YOUR CRITICAL TASK:**
+Analyze the user profile and respond with ONLY a valid JSON array of exactly 3 insight objects.
+- Each object MUST have the keys: "type", "title", and "description".
+- The "type" key MUST be one of "alert", "opportunity", or "kudos".
+- Do NOT include any introductory text, explanations, or markdown formatting like \`\`\`json. Your entire response must be the raw JSON array.
+
+**EXAMPLE OF THE EXACT OUTPUT FORMAT REQUIRED:**
+[
+  {"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ₹50,000 in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus."},
+  {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ₹50,00,000 is below the recommended ₹1,50,00,000. Let's explore affordable ways to increase this vital protection."},
+  {"type": "kudos", "title": "Great Emergency Fund!", "description": "Well done on building an emergency fund that covers over 6 months of your expenses. This is a strong foundation for your financial security."}
+]
 `;
-            try {
-                const result = await callGroqAPIWithRetry(prompt);
+                rawResponse = await callGroqAPIWithRetry(prompt);
 
-                // Find the start and end of the JSON array in the AI's response
-                const startIndex = result.indexOf('[');
-                const endIndex = result.lastIndexOf(']');
+                // --- BULLETPROOF JSON EXTRACTION & VALIDATION ---
+                let jsonString = rawResponse;
+
+                // Step 1: Look for markdown code fences and extract content if present.
+                const markdownMatch = rawResponse.match(/```(json)?\s*([\s\S]*?)\s*```/);
+                if (markdownMatch && markdownMatch[2]) {
+                    jsonString = markdownMatch[2];
+                }
+
+                // Step 2: Find the start of the JSON array '[' and its corresponding end ']'
+                const startIndex = jsonString.indexOf('[');
+                const endIndex = jsonString.lastIndexOf(']');
 
                 if (startIndex === -1 || endIndex === -1) {
-                    throw new Error("AI response did not contain a valid JSON array.");
+                    throw new Error("Could not find a JSON array in the AI response.");
+                }
+
+                jsonString = jsonString.substring(startIndex, endIndex + 1);
+                
+                const parsedData = JSON.parse(jsonString);
+
+                // Step 3: Validate the parsed data structure
+                if (!Array.isArray(parsedData) || parsedData.length === 0) {
+                    throw new Error("Parsed data is not a valid array of insights.");
                 }
                 
-                // Extract just the JSON part of the string
-                const jsonString = result.substring(startIndex, endIndex + 1);
+                parsedData.forEach((item, index) => {
+                    if (!item.type || !item.title || !item.description) {
+                        throw new Error(`Insight object at index ${index} is missing required keys.`);
+                    }
+                });
 
-                const parsedInsights = JSON.parse(jsonString);
-                setInsights(parsedInsights);
-
+                setInsights(parsedData);
             } catch (err) {
-                console.error("Error generating or parsing insights:", err);
+                console.error("Final error in generating insights:", err);
+                console.error("Problematic AI response was:", rawResponse); // Log the raw response for debugging
                 setError("Could not generate AI insights at this time. Please try again later.");
             } finally { 
                 setIsLoading(false); 
@@ -712,6 +722,7 @@ Each object must have "type", "title", and "description". Be specific in the des
         };
         generateInsights();
     }, [financialSummary, callGroqAPIWithRetry]);
+
     const InsightCard = ({ insight }) => {
         const config = {
             alert: { icon: <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>, borderColor: 'border-red-500', shadowColor: 'hover:shadow-red-glow' },
