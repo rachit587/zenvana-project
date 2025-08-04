@@ -817,7 +817,7 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
       </div>
 
       {/* --- Row 2: Health Score & Expense Breakdown --- */}
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="space-y-8">
         <div>
           <h3 className="text-2xl font-bold text-yellow-400 mb-4">Financial Health Score</h3>
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center justify-center">
@@ -828,7 +828,7 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
                         <circle className="text-gray-700" cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3"></circle>
                         <circle className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3" strokeLinecap="round" style={{transition: 'stroke-dasharray 1s ease-in-out'}}></circle>
                     </svg>
-                    <div className={`text-5xl font-extrabold ${getScoreColor(healthScore)}`}>{healthScore !== null ? healthScore : '--'}</div>
+                    <div className={`text-5xl font-extrabold drop-shadow-lg ${getScoreColor(healthScore)}`}>{healthScore !== null ? healthScore : '--'}</div>
                  </div>
                 <p className="text-gray-400 mt-6 mb-4 text-center">This score reflects your current financial standing.</p>
                 <button onClick={handleGenerateImprovementPlan} className="w-full max-w-sm bg-green-600 font-bold py-3 rounded-xl disabled:opacity-50" disabled={isGeneratingImprovement}>
