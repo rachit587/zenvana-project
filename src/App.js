@@ -6,13 +6,10 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-// MODIFICATION: A simple helper function to wait for a specific duration.
-// This resolves the `no-loop-func` ESLint error during the Netlify build process.
 const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  // Your Firebase config details remain here
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
   projectId: "zenvana-web",
@@ -22,7 +19,7 @@ const firebaseConfig = {
   measurementId: "G-TVZF4SK0YG"
 };
 
-// --- Helper Functions & Components (No Changes) ---
+// --- Helper Functions & Components ---
 const formatIndianCurrency = (num) => {
     if (typeof num !== 'number') {
         num = parseFloat(num || 0);
@@ -37,7 +34,7 @@ const formatIndianCurrency = (num) => {
 };
 
 const getAge = (dateString) => {
-    if (!dateString) return 30; // Default age if not provided
+    if (!dateString) return 30;
     const today = new Date();
     const birthDate = new Date(dateString);
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -68,7 +65,7 @@ const MarkdownRenderer = ({ text }) => {
   return <div className="text-gray-300">{elements}</div>;
 };
 
-// --- Layout Component (No Changes) ---
+// --- Layout Component ---
 const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 to-gray-900 font-sans text-gray-100">
       <nav className="w-64 bg-gray-900 shadow-lg p-6 flex flex-col rounded-r-3xl transition-all duration-300 ease-in-out transform hover:shadow-2xl">
@@ -86,7 +83,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
     </div>
 );
 
-// --- Welcome Page Component (No Changes) ---
+// --- Welcome Page Component ---
 const WelcomePage = ({ onGetStarted }) => {
   const FeatureCard = ({ icon, title, children }) => (
     <div className="bg-gray-800 bg-opacity-50 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-700 text-left transition-all duration-300 hover:border-green-400 hover:shadow-green-glow hover:-translate-y-2">
@@ -154,7 +151,7 @@ const WelcomePage = ({ onGetStarted }) => {
   );
 };
 
-// --- Onboarding Components (No Changes) ---
+// --- Onboarding Components ---
 const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -366,7 +363,7 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
 };
 
 
-// --- AI Chat Component (No Changes) ---
+// --- AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSummary, setChatHistory }) => {
   const [chatInput, setChatInput] = useState('');
   const chatHistoryRef = useRef(null);
@@ -417,7 +414,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
         prompts.push("Is my investment portfolio well-diversified?");
     }
 
-    return [...new Set(prompts)].slice(0, 3); // Use Set to remove duplicates
+    return [...new Set(prompts)].slice(0, 3);
   };
   const suggestionPrompts = generateChatPrompts();
   return (
@@ -470,7 +467,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
 };
 
 
-// --- Tax Saver Component (No Changes) ---
+// --- Tax Saver Component ---
 const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [taxData, setTaxData] = useState({
         salaryIncome: '', otherIncome: '', investments80C: '', hra: '', homeLoanInterest: '',
@@ -612,7 +609,7 @@ End with an empowering statement about proactive tax planning.`;
     );
 };
 
-// --- Expense Pie Chart Component (No Changes) ---
+// --- Expense Pie Chart Component ---
 const ExpensePieChart = ({ expenses }) => {
   const chartData = Object.entries(expenses || {}).map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) })).filter(item => item.value > 0);
   const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
@@ -633,7 +630,7 @@ const ExpensePieChart = ({ expenses }) => {
   );
 };
 
-// --- Zenvana Insights Component (No Changes to Logic) ---
+// --- Zenvana Insights Component (MODIFIED) ---
 const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [insights, setInsights] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -681,15 +678,29 @@ Example:
   {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."}
 ]`;
         try {
-            const result = await callGroqAPIWithRetry(prompt);
-            const jsonMatch = result.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-                const parsedInsights = JSON.parse(jsonMatch[0]);
-                setInsights(parsedInsights);
-            } else { 
-                const parsedInsights = JSON.parse(result);
-                setInsights(parsedInsights);
+            const rawResult = await callGroqAPIWithRetry(prompt);
+            
+            // MODIFICATION START: Robust JSON cleaning and parsing
+            // 1. Find the start and end of the JSON array.
+            const startIndex = rawResult.indexOf('[');
+            const endIndex = rawResult.lastIndexOf(']');
+            
+            if (startIndex === -1 || endIndex === -1) {
+                throw new Error("AI response did not contain a valid JSON array.");
             }
+
+            // 2. Extract the potential JSON string.
+            let jsonString = rawResult.substring(startIndex, endIndex + 1);
+
+            // 3. Clean the string: remove trailing commas before closing brackets/braces.
+            // This is a common cause of JSON parsing errors from LLMs.
+            jsonString = jsonString.replace(/,\s*([}\]])/g, '$1');
+
+            // 4. Parse the cleaned string.
+            const parsedInsights = JSON.parse(jsonString);
+            setInsights(parsedInsights);
+            // MODIFICATION END
+
         } catch (err) {
             console.error("Error generating or parsing insights:", err);
             setError("Could not generate AI insights at this time. Please try again later.");
@@ -736,7 +747,7 @@ Example:
 };
 
 
-// --- Dashboard Component (No Changes) ---
+// --- Dashboard Component ---
 const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -1010,7 +1021,7 @@ function App() {
 
         if ((response.status === 429 || response.status >= 500) && retries > 0) {
             console.warn(`API call failed with status ${response.status}. Retrying in ${delay / 1000}s...`);
-            await wait(delay); // MODIFICATION: Use the helper 'wait' function
+            await wait(delay);
             return callGroqAPIWithRetry(prompt, retries - 1, delay * 2);
         }
 
@@ -1029,7 +1040,7 @@ function App() {
         console.error("Error in callGroqAPIWithRetry:", error.message);
         if (retries > 0) {
             console.warn(`Retrying due to error. Retries left: ${retries - 1}`);
-            await wait(delay); // MODIFICATION: Use the helper 'wait' function
+            await wait(delay);
             return callGroqAPIWithRetry(prompt, retries - 1, delay * 2);
         } else {
             throw error;
@@ -1091,7 +1102,7 @@ When answering, use this context. For example, if they ask "Should I invest?", y
                 setIsGeneratingResponse(false);
                 return;
             }
-            await wait(delay); // MODIFICATION: Use the helper 'wait' function
+            await wait(delay);
             delay *= 2;
         }
     }
