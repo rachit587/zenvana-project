@@ -730,7 +730,7 @@ Each object must have "type", "title", and "description". Be specific in the des
 };
 
 
-// --- Dashboard Component (MODIFIED) ---
+// --- Dashboard Component ---
 const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -888,8 +888,8 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
       {/* --- Row 2: AI Snapshot --- */}
       <ZenvanaInsights financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />
 
-      {/* --- Row 3: Expense Breakdown & Health Score (MODIFIED LAYOUT) --- */}
-      <div className="space-y-8"> {/* Changed to a vertical stacking container */}
+      {/* --- Row 3: Expense Breakdown & Health Score --- */}
+      <div className="space-y-8">
         <div>
           <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
           <ExpensePieChart expenses={financialSummary.expenses} />
@@ -917,11 +917,11 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
         </div>
       </div>
       
-      {/* --- Row 4: Goals (MODIFIED LAYOUT) --- */}
+      {/* --- Row 4: Goals --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
         {financialSummary.customGoals?.some(g => g.name) ? (
-          <div className="space-y-6"> {/* Changed grid to space-y for vertical stacking */}
+          <div className="space-y-6">
             {financialSummary.customGoals.map((g, i) => {
               const pr = cGP(g);
               return pr ? (
@@ -994,23 +994,49 @@ function App() {
     } finally { setIsSubmitting(false); }
   };
 
-  const callGroqAPIWithRetry = useCallback(async (prompt, retries = 1, delay = 3000) => {
-    try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-8b-8192" })
-      });
-      if (response.status === 503 && retries > 0) {
-        await new Promise(res => setTimeout(res, delay));
-        return callGroqAPIWithRetry(prompt, retries - 1, delay);
-      }
-      if (!response.ok) { throw new Error(`API call failed with status: ${response.status}`); }
-      const result = await response.json();
-      if (result.choices?.[0]?.message?.content) { return result.choices[0].message.content; } 
-      else { throw new Error("Invalid response from AI."); }
-    } catch (error) { console.error("Full error object:", error); throw error; }
-   }, [groqApiKey]);
+  // --- MODIFIED: More Robust Retry Logic ---
+  const callGroqAPIWithRetry = useCallback(async (prompt, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-8b-8192" })
+            });
+
+            if (!response.ok) {
+                // Don't retry for client-side errors (e.g., bad request), but do for server-side errors.
+                if (response.status >= 400 && response.status < 500) {
+                     console.error(`Client-side API Error: ${response.status}. Not retrying.`);
+                     throw new Error(`API Error: ${response.status}`);
+                }
+                // For 5xx server errors, the error will be caught, and a retry will be attempted.
+                throw new Error(`Server-side API Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.choices?.[0]?.message?.content) {
+                return result.choices[0].message.content; // Success, exit the loop and return the content.
+            } else {
+                throw new Error("Invalid response structure from AI.");
+            }
+
+        } catch (error) {
+            console.error(`Attempt ${i + 1} of ${retries} failed:`, error.message);
+            if (i === retries - 1) { // If this was the last attempt
+                console.error("All retry attempts failed.");
+                throw error; // Re-throw the last error to be caught by the calling function.
+            }
+            // Wait with exponential backoff before the next retry (e.g., 1s, 2s, 4s)
+            const delay = Math.pow(2, i) * 1000; 
+            console.log(`Retrying in ${delay / 1000}s...`);
+            await new Promise(res => setTimeout(res, delay));
+        }
+    }
+    // This part should theoretically not be reached, but as a fallback:
+    throw new Error("API call failed after all retries.");
+  }, [groqApiKey]);
   
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
