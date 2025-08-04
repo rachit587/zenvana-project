@@ -1,3 +1,5 @@
+// PASTE THIS ENTIRE CODE INTO YOUR 'src/App.js' FILE
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -8,7 +10,6 @@ import 'aos/dist/aos.css';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  // Your Firebase config details remain here
   apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
   authDomain: "zenvana-web.firebaseapp.com",
   projectId: "zenvana-web",
@@ -186,7 +187,7 @@ const OnboardingStep2 = ({ formData, setFormData, nextStep, prevStep }) => {
                 <p className="text-xs text-gray-400 mt-1">💡 Enter your monthly income after all deductions like tax and PF.</p>
             </div>
             <div>
-                 <h4 className="text-gray-300 text-lg font-semibold mb-2">Your Average Monthly Expenses (₹)</h4>
+                <h4 className="text-gray-300 text-lg font-semibold mb-2">Your Average Monthly Expenses (₹)</h4>
                 <div className="space-y-4 max-h-64 overflow-y-auto pr-2 custom-scrollbar">{expenseCategories.map(c => (<div key={c.name} className="grid grid-cols-2 items-center gap-4"><label htmlFor={c.name} className="text-gray-300 font-semibold">{c.label}</label><input type="text" inputMode="numeric" id={c.name} name={c.name} value={formData.expenses?.[c.name] || ''} onChange={handleExpenseChange} className="p-2 border border-gray-700 rounded-lg bg-gray-900 text-white" placeholder="0" /></div>))}</div>
             </div>
         </div>
@@ -206,7 +207,7 @@ const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
             <p className="text-lg text-gray-400 mb-8 text-center">This gives us the big picture of your assets and liabilities.</p>
             <div className="space-y-6">
                 <div>
-                     <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Assets (What you own)</h4>
+                    <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Assets (What you own)</h4>
                     <div className="space-y-4">
                         <div><label className="block text-lg font-semibold mb-1">Emergency Fund (₹)</label><input type="text" inputMode="numeric" name="emergencyFund" value={formData.emergencyFund} onChange={handleFieldChange} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Cash in savings accounts or liquid funds for emergencies (ideally 6x monthly expenses).</p></div>
                         <div><label className="block text-lg font-semibold mb-1">Equity Investments (₹)</label><input type="text" inputMode="numeric" value={formData.investments.equity} onChange={(e) => handleNestedChange(e, 'investments', 'equity')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of stocks, equity mutual funds, ELSS etc.</p></div>
@@ -217,7 +218,7 @@ const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
                 </div>
                  <div>
                     <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Liabilities (What you owe)</h4>
-                      <div className="space-y-4">
+                    <div className="space-y-4">
                         <div><label className="block text-lg font-semibold mb-1">High-Interest Debt (₹)</label><input type="text" inputMode="numeric" value={formData.liabilities.highInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'highInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Total outstanding on credit cards, personal loans etc.</p></div>
                         <div><label className="block text-lg font-semibold mb-1">Low-Interest Debt (₹)</label><input type="text" inputMode="numeric" value={formData.liabilities.lowInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'lowInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Total outstanding on home loans, car loans etc.</p></div>
                     </div>
@@ -284,7 +285,7 @@ const OnboardingStep5 = ({ formData, setFormData, prevStep, handleSubmit, isSubm
       <div className="flex justify-between mt-8">
         <button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button>
         <button onClick={handleSubmit} disabled={isSubmitting} className="bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 px-8 text-xl rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
-           {isSubmitting ? 'Saving...' : 'Complete Onboarding'}
+            {isSubmitting ? 'Saving...' : 'Complete Onboarding'}
         </button>
       </div>
       <style>{`.custom-scrollbar::-webkit-scrollbar{width:8px}.custom-scrollbar::-webkit-scrollbar-track{background:#222}.custom-scrollbar::-webkit-scrollbar-thumb{background:#10B981}`}</style>
@@ -295,29 +296,18 @@ const OnboardingStep5 = ({ formData, setFormData, prevStep, handleSubmit, isSubm
 const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialData || {
-      name: '',
-      dateOfBirth: '',
-      maritalStatus: '',
-      dependents: '',
-      monthlyIncome: '',
-      expenses: {},
-      emergencyFund: '',
+      name: '', dateOfBirth: '', maritalStatus: '', dependents: '',
+      monthlyIncome: '', expenses: {}, emergencyFund: '',
       investments: { equity: '', debt: '', realEstate: '', gold: '' },
       liabilities: { highInterest: '', lowInterest: '' },
-      healthInsurance: '',
-      healthInsuranceCoverage: '',
-      termInsurance: '',
-      termInsuranceCoverage: '',
-      riskTolerance: '',
-      financialWorry: '',
+      healthInsurance: '', healthInsuranceCoverage: '',
+      termInsurance: '', termInsuranceCoverage: '',
+      riskTolerance: '', financialWorry: '',
       customGoals: [{ name: '', targetAmount: '', amountSaved: '', targetDate: '' }],
   });
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    const numericFields = [
-        'dependents', 'monthlyIncome', 'emergencyFund', 
-        'healthInsuranceCoverage', 'termInsuranceCoverage'
-    ];
+    const numericFields = ['dependents', 'monthlyIncome', 'emergencyFund', 'healthInsuranceCoverage', 'termInsuranceCoverage'];
     if (type === 'text' && numericFields.includes(name)) {
         setFormData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') }));
     } else {
@@ -360,7 +350,6 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
     </div>
   );
 };
-
 
 // --- AI Chat Component ---
 const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSummary, setChatHistory }) => {
@@ -465,7 +454,6 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
   );
 };
 
-
 // --- Tax Saver Component ---
 const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [taxData, setTaxData] = useState({
@@ -475,6 +463,7 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
+
     useEffect(() => {
         if (financialSummary?.monthlyIncome) {
             const annualIncome = parseFloat(financialSummary.monthlyIncome) * 12;
@@ -572,10 +561,10 @@ End with an empowering statement about proactive tax planning.`;
             <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-5">
                     {taxFields.map((field) => (
-                         <div key={field.name}>
+                        <div key={field.name}>
                             <label className="block mb-1 font-semibold text-gray-200">{field.label} (₹)</label>
                             <input type="text" inputMode="numeric" name={field.name} value={taxData[field.name] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-green-500 focus:outline-none" />
-                             <p className="text-xs text-gray-400 mt-1.5">💡 {field.helper}</p>
+                            <p className="text-xs text-gray-400 mt-1.5">💡 {field.helper}</p>
                         </div>
                     ))}
                 </div>
@@ -585,7 +574,7 @@ End with an empowering statement about proactive tax planning.`;
                     </button>
                     {taxResult && (
                         <div className="bg-gray-800 p-4 rounded-xl">
-                             <h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3>
+                            <h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3>
                             <div className="text-center mb-4 p-3 rounded-lg bg-green-900">
                                 <p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p>
                                 <p className="text-2xl font-extrabold text-green-400">You save {formatIndianCurrency(taxResult.s)}!</p>
@@ -594,11 +583,11 @@ End with an empowering statement about proactive tax planning.`;
                                 <div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">{formatIndianCurrency(taxResult.oR)}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.oRSlab}</p></div>
                                 <div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">{formatIndianCurrency(taxResult.nR)}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.nRSlab}</p></div>
                             </div>
-                         </div>
+                        </div>
                     )}
                     {aiAnalysis && (
                         <div className="mt-4 bg-gray-800 p-4 rounded-xl">
-                             <h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3>
+                            <h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3>
                             <MarkdownRenderer text={aiAnalysis} />
                         </div>
                     )}
@@ -612,8 +601,7 @@ End with an empowering statement about proactive tax planning.`;
 const ExpensePieChart = ({ expenses }) => {
   const chartData = Object.entries(expenses || {}).map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) })).filter(item => item.value > 0);
   const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
-  if (chartData.length === 0) { return ( <div className="bg-gray-800 p-5 rounded-xl flex items-center justify-center h-full min-h-[300px]"><p className="text-gray-400">No expense data to display.</p></div> );
-  }
+  if (chartData.length === 0) { return ( <div className="bg-gray-800 p-5 rounded-xl flex items-center justify-center h-full min-h-[300px]"><p className="text-gray-400">No expense data to display.</p></div> ); }
   return (
     <div className="bg-gray-800 p-5 rounded-xl h-[400px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -629,20 +617,22 @@ const ExpensePieChart = ({ expenses }) => {
   );
 };
 
-// --- Zenvana Insights Component ---
+// --- Zenvana Insights Component (MODIFIED FOR BUG FIX) ---
 const ZenvanaInsights = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [insights, setInsights] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
     useEffect(() => {
         const generateInsights = async () => {
             if (!financialSummary) return;
-            setIsLoading(true); setError(null);
+            setIsLoading(true);
+            setError(null);
 
             const { name, monthlyIncome, monthlyExpenses, dateOfBirth, dependents, termInsurance, termInsuranceCoverage, healthInsurance, healthInsuranceCoverage, emergencyFund, liabilities, investments, riskTolerance, financialWorry, customGoals } = financialSummary;
 
             const annualIncome = parseFloat(monthlyIncome || 0) * 12;
-             const idealTermCover = annualIncome * 15;
+            const idealTermCover = annualIncome * 15;
             const emergencyFundMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 0;
             
             const prompt = `
@@ -679,27 +669,44 @@ Your task is to analyze the following **detailed user profile** and generate the
     - Is the Emergency Fund adequate (>= 6 months)?
     - Is there zero high-interest debt?
     - Have they set clear goals?
+
 **YOUR TASK:**
 Respond with a JSON array of exactly 3 insight objects. Do not add any text outside the JSON.
-Each object must have "type", "title", and "description". Be specific in the description.
 **Example of a hyper-personalized insight:**
 {"type": "alert", "title": "Urgent: Clear High-Interest Debt", "description": "Your ${formatIndianCurrency(liabilities?.highInterest)} in high-interest debt is costly. Prioritizing its repayment should be your absolute #1 focus to improve your finances."}
 {"type": "opportunity", "title": "Review Your Term Insurance", "description": "Your current cover of ${formatIndianCurrency(termInsuranceCoverage)} is below the recommended ${formatIndianCurrency(idealTermCover)}. Let's explore affordable ways to increase this vital protection for your family."}
 `;
             try {
-                const result = await callGroqAPIWithRetry(prompt);
-                const jsonMatch = result.match(/\[[\s\S]*\]/);
-                if (jsonMatch) {
-                    const parsedInsights = JSON.parse(jsonMatch[0]);
+                const resultText = await callGroqAPIWithRetry(prompt);
+                let jsonString = resultText;
+
+                // The AI might wrap the JSON in a markdown code block. Let's extract it.
+                const match = resultText.match(/```json\s*([\s\S]*?)\s*```/);
+                if (match && match[1]) {
+                    jsonString = match[1];
+                }
+
+                // Now, parse the extracted or raw string.
+                const parsedInsights = JSON.parse(jsonString);
+                
+                if (Array.isArray(parsedInsights)) {
                     setInsights(parsedInsights);
-                } else { throw new Error("AI did not return valid JSON."); }
+                } else {
+                    // The parsed JSON is not in the expected array format.
+                    throw new Error("AI response was not a valid JSON array.");
+                }
+
             } catch (err) {
-                console.error("Error generating insights:", err);
+                console.error("Error generating or parsing insights:", err);
                 setError("Could not generate AI insights at this time. Please try again later.");
-            } finally { setIsLoading(false); }
+            } finally {
+                setIsLoading(false);
+            }
         };
+
         generateInsights();
     }, [financialSummary, callGroqAPIWithRetry]);
+
     const InsightCard = ({ insight }) => {
         const config = {
             alert: { icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>, borderColor: 'border-red-500', shadowColor: 'hover:shadow-red-glow' },
@@ -715,10 +722,9 @@ Each object must have "type", "title", and "description". Be specific in the des
         );
     };
 
-    if (isLoading) { return (<div className="bg-gray-800 p-5 rounded-2xl text-center"><p className="text-gray-400 animate-pulse">Zenvana AI is analyzing your profile...</p></div>);
-    }
-    if (error) { return (<div className="bg-red-900 bg-opacity-50 p-5 rounded-2xl text-center"><p className="text-red-300">{error}</p></div>);
-    }
+    if (isLoading) { return (<div className="bg-gray-800 p-5 rounded-2xl text-center"><p className="text-gray-400 animate-pulse">Zenvana AI is analyzing your profile...</p></div>); }
+    if (error) { return (<div className="bg-red-900 bg-opacity-50 p-5 rounded-2xl text-center"><p className="text-red-300">{error}</p></div>); }
+    
     return (
         <div>
             <h3 className="text-2xl font-bold text-yellow-400 mb-4">Namaste, {financialSummary.name}! Here's Your Financial Snapshot.</h3>
@@ -729,8 +735,7 @@ Each object must have "type", "title", and "description". Be specific in the des
     );
 };
 
-
-// --- Dashboard Component (MODIFIED) ---
+// --- Dashboard Component ---
 const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   const [healthScore, setHealthScore] = useState(null);
   const [isCalculatingHealth, setIsCalculatingHealth] = useState(true);
@@ -745,7 +750,6 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         setIsCalculatingHealth(true);
 
         const { dateOfBirth, dependents, monthlyIncome, monthlyExpenses, termInsurance, healthInsurance, investments, liabilities, emergencyFund } = financialSummary;
-        
         const age = getAge(dateOfBirth);
      
         const getPersona = (age, deps) => {
@@ -755,7 +759,6 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         };
         const persona = getPersona(age, dependents || 0);
         const monthlySavings = parseFloat(monthlyIncome || 0) - parseFloat(monthlyExpenses || 0);
- 
         const savingsRate = monthlyIncome > 0 ? (monthlySavings / monthlyIncome) * 100 : -1;
 
         const weights = {
@@ -765,22 +768,23 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         };
         const personaWeights = weights[persona];
         let rawScores = { savings: 0, emergency: 0, debt: 0, insurance: 0, investment: 0 };
-        if (savingsRate >= 30) rawScores.savings = 1; else if (savingsRate >= 15) rawScores.savings = 0.7;
-        else if (savingsRate >= 5) rawScores.savings = 0.4;
+        if (savingsRate >= 30) rawScores.savings = 1; else if (savingsRate >= 15) rawScores.savings = 0.7; else if (savingsRate >= 5) rawScores.savings = 0.4;
         
         const emergencyMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 12;
-        if (emergencyMonths >= 6) rawScores.emergency = 1;
-        else if (emergencyMonths >= 3) rawScores.emergency = 0.7; else if (emergencyMonths >= 1) rawScores.emergency = 0.3;
+        if (emergencyMonths >= 6) rawScores.emergency = 1; else if (emergencyMonths >= 3) rawScores.emergency = 0.7; else if (emergencyMonths >= 1) rawScores.emergency = 0.3;
+        
         const highInterestDebt = parseFloat(liabilities?.highInterest || 0);
-        if (highInterestDebt === 0) rawScores.debt = 1;
-        else if (highInterestDebt / (monthlyIncome * 12) < 0.1) rawScores.debt = 0.5; else rawScores.debt = 0.1;
+        if (highInterestDebt === 0) rawScores.debt = 1; else if (highInterestDebt / (monthlyIncome * 12) < 0.1) rawScores.debt = 0.5; else rawScores.debt = 0.1;
+        
         const healthScoreValue = healthInsurance === 'yes' ? 1 : 0; const lifeScore = termInsurance === 'yes' ? 1 : 0;
         rawScores.insurance = (healthScoreValue * 0.5) + (lifeScore * 0.5);
 
         const totalInvestments = Object.values(investments || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
         if (totalInvestments / (monthlyIncome * 12) > 1) rawScores.investment = 1; else if (totalInvestments > 0) rawScores.investment = 0.5;
+        
         let finalScore = Object.keys(rawScores).reduce((acc, factor) => acc + rawScores[factor] * personaWeights[factor], 0);
         if (savingsRate < 0) finalScore -= 10;
+        
         setHealthScore(Math.max(0, Math.min(100, Math.round(finalScore))));
         setIsCalculatingHealth(false);
     };
@@ -788,13 +792,11 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   }, [financialSummary]);
 
 
-  if (!financialSummary) { return (<section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80"><div className="flex items-center justify-center h-64"><p className="text-gray-400 text-lg">Loading your financial dashboard...</p></div></section> );
-  }
+  if (!financialSummary) { return (<section className="p-8 rounded-2xl bg-gray-900 bg-opacity-80"><div className="flex items-center justify-center h-64"><p className="text-gray-400 text-lg">Loading your financial dashboard...</p></div></section> ); }
   
   const mS = (financialSummary?.monthlyIncome || 0) - (financialSummary?.monthlyExpenses || 0);
   const sR = financialSummary?.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
-  const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0);
-  const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
+  const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
   const getScoreColor = (score) => { if (score === null) return 'text-gray-400'; if (score >= 75) return 'text-green-400'; if (score >= 50) return 'text-yellow-400'; return 'text-red-500'; };
   const formatDate = (dateString) => { if (!dateString) return 'N/A'; const options = { year: 'numeric', month: 'short', day: 'numeric' }; return new Date(dateString).toLocaleDateString('en-IN', options); };
   
@@ -812,7 +814,8 @@ The user has a financial health score of ${healthScore}/100 and wants a concrete
 - Biggest Worry: "${financialSummary.financialWorry}"
 
 **YOUR TASK:**
-Provide a detailed, hyper-personalized plan in Markdown to improve their score. Focus on the 2-3 most impactful areas revealed in their context.
+Provide a detailed, hyper-personalized plan in Markdown to improve their score.
+Focus on the 2-3 most impactful areas revealed in their context.
 ## Your Path to a Better Score
 Start with an encouraging sentence acknowledging their current score of ${healthScore}.
 ## Priority 1: [Identify the single biggest weakness and create a headline]
@@ -834,7 +837,8 @@ End with a single, simple, and encouraging call to action for the user to take T
   const handleGenerateGoalPlan = async (g, i) => {
     setIsGeneratingGoalPlan(p => ({ ...p, [i]: true }));
     const prompt = `
-You are ZENVANA, an expert AI financial advisor for an Indian user. Your tone is strategic and encouraging.
+You are ZENVANA, an expert AI financial advisor for an Indian user.
+Your tone is strategic and encouraging.
 
 **DEEP USER & GOAL CONTEXT:**
 - User's Risk Tolerance: ${financialSummary.riskTolerance}
@@ -869,7 +873,7 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
     } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
-    
+
   return (
     <section className="space-y-8">
       {/* --- Row 1: Overview --- */}
@@ -888,8 +892,8 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
       {/* --- Row 2: AI Snapshot --- */}
       <ZenvanaInsights financialSummary={financialSummary} callGroqAPIWithRetry={callGroqAPIWithRetry} />
 
-      {/* --- Row 3: Expense Breakdown & Health Score (MODIFIED LAYOUT) --- */}
-      <div className="space-y-8"> {/* Changed to a vertical stacking container */}
+      {/* --- Row 3: Expense Breakdown & Health Score --- */}
+      <div className="space-y-8">
         <div>
           <h3 className="text-2xl font-bold text-yellow-400 mb-4">Expense Breakdown</h3>
           <ExpensePieChart expenses={financialSummary.expenses} />
@@ -917,11 +921,11 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
         </div>
       </div>
       
-      {/* --- Row 4: Goals (MODIFIED LAYOUT) --- */}
+      {/* --- Row 4: Goals --- */}
       <div>
         <h3 className="text-2xl font-bold text-yellow-400 mb-4">Your Goals</h3>
         {financialSummary.customGoals?.some(g => g.name) ? (
-          <div className="space-y-6"> {/* Changed grid to space-y for vertical stacking */}
+          <div className="space-y-6">
             {financialSummary.customGoals.map((g, i) => {
               const pr = cGP(g);
               return pr ? (
@@ -958,6 +962,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const groqApiKey = process.env.REACT_APP_GROQ_API_KEY ;
+
   useEffect(() => {
     try {
       const app = initializeApp(firebaseConfig);
@@ -978,7 +983,7 @@ function App() {
       return () => unsubscribe();
     } catch (error) { console.error("Error initializing Firebase:", error); setIsAuthReady(true); }
   }, []);
-  
+
   const saveFinancialData = async (data) => {
     if (!db || !userId) { throw new Error("Firebase not ready"); }
     setIsSubmitting(true);
@@ -1010,7 +1015,7 @@ function App() {
       if (result.choices?.[0]?.message?.content) { return result.choices[0].message.content; } 
       else { throw new Error("Invalid response from AI."); }
     } catch (error) { console.error("Full error object:", error); throw error; }
-   }, [groqApiKey]);
+  }, [groqApiKey]);
   
   const callChatAPI = async (userMessage) => {
     setIsGeneratingResponse(true);
@@ -1022,12 +1027,15 @@ function App() {
 ${JSON.stringify(financialSummary, null, 2)}
 ---
 When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings. If they ask about saving tax, consider their income and existing 80C investments.`;
+    
     const newHistory = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(newHistory);
+    
     const messagesForAPI = [
         { role: "system", content: systemInstruction },
         ...newHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text }))
     ];
+    
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -1053,11 +1061,10 @@ When answering, use this context. For example, if they ask "Should I invest?", y
     } catch (error) { console.error("Logout error:", error); }
   };
   
-  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>);
-  }
+  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
   
   const navToOnboard = () => { setCurrentPage(financialSummary ? 'dashboard' : 'onboarding'); };
-  
+
   return (
     <div>
       {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
