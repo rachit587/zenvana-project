@@ -1,5 +1,3 @@
-// src/App.js
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -74,6 +72,7 @@ const Layout = ({ children, userId, onNavigate, currentPage, handleLogout }) => 
         <div className="mb-10 text-center"><h2 className="text-4xl font-extrabold text-green-400 drop-shadow-md">ZENVANA</h2>
           {userId && (<p className="text-xs text-gray-400 mt-2">User ID: <span className="font-mono bg-gray-800 px-2 py-1 rounded-md text-gray-300 break-all">{userId}</span></p>)}
         </div>
+      
         <ul className="space-y-4 flex-grow">
           <li><button onClick={() => onNavigate('dashboard')} className={`w-full text-left flex items-center p-3 rounded-xl transition-all duration-200 ease-in-out transform hover:scale-105 hover:bg-gray-700 hover:text-green-400 ${currentPage === 'dashboard' ? 'bg-gray-700 text-green-400 shadow-md' : 'text-gray-300 hover:text-gray-100'}`}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>Dashboard</button></li>
           <li><button onClick={() => onNavigate('taxSaver')} className={`w-full text-left flex items-center p-3 rounded-xl transition-all duration-200 ease-in-out transform hover:scale-105 hover:bg-gray-700 hover:text-green-400 ${currentPage === 'taxSaver' ? 'bg-gray-700 text-green-400 shadow-md' : 'text-gray-300 hover:text-gray-100'}`}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1l-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>Tax Saver</button></li>
@@ -101,6 +100,7 @@ const WelcomePage = ({ onGetStarted }) => {
       <div className="absolute inset-0 z-0 opacity-10"><div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div><div className="absolute top-1/2 right-1/4 w-48 h-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div><div className="absolute bottom-1/4 left-1/2 w-48 h-48 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div></div>
       <div className="relative z-10 flex flex-col items-center w-full max-w-6xl mx-auto px-4 py-20 text-center">
         <h1 className="text-7xl md:text-8xl font-extrabold text-white mb-4 drop-shadow-lg bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-yellow-300">Welcome to ZENVANA</h1>
+  
         <p className="text-2xl md:text-3xl text-gray-300 mb-10 max-w-3xl">Your AI financial advisor for your financial freedom</p>
         <section className="bg-gray-800 bg-opacity-70 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-gray-700 mb-8 max-w-3xl w-full transition-all duration-300 hover:shadow-green-glow">
           <h2 className="text-4xl font-bold text-green-400 mb-4">Our Mission</h2>
@@ -162,11 +162,13 @@ const OnboardingStep1 = ({ formData, handleChange, nextStep }) => {
         <p className="text-lg text-gray-400 mb-8 text-center">Let's start with who you are. This helps us understand your life stage.</p>
         <div className="space-y-6">
           <div><label htmlFor="name" className="block text-gray-300 text-lg font-semibold mb-2">Your Full Name</label><input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-lg" placeholder="e.g., Ananya Sharma" required /></div>
+    
           <div><label htmlFor="dateOfBirth" className="block text-gray-300 text-lg font-semibold mb-2">Your Date of Birth</label><input type="date" id="dateOfBirth" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} max={today} min="1925-01-01" className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-lg" required /></div>
           <div><label htmlFor="maritalStatus" className="block text-gray-300 text-lg font-semibold mb-2">Marital Status</label>
             <select name="maritalStatus" id="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-lg"><option value="">Select one</option><option value="single">Single</option><option value="married">Married</option></select>
           </div>
-          <div><label htmlFor="dependents" className="block text-gray-300 text-lg font-semibold mb-2">Number of Dependents</label><input type="text" inputMode="numeric" id="dependents" name="dependents" value={formData.dependents} onChange={handleChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-lg" placeholder="e.g., 0, 1, 2" /></div>
+       
+           <div><label htmlFor="dependents" className="block text-gray-300 text-lg font-semibold mb-2">Number of Dependents</label><input type="text" inputMode="numeric" id="dependents" name="dependents" value={formData.dependents} onChange={handleChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-lg" placeholder="e.g., 0, 1, 2" /></div>
           <button onClick={nextStep} className="w-full bg-gradient-to-r from-green-600 to-yellow-600 hover:from-green-700 hover:to-yellow-700 text-gray-900 font-bold py-4 px-8 rounded-xl text-xl transition duration-200 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-2xl">Next</button>
         </div>
       </div>
@@ -189,6 +191,7 @@ const OnboardingStep2 = ({ formData, setFormData, nextStep, prevStep }) => {
                 <p className="text-xs text-gray-400 mt-1">💡 Enter your monthly income after all deductions like tax and PF.</p>
             </div>
             <div>
+       
                  <h4 className="text-gray-300 text-lg font-semibold mb-2">Your Average Monthly Expenses (₹)</h4>
                 <div className="space-y-4 max-h-64 overflow-y-auto pr-2 custom-scrollbar">{expenseCategories.map(c => (<div key={c.name} className="grid grid-cols-2 items-center gap-4"><label htmlFor={c.name} className="text-gray-300 font-semibold">{c.label}</label><input type="text" inputMode="numeric" id={c.name} name={c.name} value={formData.expenses?.[c.name] || ''} onChange={handleExpenseChange} className="p-2 border border-gray-700 rounded-lg bg-gray-900 text-white" placeholder="0" /></div>))}</div>
             </div>
@@ -209,10 +212,12 @@ const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
             <p className="text-lg text-gray-400 mb-8 text-center">This gives us the big picture of your assets and liabilities.</p>
             <div className="space-y-6">
                 <div>
-                     <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Assets (What you own)</h4>
+             
+                    <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Assets (What you own)</h4>
                     <div className="space-y-4">
                         <div><label className="block text-lg font-semibold mb-1">Emergency Fund (₹)</label><input type="text" inputMode="numeric" name="emergencyFund" value={formData.emergencyFund} onChange={handleFieldChange} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Cash in savings accounts or liquid funds for emergencies (ideally 6x monthly expenses).</p></div>
-                         <div><label className="block text-lg font-semibold mb-1">Equity Investments (₹)</label><input type="text" inputMode="numeric" value={formData.investments.equity} onChange={(e) => handleNestedChange(e, 'investments', 'equity')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of stocks, equity mutual funds, ELSS etc.</p></div>
+        
+                        <div><label className="block text-lg font-semibold mb-1">Equity Investments (₹)</label><input type="text" inputMode="numeric" value={formData.investments.equity} onChange={(e) => handleNestedChange(e, 'investments', 'equity')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of stocks, equity mutual funds, ELSS etc.</p></div>
                         <div><label className="block text-lg font-semibold mb-1">Debt Investments (₹)</label><input type="text" inputMode="numeric" value={formData.investments.debt} onChange={(e) => handleNestedChange(e, 'investments', 'debt')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of FDs, PPF, EPF, debt funds, bonds etc.</p></div>
                         <div><label className="block text-lg font-semibold mb-1">Real Estate (₹)</label><input type="text" inputMode="numeric" value={formData.investments.realEstate} onChange={(e) => handleNestedChange(e, 'investments', 'realEstate')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Market value of investment properties (not your primary home).</p></div>
                         <div><label className="block text-lg font-semibold mb-1">Gold & Others (₹)</label><input type="text" inputMode="numeric" value={formData.investments.gold} onChange={(e) => handleNestedChange(e, 'investments', 'gold')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of physical gold, SGBs, crypto etc.</p></div>
@@ -220,7 +225,8 @@ const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
                 </div>
                  <div>
                     <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Liabilities (What you owe)</h4>
-                     <div className="space-y-4">
+         
+                    <div className="space-y-4">
                         <div><label className="block text-lg font-semibold mb-1">High-Interest Debt (₹)</label><input type="text" inputMode="numeric" value={formData.liabilities.highInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'highInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Total outstanding on credit cards, personal loans etc.</p></div>
                         <div><label className="block text-lg font-semibold mb-1">Low-Interest Debt (₹)</label><input type="text" inputMode="numeric" value={formData.liabilities.lowInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'lowInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Total outstanding on home loans, car loans etc.</p></div>
                     </div>
@@ -238,7 +244,8 @@ const OnboardingStep4 = ({ formData, handleChange, nextStep, prevStep }) => {
             <p className="text-lg text-gray-400 mb-8 text-center">Let's review your insurance coverage and investment approach.</p>
             <div className="space-y-6">
                 <div>
-                     <label className="block text-lg font-semibold mb-2">Do you have a separate Health Insurance plan (not from your employer)?</label>
+ 
+                    <label className="block text-lg font-semibold mb-2">Do you have a separate Health Insurance plan (not from your employer)?</label>
                     <select name="healthInsurance" value={formData.healthInsurance} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="yes">Yes</option><option value="no">No</option></select>
                 </div>
                 {formData.healthInsurance === 'yes' &&
@@ -257,7 +264,8 @@ const OnboardingStep4 = ({ formData, handleChange, nextStep, prevStep }) => {
                 </div>
                 <div>
                     <label className="block text-lg font-semibold mb-2">What is your single biggest financial worry right now?</label>
-                     <select name="financialWorry" value={formData.financialWorry} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="retirement">Saving enough for retirement</option><option value="debt">Getting out of debt</option><option value="taxes">High taxes</option><option value="investing">Not knowing where to invest</option><option value="expenses">Managing daily expenses</option></select>
+    
+                    <select name="financialWorry" value={formData.financialWorry} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="retirement">Saving enough for retirement</option><option value="debt">Getting out of debt</option><option value="taxes">High taxes</option><option value="investing">Not knowing where to invest</option><option value="expenses">Managing daily expenses</option></select>
                 </div>
             </div>
             <div className="flex justify-between mt-8"><button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button><button onClick={nextStep} className="bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-xl">Next</button></div>
@@ -287,6 +295,7 @@ const OnboardingStep5 = ({ formData, setFormData, prevStep, handleSubmit, isSubm
       <div className="flex justify-between mt-8">
         <button onClick={prevStep} className="bg-gray-700 font-bold py-3 px-6 rounded-xl">Previous</button>
         <button onClick={handleSubmit} disabled={isSubmitting} className="bg-gradient-to-r from-green-600 to-yellow-600 text-gray-900 font-bold py-4 px-8 text-xl rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
+           
             {isSubmitting ? 'Saving...' : 'Complete Onboarding'}
         </button>
       </div>
@@ -309,7 +318,8 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
       liabilities: { highInterest: '', lowInterest: '' },
       healthInsurance: '',
       healthInsuranceCoverage: '',
-      termInsurance: '',
+   
+       termInsurance: '',
       termInsuranceCoverage: '',
       riskTolerance: '',
       financialWorry: '',
@@ -355,6 +365,7 @@ const OnboardingFlow = ({ onSubmit, initialData, isSubmitting }) => {
         {currentStep === 2 && (<OnboardingStep2 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)}
         {currentStep === 3 && (<OnboardingStep3 formData={formData} setFormData={setFormData} nextStep={nextStep} prevStep={prevStep} />)}
         {currentStep === 4 && (<OnboardingStep4 formData={formData} handleChange={handleChange} nextStep={nextStep} prevStep={prevStep} />)}
+     
         {currentStep === 5 && (<OnboardingStep5 formData={formData} setFormData={setFormData} prevStep={prevStep} handleSubmit={handleSubmit} isSubmitting={isSubmitting} />)}
       </div>
     </div>
@@ -372,7 +383,6 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
   }, [chatHistory]);
-
   useEffect(() => {
     if (chatHistory.length === 0) {
         setChatHistory([{
@@ -382,18 +392,15 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (chatInput.trim() === '') return;
     callChatAPI(chatInput);
     setChatInput('');
   };
-
   const handlePromptClick = (prompt) => {
     callChatAPI(prompt);
   };
-
   const generateChatPrompts = () => {
     if (!financialSummary) return [];
     const prompts = [];
@@ -420,7 +427,6 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
     return [...new Set(prompts)].slice(0, 3);
   };
   const suggestionPrompts = generateChatPrompts();
-
   return (
     <section className="bg-gray-900 p-6 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px]">
       <h2 className="text-3xl font-bold text-green-400 mb-4">AI Financial Companion</h2>
@@ -428,6 +434,7 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
         {chatHistory.map((msg, i) => (
           <div key={i} className={`mb-3 p-3 rounded-xl max-w-[85%] ${msg.role === 'user' ? 'bg-gray-700 ml-auto' : 'bg-gray-800 mr-auto'}`}>
             <p className="text-sm font-semibold mb-1">{msg.role === 'user' ? 'You' : 'ZENVANA AI'}</p>
+      
             <MarkdownRenderer text={msg.parts[0].text} />
           </div>
         ))}
@@ -439,11 +446,13 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
       </div>
 
       {!isGeneratingResponse && chatHistory.length <= 2 && (
+  
           <div className="mb-4 flex flex-wrap gap-2">
               {suggestionPrompts.map((prompt, i) => (
                   <button key={i} onClick={() => handlePromptClick(prompt)} className="bg-gray-700 hover:bg-gray-600 text-sm text-gray-200 py-2 px-3 rounded-full transition-colors">
                       {prompt}
                   </button>
+ 
               ))}
           </div>
       )}
@@ -454,7 +463,8 @@ const AIChat = ({ chatHistory, isGeneratingResponse, callChatAPI, financialSumma
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           placeholder="Ask me anything about your finances..."
-          className="flex-grow p-3 rounded-xl bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
+       
+           className="flex-grow p-3 rounded-xl bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
           disabled={isGeneratingResponse}
         />
         <button
@@ -480,14 +490,12 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const [taxResult, setTaxResult] = useState(null);
     const [aiAnalysis, setAiAnalysis] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
-
     useEffect(() => {
         if (financialSummary?.monthlyIncome) {
             const annualIncome = parseFloat(financialSummary.monthlyIncome) * 12;
             setTaxData(prev => ({ ...prev, salaryIncome: annualIncome.toString() }));
         }
     }, [financialSummary]);
-
     if (!financialSummary) { return <div className="text-center p-10">Loading financial data...</div>; }
 
     const taxFields = [
@@ -500,7 +508,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         { name: 'nps_80ccd1b', label: 'NPS Contribution (Section 80CCD(1B))', helper: 'Additional contribution to NPS. (Max: ₹50,000)' },
         { name: 'educationLoanInterest_80e', label: 'Interest on Education Loan (Section 80E)', helper: 'Total interest paid on an education loan.' }
     ];
-
     const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
     
     const calculateTax = (taxableIncome, regime) => {
@@ -531,7 +538,6 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
         const tI_old = Math.max(0, gI - 50000 - tD);
         const { tax: oRT, slab: oRSlab } = calculateTax(tI_old, 'old');
         setTaxResult({ nR: nRT, oR: oRT, bO: nRT < oRT ? 'New' : 'Old', s: Math.abs(nRT - oRT), nRSlab, oRSlab });
-        
         const prompt = `
 You are ZENVANA, an expert AI Tax Advisor for India, providing analysis for the current financial year.
 **DEEP USER CONTEXT:**
@@ -584,36 +590,45 @@ End with an empowering statement about proactive tax planning.`;
             <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-5">
                     {taxFields.map((field) => (
+           
                          <div key={field.name}>
                             <label className="block mb-1 font-semibold text-gray-200">{field.label} (₹)</label>
                             <input type="text" inputMode="numeric" name={field.name} value={taxData[field.name] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-green-500 focus:outline-none" />
-                             <p className="text-xs text-gray-400 mt-1.5">💡 {field.helper}</p>
+         
+                            <p className="text-xs text-gray-400 mt-1.5">💡 {field.helper}</p>
                         </div>
                     ))}
                 </div>
+                 
                   <div>
                      <button onClick={handleTaxCalculation} disabled={isCalculating} className="w-full bg-green-600 font-bold py-3 rounded-xl mb-4 transition transform hover:scale-105 disabled:opacity-50">
                         {isCalculating ? 'Calculating...' : 'Calculate & Analyze'}
                     </button>
                     {taxResult && (
                         <div className="bg-gray-800 p-4 rounded-xl">
-                              <h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3>
+                           
+                           <h3 className="text-xl font-bold text-yellow-400 text-center mb-4">Tax Regime Comparison</h3>
                             <div className="text-center mb-4 p-3 rounded-lg bg-green-900">
                                 <p className="text-lg">The **{taxResult.bO} Regime** is better for you.</p>
-                                 <p className="text-2xl font-extrabold text-green-400">You save {formatIndianCurrency(taxResult.s)}!</p>
+                  
+                               <p className="text-2xl font-extrabold text-green-400">You save {formatIndianCurrency(taxResult.s)}!</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-center">
-                                 <div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">{formatIndianCurrency(taxResult.oR)}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.oRSlab}</p></div>
+                     
+                           <div className="bg-gray-700 p-3 rounded-lg"><h4>Old Regime</h4><p className="text-2xl font-bold">{formatIndianCurrency(taxResult.oR)}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.oRSlab}</p></div>
                                 <div className="bg-gray-700 p-3 rounded-lg"><h4>New Regime</h4><p className="text-2xl font-bold">{formatIndianCurrency(taxResult.nR)}</p><p className="text-sm text-gray-400">Top Slab: {taxResult.nRSlab}</p></div>
                             </div>
-                         </div>
+         
+                        </div>
                     )}
                     {aiAnalysis && (
                         <div className="mt-4 bg-gray-800 p-4 rounded-xl">
+               
                              <h3 className="text-xl font-bold text-green-400 mb-2">ZENVANA AI's Advice</h3>
                             <MarkdownRenderer text={aiAnalysis} />
                         </div>
                     )}
+       
                   </div>
             </div>
         </section>
@@ -624,7 +639,6 @@ End with an empowering statement about proactive tax planning.`;
 const ExpensePieChart = ({ expenses }) => {
   const chartData = Object.entries(expenses || {}).map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) })).filter(item => item.value > 0);
   const COLORS = ['#10B981', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6', '#F59E0B', '#6366F1', '#D946EF'];
-  
   if (chartData.length === 0) { 
     return ( <div className="bg-gray-800 p-5 rounded-xl flex items-center justify-center h-full min-h-[300px]"><p className="text-gray-400">No expense data to display.</p></div> );
   }
@@ -664,6 +678,7 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         const age = getAge(dateOfBirth);
      
         const getPersona = (age, deps) => {
+       
              if (parseInt(deps, 10) > 0) return 'Family Builder';
             if (age < 30) return 'Young Accumulator';
             return 'Established Protector';
@@ -680,26 +695,19 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
         };
         const personaWeights = weights[persona];
         let rawScores = { savings: 0, emergency: 0, debt: 0, insurance: 0, investment: 0 };
-        if (savingsRate >= 30) rawScores.savings = 1; else if (savingsRate >= 15) rawScores.savings = 0.7;
-        else if (savingsRate >= 5) rawScores.savings = 0.4;
+        if (savingsRate >= 30) rawScores.savings = 1; else if (savingsRate >= 15) rawScores.savings = 0.7; else if (savingsRate >= 5) rawScores.savings = 0.4;
         
         const emergencyMonths = monthlyExpenses > 0 ? parseFloat(emergencyFund || 0) / monthlyExpenses : 12;
-        if (emergencyMonths >= 6) rawScores.emergency = 1;
-        else if (emergencyMonths >= 3) rawScores.emergency = 0.7; else if (emergencyMonths >= 1) rawScores.emergency = 0.3;
-
+        if (emergencyMonths >= 6) rawScores.emergency = 1; else if (emergencyMonths >= 3) rawScores.emergency = 0.7; else if (emergencyMonths >= 1) rawScores.emergency = 0.3;
         const highInterestDebt = parseFloat(liabilities?.highInterest || 0);
-        if (highInterestDebt === 0) rawScores.debt = 1;
-        else if (highInterestDebt / (monthlyIncome * 12) < 0.1) rawScores.debt = 0.5; else rawScores.debt = 0.1;
-        
+        if (highInterestDebt === 0) rawScores.debt = 1; else if (highInterestDebt / (monthlyIncome * 12) < 0.1) rawScores.debt = 0.5; else rawScores.debt = 0.1;
         const healthScoreValue = healthInsurance === 'yes' ? 1 : 0; const lifeScore = termInsurance === 'yes' ? 1 : 0;
         rawScores.insurance = (healthScoreValue * 0.5) + (lifeScore * 0.5);
 
         const totalInvestments = Object.values(investments || {}).reduce((s, v) => s + parseFloat(v || 0), 0);
         if (totalInvestments / (monthlyIncome * 12) > 1) rawScores.investment = 1; else if (totalInvestments > 0) rawScores.investment = 0.5;
-        
         let finalScore = Object.keys(rawScores).reduce((acc, factor) => acc + rawScores[factor] * personaWeights[factor], 0);
         if (savingsRate < 0) finalScore -= 10;
-        
         setHealthScore(Math.max(0, Math.min(100, Math.round(finalScore))));
         setIsCalculatingHealth(false);
     };
@@ -711,10 +719,12 @@ const Dashboard = ({ financialSummary, callGroqAPIWithRetry }) => {
   
   const mS = (financialSummary?.monthlyIncome || 0) - (financialSummary?.monthlyExpenses || 0);
   const sR = financialSummary?.monthlyIncome > 0 ? ((mS / parseFloat(financialSummary.monthlyIncome)) * 100) : 0;
-  const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0); const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
-  const getScoreColor = (score) => { if (score === null) return 'text-gray-400'; if (score >= 75) return 'text-green-400'; if (score >= 50) return 'text-yellow-400'; return 'text-red-500'; };
-  const formatDate = (dateString) => { if (!dateString) return 'N/A'; const options = { year: 'numeric', month: 'short', day: 'numeric' }; return new Date(dateString).toLocaleDateString('en-IN', options); };
-  
+  const cGP = (g) => { if (!g.targetAmount) return null; const tA = parseFloat(g.targetAmount); const aS = parseFloat(g.amountSaved || 0);
+  const p = Math.min(100, (aS / tA) * 100); return { p: p.toFixed(2), s: p >= 100 ? 'Achieved!' : 'On Track' }; };
+  const getScoreColor = (score) => { if (score === null) return 'text-gray-400';
+  if (score >= 75) return 'text-green-400'; if (score >= 50) return 'text-yellow-400'; return 'text-red-500'; };
+  const formatDate = (dateString) => { if (!dateString) return 'N/A';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' }; return new Date(dateString).toLocaleDateString('en-IN', options); };
   const handleGenerateImprovementPlan = async () => {
     setIsGeneratingImprovement(true); setImprovementPlan('');
     const prompt = `
@@ -773,15 +783,15 @@ Start with an encouraging sentence.
 ## Current Status & Required SIP
 - Calculate the remaining amount needed.
 - Calculate the required monthly investment (SIP) to reach the goal, assuming a reasonable rate of return (e.g., 7% for debt, 12% for equity based on timeline).
-State this SIP amount clearly.
+- State this SIP amount clearly.
 
 ## Recommended Investment Strategy
 This is the most important section. Provide a hyper-personalized recommendation.
 - **Analyze the Time Horizon:** Short-term (<3 years) goals need safer instruments. Long-term (>5 years) can have more equity.
 - **Align with Risk Tolerance:** If the user has 'high' tolerance and a long-term goal, recommend a higher allocation to equity funds (e.g., "70% in a Nifty 50 Index Fund, 30% in a Flexi-cap Fund").
-If 'low' tolerance, recommend safer options (e.g., "Consider a mix of RDs and Corporate Bond Funds.").
+- If 'low' tolerance, recommend safer options (e.g., "Consider a mix of RDs and Corporate Bond Funds.").
 - **Do not recommend specific fund names**, but recommend *categories* (e.g., Index Fund, ELSS, Liquid Fund, etc.).
-Explain *why* you chose that category.
+- Explain *why* you chose that category.
 - **Example:** "For your '${g.name}' goal which is 10 years away and your 'high' risk tolerance, an equity-heavy approach is suitable. I recommend allocating the required SIP towards a Nifty 50 Index Fund to capture market growth at a low cost."
 ## Next Steps
 Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a platform like Kuvera or Groww. 2. Set up an automatic monthly SIP for the calculated amount before the 5th of next month.").`;
@@ -791,7 +801,6 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
     } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
-
   return (
     <section className="space-y-8">
       {/* --- Row 1: Overview --- */}
@@ -808,29 +817,20 @@ Provide a clear, 2-step action plan (e.g., "1. Research and choose a fund from a
       </div>
 
       {/* --- Row 2: Health Score & Expense Breakdown --- */}
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="space-y-8">
         <div>
           <h3 className="text-2xl font-bold text-yellow-400 mb-4">Financial Health Score</h3>
-          <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center justify-center h-full">
+          <div className="bg-gray-800 p-5 rounded-xl flex flex-col items-center justify-center">
             {isCalculatingHealth ? ( <div className="text-gray-400 m-auto">Calculating...</div> ) : (
               <>
-                {/* --- MODIFICATION START: This block is updated for perfect centering --- */}
-                <div className="relative w-40 h-40">
-                  <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 36 36" transform="rotate(-90 18 18)">
-                      <circle className="text-gray-700" cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3"></circle>
-                      <circle className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3" strokeLinecap="round" style={{transition: 'stroke-dasharray 1s ease-in-out'}}></circle>
-                  </svg>
-                  {/* This div uses absolute positioning with transforms to guarantee perfect centering */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <span className={`text-5xl font-extrabold ${getScoreColor(healthScore)}`}>
-                        {healthScore !== null ? healthScore : '--'}
-                    </span>
-                  </div>
-                </div>
-                {/* Below, I've changed mt-4 to mt-5 to give a little more space, close to 0.5cm */}
-                <p className="text-gray-400 mt-5 mb-4 text-center">This score reflects your current financial standing.</p>
-                {/* --- MODIFICATION END --- */}
-
+                <div className={`relative w-40 h-40 flex items-center justify-center`}>
+                    <svg className="absolute w-full h-full" viewBox="0 0 36 36" transform="rotate(-90 18 18)">
+                        <circle className="text-gray-700" cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3"></circle>
+                        <circle className={`${getScoreColor(healthScore).replace('text-', 'stroke-')}`} strokeDasharray={`${healthScore || 0}, 100`} cx="18" cy="18" r="15.9155" fill="none" strokeWidth="3" strokeLinecap="round" style={{transition: 'stroke-dasharray 1s ease-in-out'}}></circle>
+                    </svg>
+                    <div className={`text-5xl font-extrabold drop-shadow-lg ${getScoreColor(healthScore)}`}>{healthScore !== null ? healthScore : '--'}</div>
+                 </div>
+                <p className="text-gray-400 mt-6 mb-4 text-center">This score reflects your current financial standing.</p>
                 <button onClick={handleGenerateImprovementPlan} className="w-full max-w-sm bg-green-600 font-bold py-3 rounded-xl disabled:opacity-50" disabled={isGeneratingImprovement}>
                   {isGeneratingImprovement ? 'Generating Plan...' : 'Get AI Plan to Improve'}
                 </button>
@@ -887,7 +887,6 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const groqApiKey = process.env.REACT_APP_GROQ_API_KEY ;
-
   useEffect(() => {
     try {
       const app = initializeApp(firebaseConfig);
@@ -898,6 +897,7 @@ function App() {
           if (user) {
               setUserId(user.uid);
               const docRef = doc(firestore, `users/${user.uid}/financial_data/summary`);
+  
               const docSnap = await getDoc(docRef);
               if (docSnap.exists()) { setFinancialSummary(docSnap.data()); setCurrentPage('dashboard'); }
               setIsAuthReady(true);
@@ -905,17 +905,19 @@ function App() {
              signInAnonymously(firebaseAuth).catch(err => console.error("Anonymous sign in failed:", err));
           }
       });
+    
       return () => unsubscribe();
     } catch (error) { console.error("Error initializing Firebase:", error); setIsAuthReady(true); }
   }, []);
-
   const saveFinancialData = async (data) => {
-    if (!db || !userId) { throw new Error("Firebase not ready"); }
+    if (!db || !userId) { throw new Error("Firebase not ready");
+    }
     setIsSubmitting(true);
     try {
       const docRef = doc(db, `users/${userId}/financial_data/summary`);
       const expensesParsed = {};
-      for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0); }
+      for (const key in data.expenses) { expensesParsed[key] = parseFloat(data.expenses[key] || 0);
+      }
       const dataToSave = { ...data, expenses: expensesParsed, lastUpdated: new Date().toISOString() };
       await setDoc(docRef, dataToSave, { merge: true });
       setFinancialSummary(dataToSave);
@@ -931,6 +933,7 @@ function App() {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-8b-8192" })
+      
         });
 
         if ((response.status === 429 || response.status >= 500) && retries > 0) {
@@ -940,6 +943,7 @@ function App() {
         }
 
         if (!response.ok) {
+      
             const errorBody = await response.text();
             throw new Error(`API call failed with status: ${response.status}. Body: ${errorBody}`);
         }
@@ -976,7 +980,8 @@ Do not answer the off-topic question.
 **USER'S FINANCIAL PROFILE:**
 ${JSON.stringify(financialSummary, null, 2)}
 ---
-When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings. If they ask about saving tax, consider their income and existing 80C investments.`;
+When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings.
+If they ask about saving tax, consider their income and existing 80C investments.`;
     const newHistory = [...chatHistory, { role: "user", parts: [{ text: userMessage }] }];
     setChatHistory(newHistory);
     const messagesForAPI = [
@@ -1031,11 +1036,10 @@ When answering, use this context. For example, if they ask "Should I invest?", y
       setFinancialSummary(null); setChatHistory([]); setUserId(null); setIsAuthReady(false); setCurrentPage('welcome');
     } catch (error) { console.error("Logout error:", error); }
   };
-
-  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>); }
+  if (!isAuthReady) { return (<div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">Loading...</div>);
+  }
   
   const navToOnboard = () => { setCurrentPage(financialSummary ? 'dashboard' : 'onboarding'); };
-
   return (
     <div>
       {currentPage === 'welcome' && <WelcomePage onGetStarted={navToOnboard} />}
