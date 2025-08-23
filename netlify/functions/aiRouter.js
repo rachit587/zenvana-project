@@ -1,16 +1,19 @@
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
-
+// Uses native fetch on Node 18+ (Netlify runtime). No node-fetch needed.
 exports.handler = async (event) => {
   try {
     const { mode = "groq-fast", question = "" } = JSON.parse(event.body || "{}");
-    if (!question) return json(400, { error: "Missing question" });
+    if (!question) return j(400, { error: "Missing question" });
 
     if (mode === "openai") {
       const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) return json(500, { error: "OPENAI_API_KEY not set" });
+      if (!apiKey) return j(500, { error: "OPENAI_API_KEY not set" });
+
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           model: "gpt-4o-mini",
           messages: [
@@ -22,14 +25,20 @@ exports.handler = async (event) => {
         })
       });
       const data = await r.json();
-      return json(200, { text: data.choices?.[0]?.message?.content || "" });
+      if (!r.ok) return j(r.status, { error: data.error?.message || "OpenAI request failed" });
+      return j(200, { text: data.choices?.[0]?.message?.content || "" });
     }
 
+    // Default: Groq (fast)
     const groqKey = process.env.GROQ_API_KEY;
-    if (!groqKey) return json(500, { error: "GROQ_API_KEY not set" });
+    if (!groqKey) return j(500, { error: "GROQ_API_KEY not set" });
+
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${groqKey}`,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
         messages: [
@@ -40,12 +49,13 @@ exports.handler = async (event) => {
       })
     });
     const data = await r.json();
-    return json(200, { text: data.choices?.[0]?.message?.content || "" });
+    if (!r.ok) return j(r.status, { error: data.error?.message || "Groq request failed" });
+    return j(200, { text: data.choices?.[0]?.message?.content || "" });
   } catch (e) {
-    return json(500, { error: e.message });
+    return j(500, { error: e.message || "Unhandled error" });
   }
 };
 
-function json(statusCode, body) {
+function j(statusCode, body) {
   return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
 }
