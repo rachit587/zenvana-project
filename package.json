@@ -1,40 +1,22 @@
 {
-  "name": "zenvana-app",
-  "version": "0.1.0",
+  "name": "zenvana-v2",
+  "version": "2.0.1",
   "private": true,
-  "dependencies": {
-    "aos": "^2.3.4",
-    "firebase": "^10.12.2",
-    "node-sass": "^8.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "recharts": "^2.12.7",
-    "sass": "^1.77.4"
-  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "serve": "netlify dev",
+    "test": "react-scripts test --env=jsdom"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "dependencies": {
+    "aos": "^2.3.4",
+    "firebase": "^10.12.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.12.7"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "netlify-cli": "^17.33.0",
+    "react-scripts": "5.0.1"
   }
 }
-
