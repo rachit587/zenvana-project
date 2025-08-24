@@ -1,33 +1,33 @@
-// src/lib/api.js
-export async function groqChat(promptOrMessages, model) {
-  const payload = Array.isArray(promptOrMessages)
-    ? { messages: promptOrMessages, model }
-    : { prompt: promptOrMessages, model };
+export async function groqChat(payload) {
+  const body = Array.isArray(payload)
+    ? { messages: payload }
+    : typeof payload === "string"
+      ? { prompt: payload }
+      : payload;
 
   const res = await fetch("/.netlify/functions/groqChat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "Groq call failed");
+    const text = await res.text();
+    throw new Error(text || "Groq call failed");
   }
   const data = await res.json();
   return data.text;
 }
 
-// simple retry with backoff
-export async function groqChatWithRetry(input, model, tries = 3) {
-  let err;
+export async function groqChatWithRetry(input, tries = 3) {
+  let lastErr;
   for (let i = 0; i < tries; i++) {
     try {
-      return await groqChat(input, model);
+      return await groqChat(input);
     } catch (e) {
-      err = e;
+      lastErr = e;
       await new Promise(r => setTimeout(r, 600 * (i + 1)));
     }
   }
-  throw err;
+  throw lastErr;
 }
