@@ -6,7 +6,7 @@ import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "firebase/firestore
 
 // Import components
 import Layout from "./components/Layout";
-import WelcomePage from "./pages/WelcomePage";
+import WelcomePage from './components/WelcomePage';
 import OnboardingFlow from "./pages/Onboarding/OnboardingFlow";
 import Dashboard from "./pages/Dashboard";
 import TaxSaver from "./pages/TaxSaver";
