@@ -17,7 +17,6 @@ const firebaseConfig = {
   messagingSenderId: "783039988566",
   appId: "1:783039988566:web:6e8948d86341d4805eccf7",
   measurementId: "G-TVZF4SK0YG"
-
 };
 
 // --- Helper Functions & Components ---
@@ -133,11 +132,11 @@ const WelcomePage = ({ onGetStarted }) => {
                     icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>}
                     title="Dashboard"
                 >
-                    A single, clear view of your entire financial lifeâ€”net worth, expenses, savings, and goalsâ€”all in one place.
+                    A single, clear view of your entire financial life—net worth, expenses, savings, and goals—all in one place.
                 </FeatureCard>
             </div>
         </section>
-        <footer className="text-gray-400 text-md mt-20">Made with â¤ï¸ by Rachit Banthia</footer>
+        <footer className="text-gray-400 text-md mt-20">Made with ❤️ by Rachit Banthia</footer>
       </div>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes blob {
@@ -187,13 +186,13 @@ const OnboardingStep2 = ({ formData, setFormData, nextStep, prevStep }) => {
         <p className="text-lg text-gray-400 mb-8 text-center">Let's understand what comes in and what goes out monthly.</p>
         <div className="space-y-6">
             <div>
-                <label htmlFor="monthlyIncome" className="block text-gray-300 text-lg font-semibold mb-2">Average Monthly Take-Home Income (â‚¹)</label>
+                <label htmlFor="monthlyIncome" className="block text-gray-300 text-lg font-semibold mb-2">Average Monthly Take-Home Income (₹)</label>
                 <input type="text" inputMode="numeric" id="monthlyIncome" name="monthlyIncome" value={formData.monthlyIncome} onChange={handleIncomeChange} className="w-full p-3 border border-gray-700 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-lg" placeholder="e.g., 50000" required />
-                <p className="text-xs text-gray-400 mt-1">ðŸ’¡ Enter your monthly income after all deductions like tax and PF.</p>
+                <p className="text-xs text-gray-400 mt-1">💡 Enter your monthly income after all deductions like tax and PF.</p>
             </div>
             <div>
        
-                 <h4 className="text-gray-300 text-lg font-semibold mb-2">Your Average Monthly Expenses (â‚¹)</h4>
+                 <h4 className="text-gray-300 text-lg font-semibold mb-2">Your Average Monthly Expenses (₹)</h4>
                 <div className="space-y-4 max-h-64 overflow-y-auto pr-2 custom-scrollbar">{expenseCategories.map(c => (<div key={c.name} className="grid grid-cols-2 items-center gap-4"><label htmlFor={c.name} className="text-gray-300 font-semibold">{c.label}</label><input type="text" inputMode="numeric" id={c.name} name={c.name} value={formData.expenses?.[c.name] || ''} onChange={handleExpenseChange} className="p-2 border border-gray-700 rounded-lg bg-gray-900 text-white" placeholder="0" /></div>))}</div>
             </div>
         </div>
@@ -216,20 +215,20 @@ const OnboardingStep3 = ({ formData, setFormData, nextStep, prevStep }) => {
              
                     <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Assets (What you own)</h4>
                     <div className="space-y-4">
-                        <div><label className="block text-lg font-semibold mb-1">Emergency Fund (â‚¹)</label><input type="text" inputMode="numeric" name="emergencyFund" value={formData.emergencyFund} onChange={handleFieldChange} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Cash in savings accounts or liquid funds for emergencies (ideally 6x monthly expenses).</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">Emergency Fund (₹)</label><input type="text" inputMode="numeric" name="emergencyFund" value={formData.emergencyFund} onChange={handleFieldChange} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Cash in savings accounts or liquid funds for emergencies (ideally 6x monthly expenses).</p></div>
         
-                        <div><label className="block text-lg font-semibold mb-1">Equity Investments (â‚¹)</label><input type="text" inputMode="numeric" value={formData.investments.equity} onChange={(e) => handleNestedChange(e, 'investments', 'equity')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Value of stocks, equity mutual funds, ELSS etc.</p></div>
-                        <div><label className="block text-lg font-semibold mb-1">Debt Investments (â‚¹)</label><input type="text" inputMode="numeric" value={formData.investments.debt} onChange={(e) => handleNestedChange(e, 'investments', 'debt')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Value of FDs, PPF, EPF, debt funds, bonds etc.</p></div>
-                        <div><label className="block text-lg font-semibold mb-1">Real Estate (â‚¹)</label><input type="text" inputMode="numeric" value={formData.investments.realEstate} onChange={(e) => handleNestedChange(e, 'investments', 'realEstate')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Market value of investment properties (not your primary home).</p></div>
-                        <div><label className="block text-lg font-semibold mb-1">Gold & Others (â‚¹)</label><input type="text" inputMode="numeric" value={formData.investments.gold} onChange={(e) => handleNestedChange(e, 'investments', 'gold')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Value of physical gold, SGBs, crypto etc.</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">Equity Investments (₹)</label><input type="text" inputMode="numeric" value={formData.investments.equity} onChange={(e) => handleNestedChange(e, 'investments', 'equity')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of stocks, equity mutual funds, ELSS etc.</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">Debt Investments (₹)</label><input type="text" inputMode="numeric" value={formData.investments.debt} onChange={(e) => handleNestedChange(e, 'investments', 'debt')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of FDs, PPF, EPF, debt funds, bonds etc.</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">Real Estate (₹)</label><input type="text" inputMode="numeric" value={formData.investments.realEstate} onChange={(e) => handleNestedChange(e, 'investments', 'realEstate')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Market value of investment properties (not your primary home).</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">Gold & Others (₹)</label><input type="text" inputMode="numeric" value={formData.investments.gold} onChange={(e) => handleNestedChange(e, 'investments', 'gold')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Value of physical gold, SGBs, crypto etc.</p></div>
                     </div>
                 </div>
                  <div>
                     <h4 className="text-xl font-bold text-yellow-400 mb-3">Your Liabilities (What you owe)</h4>
          
                     <div className="space-y-4">
-                        <div><label className="block text-lg font-semibold mb-1">High-Interest Debt (â‚¹)</label><input type="text" inputMode="numeric" value={formData.liabilities.highInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'highInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Total outstanding on credit cards, personal loans etc.</p></div>
-                        <div><label className="block text-lg font-semibold mb-1">Low-Interest Debt (â‚¹)</label><input type="text" inputMode="numeric" value={formData.liabilities.lowInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'lowInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Total outstanding on home loans, car loans etc.</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">High-Interest Debt (₹)</label><input type="text" inputMode="numeric" value={formData.liabilities.highInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'highInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Total outstanding on credit cards, personal loans etc.</p></div>
+                        <div><label className="block text-lg font-semibold mb-1">Low-Interest Debt (₹)</label><input type="text" inputMode="numeric" value={formData.liabilities.lowInterest} onChange={(e) => handleNestedChange(e, 'liabilities', 'lowInterest')} className="w-full p-3 rounded-xl bg-gray-800" /><p className="text-xs text-gray-400 mt-1">💡 Total outstanding on home loans, car loans etc.</p></div>
                     </div>
                 </div>
             </div>
@@ -250,14 +249,14 @@ const OnboardingStep4 = ({ formData, handleChange, nextStep, prevStep }) => {
                     <select name="healthInsurance" value={formData.healthInsurance} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="yes">Yes</option><option value="no">No</option></select>
                 </div>
                 {formData.healthInsurance === 'yes' &&
-                    <div data-aos="fade-in"><label className="block text-lg font-semibold mb-1">Health Insurance Coverage (â‚¹)</label><input type="text" inputMode="numeric" name="healthInsuranceCoverage" value={formData.healthInsuranceCoverage} onChange={handleChange} className="w-full p-3 rounded-xl bg-gray-800" placeholder="e.g. 500000" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Enter your total family floater cover amount.</p></div>
+                    <div data-aos="fade-in"><label className="block text-lg font-semibold mb-1">Health Insurance Coverage (₹)</label><input type="text" inputMode="numeric" name="healthInsuranceCoverage" value={formData.healthInsuranceCoverage} onChange={handleChange} className="w-full p-3 rounded-xl bg-gray-800" placeholder="e.g. 500000" /><p className="text-xs text-gray-400 mt-1">💡 Enter your total family floater cover amount.</p></div>
                 }
                 <div>
                     <label className="block text-lg font-semibold mb-2">Do you have a Term Life Insurance plan?</label>
                     <select name="termInsurance" value={formData.termInsurance} onChange={handleChange} className="w-full p-3 border rounded-xl bg-gray-800"><option value="">Select one</option><option value="yes">Yes</option><option value="no">No</option></select>
                 </div>
                 {formData.termInsurance === 'yes' &&
-                     <div data-aos="fade-in"><label className="block text-lg font-semibold mb-1">Term Insurance Coverage (â‚¹)</label><input type="text" inputMode="numeric" name="termInsuranceCoverage" value={formData.termInsuranceCoverage} onChange={handleChange} className="w-full p-3 rounded-xl bg-gray-800" placeholder="e.g. 10000000" /><p className="text-xs text-gray-400 mt-1">ðŸ’¡ Your life cover amount. Recommended: 10-15x your annual income.</p></div>
+                     <div data-aos="fade-in"><label className="block text-lg font-semibold mb-1">Term Insurance Coverage (₹)</label><input type="text" inputMode="numeric" name="termInsuranceCoverage" value={formData.termInsuranceCoverage} onChange={handleChange} className="w-full p-3 rounded-xl bg-gray-800" placeholder="e.g. 10000000" /><p className="text-xs text-gray-400 mt-1">💡 Your life cover amount. Recommended: 10-15x your annual income.</p></div>
                 }
                 <div>
                     <label className="block text-lg font-semibold mb-2">What is your risk tolerance for investments?</label>
@@ -287,8 +286,8 @@ const OnboardingStep5 = ({ formData, setFormData, prevStep, handleSubmit, isSubm
           {formData.customGoals.map((goal, index) => (<div key={index} className="bg-gray-700 p-4 rounded-xl border border-gray-600">
               <div className="flex justify-between items-center mb-3"><label className="font-semibold">Goal {index + 1}</label>{formData.customGoals.length > 1 && (<button type="button" onClick={() => removeGoal(index)} className="text-red-400 text-sm">Remove</button>)}</div>
               <label className="block mt-2">Goal Name</label><input type="text" name="name" value={goal.name || ''} onChange={(e) => handleGoalChange(index, e)} className="w-full p-2 rounded bg-gray-800" placeholder="e.g., Retirement, Buy a Car"/>
-              <label className="block mt-2">Target Amount (â‚¹)</label><input type="text" inputMode="numeric" name="targetAmount" value={goal.targetAmount || ''} onChange={(e) => handleGoalChange(index, e)} className="w-full p-2 rounded bg-gray-800" />
-              <label className="block mt-2">Amount Already Saved (â‚¹)</label><input type="text" inputMode="numeric" name="amountSaved" value={goal.amountSaved || ''} onChange={(e) => handleGoalChange(index, e)} className="w-full p-2 rounded bg-gray-800" />
+              <label className="block mt-2">Target Amount (₹)</label><input type="text" inputMode="numeric" name="targetAmount" value={goal.targetAmount || ''} onChange={(e) => handleGoalChange(index, e)} className="w-full p-2 rounded bg-gray-800" />
+              <label className="block mt-2">Amount Already Saved (₹)</label><input type="text" inputMode="numeric" name="amountSaved" value={goal.amountSaved || ''} onChange={(e) => handleGoalChange(index, e)} className="w-full p-2 rounded bg-gray-800" />
               <label className="block mt-2">Target Date</label><input type="date" name="targetDate" value={goal.targetDate || ''} min={today} onChange={(e) => handleGoalChange(index, e)} className="w-full p-2 rounded bg-gray-800" />
           </div>))}
         <button type="button" onClick={addGoal} className="w-full bg-green-700 font-bold py-2 px-4 rounded-xl">+ Add Another Goal</button>
@@ -502,11 +501,11 @@ const TaxSaver = ({ financialSummary, callGroqAPIWithRetry }) => {
     const taxFields = [
         { name: 'salaryIncome', label: 'Annual Salary Income (from Form 16)', helper: 'Your total gross salary before any deductions.' },
         { name: 'otherIncome', label: 'Annual Income from Other Sources', helper: 'e.g., Interest income, rental income, capital gains.' },
-        { name: 'investments80C', label: 'Total Investments under Section 80C', helper: 'PPF, EPF, ELSS, life insurance premiums, etc. (Max: â‚¹1,50,000)' },
+        { name: 'investments80C', label: 'Total Investments under Section 80C', helper: 'PPF, EPF, ELSS, life insurance premiums, etc. (Max: ₹1,50,000)' },
         { name: 'hra', label: 'House Rent Allowance (HRA) Exemption', helper: 'The exempt portion of your HRA.' },
-        { name: 'homeLoanInterest', label: 'Interest on Home Loan (Section 24)', helper: 'Interest on home loan. (Max: â‚¹2,00,000 for self-occupied)' },
+        { name: 'homeLoanInterest', label: 'Interest on Home Loan (Section 24)', helper: 'Interest on home loan. (Max: ₹2,00,000 for self-occupied)' },
         { name: 'medicalInsurance80D', label: 'Medical Insurance Premium (Section 80D)', helper: 'Premium for self/family & parents.' },
-        { name: 'nps_80ccd1b', label: 'NPS Contribution (Section 80CCD(1B))', helper: 'Additional contribution to NPS. (Max: â‚¹50,000)' },
+        { name: 'nps_80ccd1b', label: 'NPS Contribution (Section 80CCD(1B))', helper: 'Additional contribution to NPS. (Max: ₹50,000)' },
         { name: 'educationLoanInterest_80e', label: 'Interest on Education Loan (Section 80E)', helper: 'Total interest paid on an education loan.' }
     ];
     const handleNumberChange = (e) => { const { name, value } = e.target; setTaxData(p => ({ ...p, [name]: value.replace(/[^0-9]/g, '') })); };
@@ -563,7 +562,7 @@ State the recommended tax regime and the potential savings clearly upfront.
 ## Detailed Comparison
 Provide a clear, side-by-side comparison of the Old vs. New tax regimes.
 Explain *why* one is better in this specific case (e.g., "The New Regime is better because your claimed deductions are not high enough to make the Old Regime's lower tax slabs beneficial.").
-## ðŸ’¡ Smart Deduction Analysis & Missed Opportunities
+## 💡 Smart Deduction Analysis & Missed Opportunities
 Analyze the user's deduction inputs.
 For any key deduction field where the user entered 0 (like 80D, 80CCD1B), highlight this as a potential missed opportunity.
 Explain the benefit simply. If they have maxed out 80C, praise them: "Great job maxing out your 80C limit!"
@@ -593,10 +592,10 @@ End with an empowering statement about proactive tax planning.`;
                     {taxFields.map((field) => (
            
                          <div key={field.name}>
-                            <label className="block mb-1 font-semibold text-gray-200">{field.label} (â‚¹)</label>
+                            <label className="block mb-1 font-semibold text-gray-200">{field.label} (₹)</label>
                             <input type="text" inputMode="numeric" name={field.name} value={taxData[field.name] || ''} onChange={handleNumberChange} className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-green-500 focus:outline-none" />
          
-                            <p className="text-xs text-gray-400 mt-1.5">ðŸ’¡ {field.helper}</p>
+                            <p className="text-xs text-gray-400 mt-1.5">💡 {field.helper}</p>
                         </div>
                     ))}
                 </div>
@@ -887,7 +886,7 @@ function App() {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const groqApiKey = process.env.GROQ_API_KEY ;
+  const groqApiKey = process.env.REACT_APP_GROQ_API_KEY ;
   useEffect(() => {
     try {
       const app = initializeApp(firebaseConfig);
@@ -1057,4 +1056,3 @@ If they ask about saving tax, consider their income and existing 80C investments
 }
 
 export default App;
-
