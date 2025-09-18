@@ -10,13 +10,14 @@ const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  apiKey: REACT_APP_FIREBASE_API_KEY,
-  authDomain:REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId:REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: REACT_APP_FIREBASE_APP_ID,
-  measurementId: REACT_APP_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
+  authDomain: "zenvana-web.firebaseapp.com",
+  projectId: "zenvana-web",
+  storageBucket: "zenvana-web.appspot.com",
+  messagingSenderId: "783039988566",
+  appId: "1:783039988566:web:6e8948d86341d4805eccf7",
+  measurementId: "G-TVZF4SK0YG"
+
 };
 
 // --- Helper Functions & Components ---
