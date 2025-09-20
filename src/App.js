@@ -17,7 +17,6 @@ function App() {
   const [financialSummary, setFinancialSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
@@ -27,27 +26,18 @@ function App() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setFinancialSummary(docSnap.data());
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/dashboard');
-          }
         } else {
           setFinancialSummary(null);
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/onboarding');
-          }
         }
       } else {
         setUser(null);
         setFinancialSummary(null);
-        if (location.pathname !== '/' && location.pathname !== '/auth') {
-          navigate('/');
-        }
       }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [navigate, location]);
+  }, []);
 
   const saveFinancialData = async (data) => {
     if (!user || !user.uid) {
@@ -65,6 +55,18 @@ function App() {
     }
   };
 
+  const handleGetStartedClick = () => {
+    if (user) {
+      if (financialSummary) {
+        navigate('/dashboard');
+      } else {
+        navigate('/onboarding');
+      }
+    } else {
+      navigate('/auth');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">
@@ -75,7 +77,7 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<WelcomePage />} />
+      <Route path="/" element={<WelcomePage onGetStarted={handleGetStartedClick} />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/onboarding" element={user && !financialSummary ? <OnboardingFlow onSubmit={saveFinancialData} /> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
       <Route path="/dashboard" element={user && financialSummary ? <Layout currentPage="dashboard" userId={user.uid}><Dashboard financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
