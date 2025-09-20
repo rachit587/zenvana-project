@@ -10,13 +10,13 @@ const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDjN0_LU5WEtCNLNryPIUjavIJAOXghCCQ",
-  authDomain: "zenvana-web.firebaseapp.com",
-  projectId: "zenvana-web",
-  storageBucket: "zenvana-web.appspot.com",
-  messagingSenderId: "783039988566",
-  appId: "1:783039988566:web:6e8948d86341d4805eccf7",
-  measurementId: "G-TVZF4SK0YG"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // --- Helper Functions & Components ---
@@ -886,7 +886,9 @@ function App() {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const groqApiKey = process.env.REACT_APP_GROQ_API_KEY ;
+  // Use a different variable name for the Groq API key to avoid conflicts with process.env
+  const groqApiKey = process.env.REACT_APP_GROQ_API_KEY;
+
   useEffect(() => {
     try {
       const app = initializeApp(firebaseConfig);
@@ -932,7 +934,7 @@ function App() {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama3-8b-8192" })
+            body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama-3.1-8b-instant" })
       
         });
 
@@ -995,7 +997,7 @@ If they ask about saving tax, consider their income and existing 80C investments
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: messagesForAPI, model: "llama3-8b-8192" })
+                body: JSON.stringify({ messages: messagesForAPI, model: "llama-3.1-8b-instant" })
             });
             if (response.status === 429 || response.status >= 500) {
                 throw new Error(`API Error with status ${response.status}`);
