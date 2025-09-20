@@ -27,14 +27,8 @@ function App() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setFinancialSummary(docSnap.data());
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/dashboard');
-          }
         } else {
           setFinancialSummary(null);
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/onboarding');
-          }
         }
       } else {
         setUser(null);
@@ -62,7 +56,7 @@ function App() {
     }
   };
 
-  const handleAuthRedirect = (destination) => {
+  const handleGetStartedClick = () => {
     if (user) {
       if (financialSummary) {
         navigate('/dashboard');
@@ -84,8 +78,8 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<WelcomePage onGetStarted={handleAuthRedirect} />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/" element={<WelcomePage onGetStarted={handleGetStartedClick} />} />
+      <Route path="/auth" element={<Auth onLoginSuccess={handleGetStartedClick} />} />
       <Route path="/onboarding" element={user && !financialSummary ? <OnboardingFlow onSubmit={saveFinancialData} /> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
       <Route path="/dashboard" element={user && financialSummary ? <Layout currentPage="dashboard" userId={user.uid}><Dashboard financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
       <Route path="/tax-saver" element={user && financialSummary ? <Layout currentPage="tax-saver" userId={user.uid}><TaxSaver financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
