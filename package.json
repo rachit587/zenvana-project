@@ -1,13 +1,16 @@
 {
   "name": "zenvana-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
+    "@google/generative-ai": "^0.15.0",
     "aos": "^2.3.4",
+    "axios": "^1.7.2",
     "firebase": "^10.12.2",
     "node-sass": "^8.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.2.1",
     "react-scripts": "5.0.1",
     "recharts": "^2.12.7",
     "sass": "^1.77.4"
