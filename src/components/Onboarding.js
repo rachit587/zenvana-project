@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase/config';
-import { doc, setDoc } from 'firebase/firestore';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
