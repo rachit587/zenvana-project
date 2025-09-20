@@ -3,7 +3,7 @@ import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, create
 import { auth, db } from '../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
 
-const Auth = () => {
+const Auth = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
@@ -13,13 +13,8 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      await setDoc(doc(db, "users", user.uid), {
-        name: user.displayName,
-        email: user.email,
-        createdAt: new Date(),
-      }, { merge: true });
+      await signInWithPopup(auth, provider);
+      onLoginSuccess();
     } catch (e) {
       setError(e.message);
     }
@@ -39,6 +34,7 @@ const Auth = () => {
           createdAt: new Date(),
         });
       }
+      onLoginSuccess();
     } catch (e) {
       setError(e.message);
     }
