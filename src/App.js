@@ -27,25 +27,18 @@ function App() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setFinancialSummary(docSnap.data());
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/dashboard');
-          }
         } else {
           setFinancialSummary(null);
-          navigate('/onboarding');
         }
       } else {
         setUser(null);
         setFinancialSummary(null);
-        if (location.pathname !== '/auth') {
-          navigate('/');
-        }
       }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [navigate, location]);
+  }, []); // The empty dependency array ensures this runs only once on mount.
 
   const saveFinancialData = async (data) => {
     if (!user || !user.uid) {
@@ -63,6 +56,22 @@ function App() {
     }
   };
 
+  // This function checks user status before rendering protected routes.
+  const ProtectedRoute = ({ children }) => {
+    if (isLoading) {
+      return <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Loading Zenvana...</div>;
+    }
+    if (!user) {
+      navigate('/auth');
+      return null;
+    }
+    if (!financialSummary && location.pathname !== '/onboarding') {
+      navigate('/onboarding');
+      return null;
+    }
+    return children;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">
@@ -75,11 +84,11 @@ function App() {
     <Routes>
       <Route path="/" element={<WelcomePage />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/onboarding" element={user && !financialSummary ? <OnboardingFlow onSubmit={saveFinancialData} /> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
-      <Route path="/dashboard" element={user && financialSummary ? <Layout currentPage="dashboard" userId={user.uid}><Dashboard financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
-      <Route path="/tax-saver" element={user && financialSummary ? <Layout currentPage="tax-saver" userId={user.uid}><TaxSaver financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
-      <Route path="/ai-chat" element={user && financialSummary ? <Layout currentPage="ai-chat" userId={user.uid}><AIChat financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
-      <Route path="/profile" element={user ? <Layout currentPage="profile" userId={user.uid}><Profile /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
+      <Route path="/onboarding" element={<ProtectedRoute><OnboardingFlow onSubmit={saveFinancialData} /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><Layout currentPage="dashboard" userId={user.uid}><Dashboard financialSummary={financialSummary} /></Layout></ProtectedRoute>} />
+      <Route path="/tax-saver" element={<ProtectedRoute><Layout currentPage="tax-saver" userId={user.uid}><TaxSaver financialSummary={financialSummary} /></Layout></ProtectedRoute>} />
+      <Route path="/ai-chat" element={<ProtectedRoute><Layout currentPage="ai-chat" userId={user.uid}><AIChat financialSummary={financialSummary} /></Layout></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Layout currentPage="profile" userId={user.uid}><Profile /></Layout></ProtectedRoute>} />
       <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">404 - Page Not Found</div>} />
     </Routes>
   );
