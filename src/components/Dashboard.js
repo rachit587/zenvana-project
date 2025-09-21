@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getGeminiResponse } from '../api/gemini';
 import { formatIndianCurrency, getAge, MarkdownRenderer } from '../utils/helpers';
-import { getIndianStockPrices } from '../api/yahooFinance';
 
 const ExpensePieChart = ({ expenses }) => {
   const chartData = Object.entries(expenses || {}).map(([key, value]) => ({ name: key.charAt(0).toUpperCase() + key.slice(1), value: parseFloat(value || 0) })).filter(item => item.value > 0);
