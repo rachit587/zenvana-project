@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 const rapidApiClient = axios.create({
-    baseURL: 'https://yahoo-finance15.p.rapidapi.com/api/v1',
+    baseURL: 'https://yahoo-finance-real-time1.p.rapidapi.com/api/v1',
     headers: {
         'X-RapidAPI-Key': process.env.REACT_APP_RAPIDAPI_KEY,
-        'X-RapidAPI-Host': process.env.REACT_APP_RAPIDAPI_HOST,
+        'X-RapidAPI-Host': 'yahoo-finance-real-time1.p.rapidapi.com',
     },
 });
 
