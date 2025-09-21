@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getGroqResponse } from '../api/groq';
-import { getGeminiResponse, analyzeDocument } from '../api/gemini';
 import { MarkdownRenderer } from '../utils/helpers';
 
 const AIChat = ({ financialSummary }) => {
@@ -36,48 +35,18 @@ const AIChat = ({ financialSummary }) => {
     setChatInput('');
 
     try {
-        let aiResponse = '';
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const base64Image = reader.result.split(',')[1];
-                try {
-                    const analysisResult = await analyzeDocument(base64Image);
-                    aiResponse = "I have analyzed your document. Here's what I found:\n\n" + JSON.stringify(analysisResult, null, 2);
-                } catch (e) {
-                    aiResponse = e.message;
-                }
-                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
-                setIsGeneratingResponse(false);
-                setFile(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-            };
-            reader.readAsDataURL(file);
-        } else {
-            const systemInstruction = `You are ZENVANA AI, a hyper-personalized financial advisor for India. Your tone is that of an expert, empathetic human advisor. Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As Zenvana AI, my expertise is in finance. I can't help with that, but I'm ready to answer any of your money-related questions." Do not answer the off-topic question. **CRITICAL INSTRUCTION: Use the following detailed user profile to make your answers deeply personal and contextual. Refer to their specific data points when relevant.** --- **USER'S FINANCIAL PROFILE:** ${JSON.stringify(financialSummary, null, 2)} --- When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings. If they ask about saving tax, consider their income and existing 80C investments.`;
-            const messagesForAPI = [
-                { role: "system", content: systemInstruction },
-                ...chatHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text })),
-                { role: "user", content: chatInput }
-            ];
-
-            const isComplexQuery = chatInput.toLowerCase().includes('plan') || chatInput.toLowerCase().includes('strategy') || chatInput.toLowerCase().includes('analyze') || chatInput.toLowerCase().includes('predict') || chatInput.toLowerCase().includes('suggest');
-            
-            try {
-                if (isComplexQuery) {
-                    aiResponse = await getGeminiResponse(messagesForAPI);
-                } else {
-                    aiResponse = await getGroqResponse(messagesForAPI);
-                }
-            } catch (e) {
-                aiResponse = e.message;
-            } finally {
-                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
-                setIsGeneratingResponse(false);
-            }
-        }
+        const systemInstruction = `You are ZENVANA AI, a hyper-personalized financial advisor for India. Your tone is that of an expert, empathetic human advisor. Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As Zenvana AI, my expertise is in finance. I can't help with that, but I'm ready to answer any of your money-related questions." Do not answer the off-topic question. **CRITICAL INSTRUCTION: Use the following detailed user profile to make your answers deeply personal and contextual. Refer to their specific data points when relevant.** --- **USER'S FINANCIAL PROFILE:** ${JSON.stringify(financialSummary, null, 2)} --- When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings. If they ask about saving tax, consider their income and existing 80C investments.`;
+        const messagesForAPI = [
+            { role: "system", content: systemInstruction },
+            ...chatHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text })),
+            { role: "user", content: chatInput }
+        ];
+        
+        const aiResponse = await getGroqResponse(messagesForAPI);
+        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
     } catch (e) {
-        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, an error occurred: ${e.message}` }] }]);
+        setChatHistory(prev => [...prev, { role: "model", parts: [{ text: e.message }] }]);
+    } finally {
         setIsGeneratingResponse(false);
     }
   };
