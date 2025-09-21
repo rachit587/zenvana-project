@@ -33,19 +33,8 @@ const Dashboard = ({ financialSummary }) => {
   const [isGeneratingImprovement, setIsGeneratingImprovement] = useState(false);
   const [goalPlanResults, setGoalPlanResults] = useState({});
   const [isGeneratingGoalPlan, setIsGeneratingGoalPlan] = useState({});
-  const [marketData, setMarketData] = useState([]);
-
+  
   useEffect(() => {
-    const fetchMarketData = async () => {
-        try {
-            const data = await getIndianStockPrices();
-            setMarketData(data);
-        } catch (e) {
-            console.error(e);
-        }
-    };
-    fetchMarketData();
-
     const calculateAdvancedHealthScore = () => {
         if (!financialSummary) return;
         setIsCalculatingHealth(true);
@@ -113,6 +102,7 @@ const Dashboard = ({ financialSummary }) => {
     } catch (e) { setGoalPlanResults(p => ({ ...p, [i]: `My apologies, Zenvana AI is currently experiencing high traffic.` }));
     } finally { setIsGeneratingGoalPlan(p => ({ ...p, [i]: false })); }
   };
+
   return (
     <section className="space-y-8">
       <div>
@@ -125,18 +115,6 @@ const Dashboard = ({ financialSummary }) => {
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Savings Rate</span><span className={`font-bold text-3xl mt-1 ${sR < 10 ? 'text-red-500' : 'text-green-400'}`}>{sR.toFixed(1)}%</span></div>
           <div className="bg-gray-800 p-5 rounded-xl flex flex-col justify-center"><span className="text-gray-400 text-sm">Risk Tolerance</span><span className="font-bold text-3xl text-white mt-1 capitalize">{financialSummary.riskTolerance || 'N/A'}</span></div>
         </div>
-      </div>
-      <div>
-          <h3 className="text-2xl font-bold text-yellow-400 mb-4">Live Indian Market Snapshot</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {marketData.map((item, index) => (
-                  <div key={index} className="bg-gray-800 p-5 rounded-xl">
-                      <h4 className="font-semibold text-lg">{item.longname || item.shortname}</h4>
-                      <p className={`text-xl font-bold ${item.regularMarketChangePercent > 0 ? 'text-green-400' : 'text-red-500'}`}>{formatIndianCurrency(item.regularMarketPrice)}</p>
-                      <p className={`text-sm ${item.regularMarketChangePercent > 0 ? 'text-green-400' : 'text-red-500'}`}>{item.regularMarketChangePercent.toFixed(2)}%</p>
-                  </div>
-              ))}
-          </div>
       </div>
       <div className="space-y-8">
         <div>
