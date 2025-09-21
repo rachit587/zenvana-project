@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-const Auth = () => {
+const Auth = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +14,7 @@ const Auth = () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      await onLoginSuccess();
     } catch (e) {
       setError(e.message);
     }
@@ -33,6 +34,7 @@ const Auth = () => {
           createdAt: new Date(),
         });
       }
+      await onLoginSuccess();
     } catch (e) {
       setError(e.message);
     }
