@@ -5,32 +5,31 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
-export const getGeminiResponse = async (prompt) => {
+export const getGeminiResponse = async (messages) => {
     try {
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent({ contents: messages });
         return result.response.text();
     } catch (error) {
         console.error("Error calling Gemini API:", error);
-        if (error.status === 429) {
-            throw new Error("Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
+        if (error.response && error.response.status === 429) {
+            throw new Error("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
         }
         throw new Error("An error occurred with Zenvana AI. Please try again.");
     }
 };
 
-export const analyzeDocument = async (base64Image, financialSummary) => {
+export const analyzeDocument = async (base64Image) => {
     try {
         const prompt = [
-            `You are ZENVANA, a hyper-personalized AI financial advisor for India. Your task is to extract income and expense data from the following image of a financial document (e.g., bank statement, pay stub) and return it as a JSON object.
+            `You are ZENVANA AI, a hyper-personalized AI financial advisor for India. Your task is to extract income and expense data from the following image of a financial document (e.g., bank statement, pay stub) and return it as a JSON object.
 
             **INSTRUCTIONS:**
             1.  Scan the document for keywords like "salary," "income," "credit," "rent," "bill," "EMI," "debit," etc.
             2.  Calculate the total monthly income and total monthly expenses.
             3.  Create a JSON object with two keys: "monthlyIncome" and "expenses".
-            4.  For "expenses", provide a breakdown based on the categories in the user's current profile, if possible.
-            5.  **DO NOT** include any personal or private information from the document in your response. Only provide the JSON object.
-            6.  If no data can be extracted, return an empty JSON object: {}.
-            7.  Your entire response must be a valid JSON object. Do not include any other text.
+            4.  **DO NOT** include any personal or private information from the document in your response. Only provide the JSON object.
+            5.  If no data can be extracted, return an empty JSON object: {}.
+            6.  Your entire response must be a valid JSON object. Do not include any other text.
             
             Example JSON:
             {
