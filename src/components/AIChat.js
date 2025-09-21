@@ -50,17 +50,27 @@ const AIChat = ({ financialSummary }) => {
             };
             reader.readAsDataURL(file);
         } else {
-            // Simple query logic
-            const prompt = `User's financial profile: ${JSON.stringify(financialSummary)}. User's question: ${chatInput}`;
-            const isComplexQuery = chatInput.toLowerCase().includes('plan') || chatInput.toLowerCase().includes('strategy') || chatInput.toLowerCase().includes('analyze') || chatInput.toLowerCase().includes('predict');
+            const systemInstruction = `You are ZENVANA AI, a hyper-personalized financial advisor for India. Your tone is that of an expert, empathetic human advisor. Your primary goal is to provide helpful, safe, and accurate financial advice based on the user's detailed profile. You MUST ONLY answer questions related to personal finance, economics, investing, budgeting, taxes, and money-related topics in an Indian context. If the user asks an off-topic question, you MUST politely decline by saying: "As Zenvana AI, my expertise is in finance. I can't help with that, but I'm ready to answer any of your money-related questions." Do not answer the off-topic question. **CRITICAL INSTRUCTION: Use the following detailed user profile to make your answers deeply personal and contextual. Refer to their specific data points when relevant.** --- **USER'S FINANCIAL PROFILE:** ${JSON.stringify(financialSummary, null, 2)} --- When answering, use this context. For example, if they ask "Should I invest?", your answer should consider their risk tolerance, existing investments, and monthly savings. If they ask about saving tax, consider their income and existing 80C investments.`;
+            const messagesForAPI = [
+                { role: "system", content: systemInstruction },
+                ...chatHistory.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.parts[0].text })),
+                { role: "user", content: chatInput }
+            ];
+
+            const isComplexQuery = chatInput.toLowerCase().includes('plan') || chatInput.toLowerCase().includes('strategy') || chatInput.toLowerCase().includes('analyze') || chatInput.toLowerCase().includes('predict') || chatInput.toLowerCase().includes('suggest');
             
-            if (isComplexQuery) {
-                aiResponse = await getGeminiResponse(prompt);
-            } else {
-                aiResponse = await getGroqResponse([{ role: 'user', content: prompt }]);
+            try {
+                if (isComplexQuery) {
+                    aiResponse = await getGeminiResponse(messagesForAPI);
+                } else {
+                    aiResponse = await getGroqResponse(messagesForAPI);
+                }
+                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
+            } catch (e) {
+                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: "My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments." }] }]);
+            } finally {
+                setIsGeneratingResponse(false);
             }
-            setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
-            setIsGeneratingResponse(false);
         }
     } catch (e) {
         setChatHistory(prev => [...prev, { role: "model", parts: [{ text: `Sorry, an error occurred: ${e.message}` }] }]);
