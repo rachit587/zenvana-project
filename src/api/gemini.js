@@ -11,7 +11,10 @@ export const getGeminiResponse = async (prompt) => {
         return result.response.text();
     } catch (error) {
         console.error("Error calling Gemini API:", error);
-        throw new Error("Failed to get response from Gemini. Please try again.");
+        if (error.status === 429) {
+            throw new Error("Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
+        }
+        throw new Error("An error occurred with Zenvana AI. Please try again.");
     }
 };
 
