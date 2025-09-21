@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard';
 import TaxSaver from './components/TaxSaver';
 import AIChat from './components/AIChat';
 import Profile from './components/Profile';
+import { wait } from './utils/helpers';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -27,14 +28,8 @@ function App() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setFinancialSummary(docSnap.data());
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/dashboard');
-          }
         } else {
           setFinancialSummary(null);
-          if (location.pathname === '/' || location.pathname === '/auth') {
-            navigate('/onboarding');
-          }
         }
       } else {
         setUser(null);
@@ -62,6 +57,36 @@ function App() {
     }
   };
 
+  const handleGetStartedClick = () => {
+    if (user) {
+      if (financialSummary) {
+        navigate('/dashboard');
+      } else {
+        navigate('/onboarding');
+      }
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  const handleLoginSuccess = async () => {
+    setIsLoading(true);
+    // Wait for auth state to be fully processed
+    await wait(1000); 
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const docRef = doc(db, `users/${currentUser.uid}/financial_data/summary`);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        navigate('/dashboard');
+      } else {
+        navigate('/onboarding');
+      }
+    }
+    setIsLoading(false);
+  };
+  
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">
@@ -72,8 +97,8 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<WelcomePage />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/" element={<WelcomePage onGetStarted={handleGetStartedClick} />} />
+      <Route path="/auth" element={<Auth onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/onboarding" element={user && !financialSummary ? <OnboardingFlow onSubmit={saveFinancialData} /> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
       <Route path="/dashboard" element={user && financialSummary ? <Layout currentPage="dashboard" userId={user.uid}><Dashboard financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
       <Route path="/tax-saver" element={user && financialSummary ? <Layout currentPage="tax-saver" userId={user.uid}><TaxSaver financialSummary={financialSummary} /></Layout> : <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100">Access Denied</div>} />
