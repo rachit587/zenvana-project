@@ -21,7 +21,7 @@ const AIChat = ({ financialSummary }) => {
     if (chatHistory.length === 0) {
       setChatHistory([{
         role: 'model',
-        parts: [{ text: `Namaste, ${financialSummary?.name || 'User'}! I'm your AI financial companion. I have reviewed your detailed profile. How can I help you today?` }]
+        parts: [{ text: `Namaste, ${financialSummary?.name || 'User'}! I'm your Zenvana AI financial companion. I have reviewed your detailed profile. How can I help you today?` }]
       }]);
     }
   }, [financialSummary, chatHistory]);
@@ -41,8 +41,12 @@ const AIChat = ({ financialSummary }) => {
             const reader = new FileReader();
             reader.onloadend = async () => {
                 const base64Image = reader.result.split(',')[1];
-                const analysisResult = await analyzeDocument(base64Image, financialSummary);
-                aiResponse = "I have analyzed your document. Here's what I found:\n\n" + JSON.stringify(analysisResult, null, 2);
+                try {
+                    const analysisResult = await analyzeDocument(base64Image);
+                    aiResponse = "I have analyzed your document. Here's what I found:\n\n" + JSON.stringify(analysisResult, null, 2);
+                } catch (e) {
+                    aiResponse = e.message;
+                }
                 setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
                 setIsGeneratingResponse(false);
                 setFile(null);
@@ -65,10 +69,10 @@ const AIChat = ({ financialSummary }) => {
                 } else {
                     aiResponse = await getGroqResponse(messagesForAPI);
                 }
-                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
             } catch (e) {
-                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: "My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments." }] }]);
+                aiResponse = e.message;
             } finally {
+                setChatHistory(prev => [...prev, { role: "model", parts: [{ text: aiResponse }] }]);
                 setIsGeneratingResponse(false);
             }
         }
