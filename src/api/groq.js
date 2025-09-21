@@ -17,6 +17,6 @@ export const getGroqResponse = async (messages) => {
         return response.data.choices[0].message.content;
     } catch (error) {
         console.error("Error calling Groq API:", error);
-        throw new Error("Failed to get response from Groq. Please try again.");
+        throw new Error("My apologies, Zenvana AI is currently experiencing high traffic. Please try again in a few moments.");
     }
 };
