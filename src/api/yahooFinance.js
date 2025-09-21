@@ -1,16 +1,16 @@
 import axios from 'axios';
 
 const rapidApiClient = axios.create({
-    baseURL: 'https://yahoo-finance-real-time1.p.rapidapi.com/api/v1',
+    baseURL: 'https://yahoo-finance-real-time.p.rapidapi.com/api',
     headers: {
         'X-RapidAPI-Key': process.env.REACT_APP_RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'yahoo-finance-real-time1.p.rapidapi.com',
+        'X-RapidAPI-Host': 'yahoo-finance-real-time.p.rapidapi.com',
     },
 });
 
 export const getMarketData = async (symbols) => {
     try {
-        const response = await rapidApiClient.get('/finance/quotes', {
+        const response = await rapidApiClient.get('/quotes', {
             params: { symbols: symbols.join(',') },
         });
         return response.data.marketSummary;
@@ -23,7 +23,7 @@ export const getMarketData = async (symbols) => {
 export const getIndianStockPrices = async () => {
     try {
         const symbols = ['^NSEI', '^BSESN', 'RELIANCE.NS', 'HDFC.NS', 'TCS.NS']; // Example Indian symbols
-        const response = await rapidApiClient.get('/finance/quotes', {
+        const response = await rapidApiClient.get('/quotes', {
             params: { symbols: symbols.join(',') },
         });
         return response.data.marketSummary;
