@@ -1,0 +1,6 @@
+name = "zenvana-ai-engine"
+main = "src/index.js"
+compatibility_date = "2024-05-20"
+
+[ai]
+binding = "AI"
